@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="syntax_editor_macro">
+    <syntax_editor_macro action="INSERT_OR_UPDATE">
+        <comments>Template for a Client Side UI Action with onclick=onClick which does an async submit for a UI Action with the action_name=ACTION_NAME</comments>
+        <name>dev_ui_action</name>
+        <sys_class_name>syntax_editor_macro</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 18:00:21</sys_created_on>
+        <sys_id>8e4eba8997532110d70ef207f053af2a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>dev_ui_action</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>syntax_editor_macro_8e4eba8997532110d70ef207f053af2a</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-06 18:00:21</sys_updated_on>
+        <text>/* global current, action */&#13;
+/* global GlideAjax, gsftSubmit */&#13;
+/* eslint no-undef: "error" */&#13;
+function onClick() {&#13;
+	var ga = new GlideAjax('x_my_scope.SCRIPTINCLUDE');&#13;
+	ga.addParam('sysparm_name', 'MYFUNCTION');&#13;
+	ga.addParam('incident', g_form.getUniqueValue());&#13;
+	ga.getXMLAnswer(function (result) {&#13;
+		result = JSON.parse(result);&#13;
+		if (result.status == 'success') {&#13;
+			gsftSubmit(null, g_form.getFormElement(), 'ACTION_NAME');&#13;
+		}&#13;
+	});&#13;
+}&#13;
+&#13;
+function executeUIAction(taskGr, action) {&#13;
+	action.setRedirectURL(taskGr);&#13;
+}&#13;
+&#13;
+if (typeof window === 'undefined') {&#13;
+	executeUIAction(current, action);&#13;
+}</text>
+    </syntax_editor_macro>
+</record_update>

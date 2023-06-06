@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="syntax_editor_macro">
+    <syntax_editor_macro action="INSERT_OR_UPDATE">
+        <comments/>
+        <name>dev_glideajax</name>
+        <sys_class_name>syntax_editor_macro</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 18:02:36</sys_created_on>
+        <sys_id>36aff60997d32110d70ef207f053afa4</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>dev_glideajax</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>syntax_editor_macro_36aff60997d32110d70ef207f053afa4</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-06 18:02:36</sys_updated_on>
+        <text>var ga = new GlideAjax('x_myscope.SCRIPTINCLUDE');&#13;
+ga.addParam('sysparm_name', 'MYFUNCTION');&#13;
+ga.addParam('table', g_form.getTableName());&#13;
+ga.addParam('sys_id', g_form.getUniqueValue());&#13;
+ga.getXMLAnswer(function (result) {&#13;
+	result = JSON.parse(result);&#13;
+	if (result.status == 'success') {&#13;
+&#13;
+	} else if (result.message) {&#13;
+		g_form.addErrorMessage(result.message);&#13;
+	}&#13;
+});</text>
+    </syntax_editor_macro>
+</record_update>

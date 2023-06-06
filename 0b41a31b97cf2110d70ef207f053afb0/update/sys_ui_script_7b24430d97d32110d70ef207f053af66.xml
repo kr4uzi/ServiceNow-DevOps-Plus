@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.context_menu</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.context_menu = (function() {
+	"use strict";
+	
+	/* global MutationObserver */
+	/* eslint no-undef: "error" */
+	if (x_424426_devops.context_menu) {
+		return x_424426_devops.context_menu;
+	}
+	
+	var $window = null;
+	var $config = null;
+	
+	x_424426_devops.loader.get('window', function (_window) {
+		$window = _window;
+		if ($window && $config) {
+			inject($window, $config);
+		}
+	});
+	
+	x_424426_devops.loader.get('config', function (_config) {
+		$config = _config;
+		if ($window && $config) {
+			inject($window, $config);
+		}
+	});
+
+	return {
+		type: 'context_menu'
+	};
+	
+	function inject($window, $config) {
+		injectHeaderMenu($window, $config);
+		injectContextMenu($window, $config);
+	}
+	
+	function injectContextMenu($window, $config) {
+		$window.document.on('contextmenu', 'div[data-type="label"]', function (evt, element) {
+			var id = element.id;
+			var fieldName = id.substring(id.lastIndexOf('.') + 1);
+			if ($window.gcm && $window.document.getElementById($window.gcm.getID())) {
+				if ($config.fieldItems.length) {
+					var devopsMenu = new $window.GwtContextMenu('devops_field_menu');
+					devopsMenu.clear();
+					
+					var sncVariableWorkaround = '{FIELD}';
+					$config.fieldItems.forEach(function (item) {
+						devopsMenu.addHref(
+							item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
+							item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
+						);
+					});
+
+					$window.gcm.addLine();
+					$window.gcm.addMenu('DevOps+', devopsMenu);
+				}
+			}
+		});
+	}
+	
+	function injectHeaderMenu($window, $config) {
+		if ($window.gcmSection) {
+			addHeaderMenuItems($window, $config, $window.gcmSection);
+		} else {
+			Object.defineProperty($window, 'gcmSection', {
+				configurable: true,
+				set: function (v) {
+					Object.defineProperty($window, 'gcmSection', {
+						configurable: true, enumerable: true, writable: true, value: v 
+					});
+					
+					addHeaderMenuItems($window, $config, v);
+				}
+			});
+		}
+		
+		function addHeaderMenuItems($window, $config, headerMenu) {
+			// by this time the g_form should have already loaded...
+			if (!$window.g_form) {
+				return;
+			}
+			
+			if ($config.headerItems.length) {
+				var devopsMenu = new $window.GwtContextMenu('devops_header_menu');
+				
+				$config.headerItems.forEach(function (item) {
+					devopsMenu.addHref(item.label, item.script);
+				});
+
+				headerMenu.addLine();
+				headerMenu.addMenu('DevOps+', devopsMenu);
+			}
+		}
+	}
+})();
+]]></script>
+        <script_name>context_menu</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 18:59:03</sys_created_on>
+        <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>x_424426_devops.context_menu</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-06 20:44:44</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

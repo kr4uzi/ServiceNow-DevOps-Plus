@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="syntax_editor_macro">
+    <syntax_editor_macro action="INSERT_OR_UPDATE">
+        <comments>Template for a Client Callable Script include with an initialization function (constructor)</comments>
+        <name>dev_script_include</name>
+        <sys_class_name>syntax_editor_macro</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 18:10:33</sys_created_on>
+        <sys_id>0d20cb0997d32110d70ef207f053afd6</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>dev_script_include</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>syntax_editor_macro_0d20cb0997d32110d70ef207f053afd6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-06 19:15:26</sys_updated_on>
+        <text>/* global global, Class, gs, GlideRecordSecure */&#13;
+/* eslint no-undef: "error" */&#13;
+// Note: It is best practice to use a &lt;SCRIPTINCLUDE NAME&gt;Client Script Include which wraps calls to &lt;SCRIPTINCLUDE NAME&gt;&#13;
+// This Client Callable Script Include should not use GlideRecord, instead all lookups should be done via GlideRecordSecure&#13;
+var SCRIPTINCLUDEClient = Class.create();&#13;
+SCRIPTINCLUDEClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {&#13;
+&#13;
+	initialize: function(request, responseXML, gc) {&#13;
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);&#13;
+	},&#13;
+&#13;
+	MYFUNCTION: function() {&#13;
+		const result = {&#13;
+			status: 'error',&#13;
+			message: ''&#13;
+		};&#13;
+&#13;
+		const table = this.getParameter('table');&#13;
+		const sys_id = this.getParameter('sys_id');&#13;
+		if (table &amp;&amp; sys_id &amp;&amp; gs.tableExists(table)) {&#13;
+			const recordGr = new GlideRecordSecure(table);&#13;
+			recordGr.addQuery('sys_id', sys_id);&#13;
+			recordGr.setLimit(1);&#13;
+			recordGr.query();&#13;
+			if (recordGr.next()) {&#13;
+				result.status = 'success';&#13;
+				result.number = recordGr.number.toString();&#13;
+			} else {&#13;
+				result.message = 'Invalid record';&#13;
+			}&#13;
+		} else {&#13;
+			result.message = 'Invalid parameters';&#13;
+		}&#13;
+			&#13;
+		return JSON.stringify(result);&#13;
+	},&#13;
+&#13;
+	type: 'SCRIPTINCLUDEClient'&#13;
+});</text>
+    </syntax_editor_macro>
+</record_update>

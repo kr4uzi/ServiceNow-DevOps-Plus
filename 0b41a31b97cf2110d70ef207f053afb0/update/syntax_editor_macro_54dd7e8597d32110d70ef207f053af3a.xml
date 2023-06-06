@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="syntax_editor_macro">
+    <syntax_editor_macro action="INSERT_OR_UPDATE">
+        <comments/>
+        <name>dev_help</name>
+        <sys_class_name>syntax_editor_macro</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 17:54:41</sys_created_on>
+        <sys_id>54dd7e8597d32110d70ef207f053af3a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>dev_help</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>syntax_editor_macro_54dd7e8597d32110d70ef207f053af3a</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-06 17:54:41</sys_updated_on>
+        <text>dev_lint&#13;
+dev_glideajax&#13;
+dev_ui_action&#13;
+dev_script_include</text>
+    </syntax_editor_macro>
+</record_update>
