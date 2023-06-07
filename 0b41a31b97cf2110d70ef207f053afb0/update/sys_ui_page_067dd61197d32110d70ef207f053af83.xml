@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[/* global document, addLoadEvent, FormData, XMLHttpRequest, gel, window */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {	
+	var submitButton = document.querySelector('#search-form button[type="submit"]');
+	var searchInput = document.getElementById('adv-search-term');
+	searchInput.select();
+	searchInput.focus();
+	
+	updateButtonState(submitButton, searchInput.value);
+	
+	searchInput.addEventListener('keyup', function () {
+		updateButtonState(submitButton, this.value);
+	});
+	
+	var scopeInput = document.querySelector('#search-form #search-scope');
+	var currentApplicationOption = scopeInput.querySelector('option[value="$[JS:gs.getCurrentApplicationId()]"]');
+	if (currentApplicationOption) {
+		currentApplicationOption.setAttribute('selected', 'selected');
+	}
+	
+	var searchScope = document.querySelector('#search-form #search-scope');
+	var globalSearch = document.querySelector('#search-form #search-global');
+	globalSearch.addEventListener('change', function () {
+		searchScope.style.display = this.checked ? 'none' : '';
+	});
+	
+	var canceled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		canceled = true;
+	});
+	
+	document.addEventListener('keyup', function (event) {
+		if (event.key == 'Escape') {
+			canceled = true;
+		}
+	});
+	
+	document.getElementById('search-form').addEventListener('submit', function (event) {
+		canceled = false;
+		event.preventDefault();
+		
+		var fd = new FormData(this);
+		var term = fd.get('term');
+		var scope = fd.get('scope');
+		var allScopes = fd.get('global');
+		if (term && (allScopes == 'on' || scope)) {
+			gel('search-results').innerHTML = '';
+			gel('progressPercentage').innerHTML = ' (0)';
+			gel('numResults').innerHTML = ' 0 ';
+			gel('searchTerm').innerHTML = ' "' + term.trim() + '" ';
+			gel('searchedScope').innerHTML = ' "' + (allScopes ? 'All Applications' : gel('search-scope').selectedOptions[0].label) + '" ';
+			var hits = 0;
+			var progressBar = gel('bcs-progress-bar');
+			progressBar.setAttribute('aria-valuenow', '0');
+			progressBar.style.width = '0%';
+			
+			gel('progress-container').style.display = '';
+			gel('progress-header').style.display = '';
+			
+			var searchGroup = 'x_424426_devops.DevOps+ Code Search';
+			
+			getTables(searchGroup, function (tables) {
+				if (tables.length) {
+					var i = 0;
+					searchTable(tables[i++].name, term, scope, allScopes == 'on', searchGroup, function processTableResults(result) {
+						var percentageComplete = Math.floor(i / tables.length * 100);
+						gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+						progressBar.setAttribute('aria-valuenow', percentageComplete);
+						progressBar.style.width = percentageComplete + '%';
+						
+						if (result.hits && result.hits.length) {
+							hits += result.hits.length;							
+							gel('numResults').innerHTML = ' ' + hits + ' ';
+							
+							addTable(result.tableLabel, result.hits, true, term);
+						}
+
+						if (i < tables.length && !canceled) {
+							searchTable(tables[i++].name, term, scope, allScopes == 'on', searchGroup, processTableResults);
+						} else {
+							gel('progress-container').style.display = 'none';
+						}
+					});
+				}
+			});
+		}
+	});
+});
+
+function updateButtonState(buttonNode, searchTerm) {
+	if (searchTerm) {
+		buttonNode.removeAttribute('disabled');
+	} else {
+		buttonNode.setAttribute('disabled', 'disabled');
+	}
+}
+
+function addTable(tableName, hits, open, searchTerm) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	if (open) {
+		tableLi.setAttribute('aria-expanded', 'true');
+	} else {
+		tableLi.classList.add('collapsed');
+		tableLi.setAttribute('aria-expanded', false);
+	}
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '<span class="title"> ' + tableName + ' <span class="count">(' + hits.length + ')</span></span><i class="toggle-trigger icon icon-vcr-right"></i>';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i > 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		var hitToggleBarTitleCount = document.createElement('span');
+		hitToggleBarTitleCount.classList.add('count');
+		hitToggleBarTitleCount.innerHTML = '(' + hit.matches.length + ')';
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		hitToggleBarTitle.append(hitToggleBarTitleCount);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+		
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			
+			var matchCode = document.createElement('pre');
+			matchCode.classList.add('javascript', 'hljs');
+			
+			var lastLine = null;
+			match.lineMatches.sort(function (a, b) { return a.line - b.line; }).forEach(function (line) {
+				if (lastLine && (lastLine < (line.line - 1))) {
+					matchCode.append(document.createElement('br'));
+				}
+				
+				lastLine = line.line;
+				var lineSpan = document.createElement('span');
+				var numSpan = document.createElement('span');
+				numSpan.innerHTML = 'Line ' + line.line;
+				
+				var contentSpan = document.createElement('span');
+				contentSpan.innerHTML = line.context.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(new RegExp(searchTerm, 'g'), function (part) { return '<strong>' + part + '</strong>'; });
+				
+				lineSpan.append(numSpan, ': ', contentSpan, document.createElement('br'));
+				matchCode.append(lineSpan);
+			});
+			
+			matchLi.append(' ' + match.fieldLabel + ': ', matchCode);
+			matchUl.append(matchLi);
+		});
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function getTables(searchGroup, callback) {
+	var client = new XMLHttpRequest();
+	client.open('GET', '/api/sn_codesearch/code_search/tables?search_group=' + encodeURIComponent(searchGroup));
+	client.setRequestHeader('X-UserToken', window.g_ck);
+	client.setRequestHeader('Accept','application/json');
+	client.setRequestHeader('Content-Type','application/json');
+
+	client.onreadystatechange = function() { 
+		if (this.readyState == this.DONE) {
+			callback(JSON.parse(this.response).result);
+		}
+	};
+	
+	client.send();
+}
+
+function searchTable(table, term, scope, allScopes, searchGroup, callback) {
+	var url = 'api/sn_codesearch/code_search/search';
+	url += '?search_group=' + encodeURIComponent(searchGroup);
+	url += '&extended_matching=true';
+	
+	if (allScopes) {
+		url += '&search_all_scopes=true';
+	} 
+	
+	if (scope) {
+		url += '&current_app=' + scope;
+	}
+
+	url += '&table=' + table;
+	url += '&term=' + encodeURIComponent(term.trim());
+
+	var client = new XMLHttpRequest();
+	client.open('GET', url);
+	client.setRequestHeader('X-UserToken', window.g_ck);
+	client.setRequestHeader('Accept','application/json');
+	client.setRequestHeader('Content-Type','application/json');
+	client.onreadystatechange = function() { 
+		if (this.readyState == this.DONE) {
+			callback(JSON.parse(this.response).result);
+		}
+	};
+
+	client.send();
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_code_search.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var scopes = [];
+		var scopeGr = new GlideRecordSecure('sys_scope');
+		scopeGr.orderByDesc('sys_created_on');
+		scopeGr.query();
+		while (scopeGr.next()) {
+			scopes.push({
+				sys_id: scopeGr.getUniqueValue(),
+				display_value: scopeGr.getDisplayValue()
+			});
+		}
+	</g:evaluate>
+	<g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" />
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.0" />
+	<form id="search-form">
+		<fieldset>
+			<div>
+				<div class="form-group">
+					<div>You are now on the Code Search dialog. Enter a search term to search files in any of your applications. You may optionally select a scope or search for files in all applications. 
+					</div>
+					<div class="input-group-transparent">
+						<input id="adv-search-term" class="form-control mousetrap" type="text" name="term" placeholder="Search Term..." autocomplete="off" title="Search your application code here" value="${jvar_search_term}" />
+					</div>
+					<div class="row">
+						<div id="global-search-group" class="input-group-checkbox">
+							<input id="search-global" class="checkbox mousetrap" type="checkbox" name="global" /> 
+							<label for="search-global" class="checkbox-label mousetrap">Search in all applications</label>
+						</div>
+						<select id="search-scope" class="form-control mousetrap" name="scope" title="Select a scope to search">
+							<j:forEach var="jvar_scope" items="${scopes}">
+								<option value="${jvar_scope.sys_id}">${jvar_scope.display_value}</option>
+							</j:forEach>
+						</select>
+					</div>
+					<div class="row">
+						<div style="flex: 3;"></div>
+						<div class="action-buttons">
+							<button type="button" class="btn btn-default" style="display: none;" click="dismissResults()">Cancel</button>
+							<button type="submit" class="btn btn-primary" disabled="disabled">Search</button> 
+						</div>
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	</form>
+	<div class="search-pane">
+		<div id="progress-header" style="display: none;">
+			<div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline">
+				<strong id="numResults"></strong>results for<strong id="searchTerm"></strong>in<strong id="searchedScope"></strong>
+			</div>
+			<div id="progress-limit" style="display: none;">
+				<span class="error">
+					<strong>Search cancelled because too many results were found.</strong>
+				</span>
+			</div>
+			<div id="progress-container">
+				<div>In progress<span id="progressPercentage"></span></div>
+				<div id="progress-bar-container">
+					<div class="progress">
+						<div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						</div>
+					</div>
+				</div>
+				<div>
+					<a class="icon icon-error-circle"></a>
+				</div>
+			</div>
+		</div>
+		<div id="no-results" style="display: none;">
+			No Results Found
+		</div>
+		<ul id="search-results" role="tree" tree-navigator="true">
+		</ul>
+	</div>
+</j:jelly>]]></html>
+        <name>code_search</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-07 10:10:53</sys_created_on>
+        <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>code_search</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-07 17:26:08</sys_updated_on>
+    </sys_ui_page>
+</record_update>

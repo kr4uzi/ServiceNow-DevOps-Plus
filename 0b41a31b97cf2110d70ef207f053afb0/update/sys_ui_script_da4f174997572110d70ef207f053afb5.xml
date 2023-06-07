@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
     <sys_ui_script action="INSERT_OR_UPDATE">
         <active>true</active>
-        <description>Get the Highlighted/Selected text for easy code search e.g. from a selected System Log</description>
+        <description>- Get the Highlighted/Selected text for easy code search e.g. from a selected System Log&#13;
+- Enable CTRL (win) / CMD (mac) + SHIFT + F for code search on all forms</description>
         <global>false</global>
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.text_capture</name>
@@ -9,6 +10,7 @@
 x_424426_devops.text_capture = (function() {
 	"use strict";
 	
+	/* global GlideModal */
 	/* eslint no-undef: "error" */
 	var textCapture = {
 		text: '',
@@ -20,6 +22,28 @@ x_424426_devops.text_capture = (function() {
 			var text = getSelectionText($window);
 			if (text) {
 				textCapture.text = text; 
+			}
+		});
+		
+		var isMac = $window.navigator.userAgent.indexOf('Mac OS X') > -1;
+		$window.document.addEventListener('keydown', function (event) {
+			if ($window.isDevStudio) {
+				return;
+			}
+			
+			if ((isMac ? event.metaKey : event.ctrlKey) && event.shiftKey && event.key == 'f') {
+				event.preventDefault();
+
+				var gm = new GlideModal('', false, 'modal-95');
+				gm.setTitle("Code Search");
+
+				var iframe = '<iframe src="/x_424426_devops_code_search.do';
+				if (textCapture.text) {
+					iframe += '?search=' + encodeURIComponent(textCapture.text);
+				}
+
+				iframe += '" style="width: 100%; height: 650px; border: 0; overflow: hidden;" />';
+				gm.renderWithContent(iframe);
 			}
 		});
 	});
@@ -49,14 +73,14 @@ x_424426_devops.text_capture = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 20:25:41</sys_created_on>
         <sys_id>da4f174997572110d70ef207f053afb5</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>x_424426_devops.text_capture</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_da4f174997572110d70ef207f053afb5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-06 20:25:41</sys_updated_on>
+        <sys_updated_on>2023-06-07 18:10:50</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
