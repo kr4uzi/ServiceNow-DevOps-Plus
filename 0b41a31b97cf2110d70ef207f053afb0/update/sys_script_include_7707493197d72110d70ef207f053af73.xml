@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.MetadataUtil</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>MetadataUtil</name>
+        <script><![CDATA[var MetadataUtil = Class.create();
+MetadataUtil.prototype = {
+    initialize: function() {
+		// this is the out of the box 'Version' relationship SysID (sys_relationship record)
+		this.ootbVersionRelationshipSysID = '67bdac52374010008687ddb1967334ee';
+		
+		const hasRoleGr = new GlideRecord('sys_user_has_role');
+		hasRoleGr.addQuery('role.name', 'x_424426_devops.developer');
+		hasRoleGr.addQuery('user', gs.getUserID());
+		hasRoleGr.setLimit(1);
+		hasRoleGr.query();
+		this.hasDevRole = hasRoleGr.hasNext();
+    },
+	
+	shouldDisplayShowVersionUIAction: function (metadataGr, action) {
+		// only display the 'Show Versions' UI Action if there current user is an admin ...
+		if (gs.hasRole('admin') && this.hasDevRole) {
+			// ... and if there the 'Versions' Related List isn't already on the current view
+			var view = action.getGlideURI().get('sysparm_view') || '';
+			var table = metadataGr.getRecordClassName();
+			
+			var relatedListEntryGr = new GlideRecord('sys_ui_related_list_entry');
+			relatedListEntryGr.addQuery('related_list', 'REL:' + this.ootbVersionRelationshipSysID);
+			relatedListEntryGr.addQuery('list_id.name', table);
+			relatedListEntryGr.addQuery('list_id.view.name', view);
+			relatedListEntryGr.setLimit(1);
+			relatedListEntryGr.query();
+			if (!relatedListEntryGr.hasNext()) {
+				return true;
+			}
+		}
+		
+		return false;
+	},
+
+    type: 'MetadataUtil'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-08 17:15:16</sys_created_on>
+        <sys_id>7707493197d72110d70ef207f053af73</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>MetadataUtil</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_7707493197d72110d70ef207f053af73</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-08 20:00:22</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action">
+    <sys_ui_action action="INSERT_OR_UPDATE">
+        <action_name/>
+        <active>true</active>
+        <client>true</client>
+        <client_script_v2><![CDATA[function onClick(g_form) {
+
+}]]></client_script_v2>
+        <comments/>
+        <condition>new x_424426_devops.MetadataUtil().shouldDisplayShowVersionUIAction(current, gs.action)</condition>
+        <form_action>true</form_action>
+        <form_button>false</form_button>
+        <form_button_v2>false</form_button_v2>
+        <form_context_menu>false</form_context_menu>
+        <form_link>true</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
+        <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
+        <hint/>
+        <isolate_script>false</isolate_script>
+        <list_action>false</list_action>
+        <list_banner_button>false</list_banner_button>
+        <list_button>false</list_button>
+        <list_choice>false</list_choice>
+        <list_context_menu>false</list_context_menu>
+        <list_link>false</list_link>
+        <list_save_with_form_button>false</list_save_with_form_button>
+        <list_style/>
+        <messages/>
+        <name>Show versions</name>
+        <onclick>devops_openRecordVersions()</onclick>
+        <order>100</order>
+        <script><![CDATA[/* global g_scratchpad, g_navigation, g_form */
+/* eslint no-undef: "error" */
+function devops_openRecordVersions() {
+	var windowName = g_form.getTableName() + '_' + g_form.getUniqueValue() + '_versions';
+	var updateName = g_scratchpad.devops_update_name || (g_form.getTableName() + '_' + g_form.getUniqueValue());
+	g_navigation.open('nav_to.do?uri=sys_update_version_list.do%3Fsysparm_query=name%3D' + updateName, windowName);
+}]]></script>
+        <show_insert>false</show_insert>
+        <show_multiple_update>false</show_multiple_update>
+        <show_query>false</show_query>
+        <show_update>true</show_update>
+        <sys_class_name>sys_ui_action</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-08 17:11:48</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>7527c93197d72110d70ef207f053af07</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>Show versions</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_action_7527c93197d72110d70ef207f053af07</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-08 17:15:38</sys_updated_on>
+        <table>sys_metadata</table>
+        <ui11_compatible>false</ui11_compatible>
+        <ui16_compatible>false</ui16_compatible>
+        <x_376096_cxp_style/>
+    </sys_ui_action>
+</record_update>
