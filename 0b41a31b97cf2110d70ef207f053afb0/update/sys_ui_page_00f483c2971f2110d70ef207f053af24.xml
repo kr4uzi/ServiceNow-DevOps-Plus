@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[function refreshPage() {
+	window.location.reload();
+}
+
+function devopsSubmit() {
+	var form = window.document.forms['form.00f483c2971f2110d70ef207f053af24'];
+	form.elements['selected_devops_users'].value = devops_users.getValues(devops_users.getRightSelect());
+	return true;
+}
+
+addLoadEvent(function(){
+	devops_users.clear();
+	
+	x_424426_devops_users.available.forEach(function (user) {
+		devops_users.addLeftChoice(user.value, user.label);
+	});
+	
+	x_424426_devops_users.selected.forEach(function (user) {
+		devops_users.addRightChoice(user.value, user.label);
+	});
+});
+]]></client_script>
+        <description>UI Page to administrate 'DevOps+' developer role</description>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_admins.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate>
+		const selectedUsers = (function () {
+			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
+			userRoleGr.addQuery('role.name', 'x_424426_devops.admin');
+			userRoleGr.addJoinQuery('sys_user_has_role', 'user', 'user')
+				.addCondition('role.name', 'security_admin');
+			userRoleGr.query();
+
+			const devOpsUsers = [];
+			while (userRoleGr.next()) {
+				const label = userRoleGr.getDisplayValue('user');
+				if (label) {
+					devOpsUsers.push({
+						value: userRoleGr.getValue('user'),
+						label: label
+					});
+				}
+			}
+			
+			return devOpsUsers;
+		})();
+		
+		const availableUsers = (function (selectedUsers) {
+			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
+			userRoleGr.addQuery('role.name', 'security_admin');
+			userRoleGr.addQuery('user', 'NOT IN', selectedUsers.map(u => u.value));
+			userRoleGr.query();
+
+			const adminUsers = [];
+			while (userRoleGr.next()) {
+				const label = userRoleGr.getDisplayValue('user')
+				if (label) {
+					adminUsers.push({
+						value: userRoleGr.getValue('user'),
+						label: label
+					});
+				}
+			}
+			
+			return adminUsers;
+		})(selectedUsers);
+	</g2:evaluate>
+	<script>
+		var x_424426_devops_users = { 
+			selected: JSON.parse('$[JS:JSON.stringify(selectedUsers)]'),
+			available: JSON.parse('$[JS:JSON.stringify(availableUsers)]') 
+		};
+	</script>
+	<h4 style="padding: 10px 15px 0px; font-weight: bold;">Select users who should be assigned to the 'DevOps+ Admin' role</h4><br></br>
+	<div style="display: inline-block;min-width: 500px;">
+		<g:ui_form>
+			<input name="selected_devops_users" type="hidden" />
+			<g:ui_slushbucket name="devops_users" left_header="Available Users:" right_header="Selected User(s):" up_down="true" />
+			<div style="margin-left: auto; display: flex; justify-content: center; position: relative; left: -30px; padding: 7px;">
+				<button type="button" id="cancel_button" onclick="return refreshPage()" title="" style="min-width: 5em;" class="btn btn-default" data-original-title="">Reset</button>
+				<span style="width: 4px;"> </span>
+				<button type="submit" onclick="return devopsSubmit()" id="ok_button" title="" style="min-width: 5em; padding: 2px;" class="btn btn-primary" data-original-title="">Save</button>
+			</div>
+		</g:ui_form>
+	</div>
+</j:jelly>]]></html>
+        <name>admins</name>
+        <processing_script><![CDATA[/* global request, response */
+/* global sn_ws, gs */
+/* global GlideRecord, GlideDateTime */
+/* eslint no-undef: "error" */
+(function (request, response) {
+	// request [GlideServletRequest]
+	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletRequestScopedAPI
+	
+	// response [GlideServletResponse]
+	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletResponseScopedAPI
+	
+	// this
+	// [represents the values from the <g:ui_form>]
+	if (this.selected_devops_users) {		
+		const userRoleGr = new GlideRecord('sys_user_has_role');
+		userRoleGr.addQuery('user', 'IN', this.selected_devops_users);
+		userRoleGr.addQuery('role.name', 'x_424426_devops.developer');
+		userRoleGr.query();
+		
+		const assigned = [];
+		while (userRoleGr.next()) {
+			assigned.push(userRoleGr.getValue('user'));
+		}
+		
+		const devopsAdminRoleGr = new GlideRecord('sys_user_role');
+		devopsAdminRoleGr.addQuery('name', 'x_424426_devops.admin');
+		devopsAdminRoleGr.setLimit(1);
+		devopsAdminRoleGr.query();
+		if (devopsAdminRoleGr.next()) {
+			const unassigned = this.selected_devops_users.split(',').filter(x => !assigned.includes(x));
+			unassigned.forEach(function (x) {
+				const userRoleGr = new GlideRecord('sys_user_has_role');
+				userRoleGr.addQuery('role.name', 'admin');
+				userRoleGr.addQuery('user', x);
+				userRoleGr.setLimit(1);
+				userRoleGr.query();
+				if (userRoleGr.hasNext()) {
+					userRoleGr.newRecord();
+					userRoleGr.role.setDisplayValue('x_424426_devops.admin');
+					userRoleGr.user = x;
+					const sysID = userRoleGr.insert();
+					if (!sysID) {
+						gs.addErrorMessage(
+							gs.getMessage('devops_admin_assignment_failed_insert', userRoleGr.getDisplayValue('user'))
+						);
+					}
+				} else {
+					gs.addErrorMessage(
+						gs.getMessage('devops_admin_assignment_failed_no_admin', userRoleGr.getDisplayValue('user'))
+					);
+				}
+			});
+		} else {
+			gs.addErrorMessage(gs.getMessage('devops_admin_role_missing'));
+		}
+	}	
+	
+	response.sendRedirect('x_424426_devops_admins.do');
+	
+}).call(this, request, response);]]></processing_script>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-09 20:57:44</sys_created_on>
+        <sys_id>00f483c2971f2110d70ef207f053af24</sys_id>
+        <sys_mod_count>28</sys_mod_count>
+        <sys_name>admins</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_00f483c2971f2110d70ef207f053af24</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-10 08:25:05</sys_updated_on>
+    </sys_ui_page>
+</record_update>

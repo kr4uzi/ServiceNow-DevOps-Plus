@@ -53,5 +53,24 @@
             <sys_updated_on>2023-06-06 19:44:11</sys_updated_on>
             <value>field</value>
         </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>type</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Breadcrumb</label>
+            <language>en</language>
+            <name>x_424426_devops_context_menu_item</name>
+            <sequence>300</sequence>
+            <synonyms/>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2023-06-09 07:03:02</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>2</sys_mod_count>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2023-06-09 07:03:08</sys_updated_on>
+            <value>breadcrumb</value>
+        </sys_choice>
     </sys_choice>
 </record_update>

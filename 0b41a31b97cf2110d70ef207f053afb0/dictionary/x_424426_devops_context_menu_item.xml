@@ -8,6 +8,7 @@
             <choice>
                 <element inactive_on_update="false" label="Header" sequence="100" value="header"/>
                 <element inactive_on_update="false" label="Field" sequence="200" value="field"/>
+                <element inactive_on_update="false" label="Breadcrumb" sequence="300" value="breadcrumb"/>
             </choice>
         </element>
     </element>
