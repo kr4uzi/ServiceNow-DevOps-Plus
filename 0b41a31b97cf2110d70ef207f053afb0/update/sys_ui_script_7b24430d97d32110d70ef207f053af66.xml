@@ -55,18 +55,31 @@ x_424426_devops.context_menu = (function() {
 			// is executed *after* the ootb handler (which initializes the gcm variable)
 			$window.setTimeout(function () {
 				if ($window.gcm && $window.document.getElementById($window.gcm.getID())) {
-					if ($config.fieldItems.length) {
-						var devopsMenu = new $window.GwtContextMenu('devops_field_menu');
-						devopsMenu.clear();
+					var itemsAdded = 0;
+					var devopsMenu = new $window.GwtContextMenu('devops_field_menu');
+					devopsMenu.clear();
 
-						var sncVariableWorkaround = '{FIELD}';
-						$config.fieldItems.forEach(function (item) {
-							devopsMenu.addHref(
-								item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
-								item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
-							);
-						});
+					var sncVariableWorkaround = '{FIELD}';
+					$config.fieldItems.forEach(function (item) {
+						var conditionScript = item.condition_script;
+						if (conditionScript) {
+							conditionScript = conditionScript
+								.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
+							;
 
+							if ($window.eval(conditionScript) != true) {
+								return;
+							}
+						}
+
+						itemsAdded++;
+						devopsMenu.addHref(
+							item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
+							item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
+						);
+					});
+
+					if (itemsAdded) {
 						$window.gcm.addLine();
 						$window.gcm.addMenu('DevOps+', devopsMenu);
 					}
@@ -94,23 +107,37 @@ x_424426_devops.context_menu = (function() {
 				var filter = getFilter(element);
 				$window.setTimeout(function () {
 					if (bcm && $window.document.getElementById(bcm.getID())) {
-						if ($config.breadcrumbItems.length) {
-							var devopsMenu = new $window.GwtContextMenu('devops_breadcrumbs_menu');
-							devopsMenu.clear();
+						var itemsAdded = 0;
+						var devopsMenu = new $window.GwtContextMenu('devops_breadcrumbs_menu');
+						devopsMenu.clear();
 
-							var sncVariableWorkaround1 = '{LISTID}';
-							var sncVariableWorkaround2 = '{FILTER}';
-							$config.breadcrumbItems.forEach(function (item) {
-								devopsMenu.addHref(
-									item.label
-										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
-									item.script
-										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
-								);
-							});
+						var sncVariableWorkaround1 = '{LISTID}';
+						var sncVariableWorkaround2 = '{FILTER}';
+						$config.breadcrumbItems.forEach(function (item) {
+							var conditionScript = item.condition_script;
+							if (conditionScript) {
+								conditionScript = conditionScript
+									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
+								;
+								
+								if ($window.eval(conditionScript) != true) {
+									return;
+								}
+							}
 
+							itemsAdded++;
+							devopsMenu.addHref(
+								item.label
+									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
+								item.script
+									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
+							);
+						});
+
+						if (itemsAdded) {
 							bcm.addLine();
 							bcm.addMenu('DevOps+', devopsMenu);
 						}
@@ -150,12 +177,20 @@ x_424426_devops.context_menu = (function() {
 				return;
 			}
 			
-			if ($config.headerItems.length) {
-				var devopsMenu = new $window.GwtContextMenu('devops_header_menu');
-				$config.headerItems.forEach(function (item) {
-					devopsMenu.addHref(item.label, item.script);
-				});
+			var itemsAdded = 0;
+			var devopsMenu = new $window.GwtContextMenu('devops_header_menu');
+			$config.headerItems.forEach(function (item) {
+				var conditionScript = item.condition_script;
+				if (conditionScript) {
+					if ($window.eval(conditionScript) != true) {
+						return;
+					}
+				}
 
+				devopsMenu.addHref(item.label, item.script);
+			});
+
+			if (itemsAdded) {
 				headerMenu.addLine();
 				headerMenu.addMenu('DevOps+', devopsMenu);
 			}
@@ -168,14 +203,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>43</sys_mod_count>
+        <sys_mod_count>51</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-10 12:25:28</sys_updated_on>
+        <sys_updated_on>2023-06-12 21:25:40</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[(function () {
+	
+	var table = '';
+	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
+	if (typeElement) {
+		var type = typeElement.getAttribute('type');
+		if (type == 'translated_html') {
+			table = 'sys_translated_text';
+		} else if (type == 'translated_text') {
+			table = 'sys_translated_text';
+		}
+	}
+	
+	if (table) {
+		var gmf = new GlideModalForm('Translations for \'${FIELD}\'', table + '_list', function () {
+			
+		}, false);
+		gmf.addParm('sysparm_query', 'documentkey=' + g_form.getUniqueValue());
+		gmf.render();
+	}
+	
+})();]]></client_script>
+        <condition_script><![CDATA[(function () {
+	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
+	if (typeElement) {
+		var type = typeElement.getAttribute('type');
+		if (type == 'translated_html') {
+			return true;
+		} else if (type == 'translated_text') {
+			return true;
+		}
+	}
+
+	return false;
+})();]]></condition_script>
+        <label>translations</label>
+        <order>500</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-12 20:41:35</sys_created_on>
+        <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_name>translations</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-12 21:24:21</sys_updated_on>
+        <type>field</type>
+        <use_condition>true</use_condition>
+    </x_424426_devops_context_menu_item>
+</record_update>
