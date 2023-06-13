@@ -6,7 +6,7 @@
 }
 
 function devopsSubmit() {
-	var form = window.document.forms['form.00f483c2971f2110d70ef207f053af24'];
+	var form = window.document.forms['form.71f2eb5b97d72110d70ef207f053af97'];
 	form.elements['selected_devops_users'].value = devops_users.getValues(devops_users.getRightSelect());
 	return true;
 }
@@ -23,15 +23,15 @@ addLoadEvent(function(){
 	});
 });
 ]]></client_script>
-        <description>UI Page to administrate 'DevOps+' admin role</description>
+        <description>UI Page to administrate 'DevOps+' user role</description>
         <direct>false</direct>
-        <endpoint>x_424426_devops_admins.do</endpoint>
+        <endpoint>x_424426_devops_users.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
 	<g2:evaluate>
 		const selectedUsers = (function () {
 			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
-			userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+			userRoleGr.addQuery('role.name', 'x_424426_devops.devops_user');
 			userRoleGr.addQuery('inherited', false);
 			userRoleGr.query();
 
@@ -88,7 +88,7 @@ addLoadEvent(function(){
 		</g:ui_form>
 	</div>
 </j:jelly>]]></html>
-        <name>admins</name>
+        <name>users</name>
         <processing_script><![CDATA[/* global request, response */
 /* global gs, global */
 /* global GlideRecordSecure */
@@ -103,18 +103,18 @@ addLoadEvent(function(){
 	// this
 	// [represents the values from the <g:ui_form>]
 	if (this.selected_devops_users) {
-		cleanupDevOpsAdmins(this.selected_devops_users);
+		cleanupDevOpsUsers(this.selected_devops_users);
 		
-		const eligibleAdmins = getEligibleAdmins();
-		const devopsAdmins = getDevOpAdmins();
+		const eligibleUsers = getEligibleUsers();
+		const devopsUsers = getDevOpUsers();
 			
 		const unassigned = this.selected_devops_users.split(',')
-			.filter(x => !devopsAdmins.includes(x))
-			.filter(x => eligibleAdmins.includes(x));
+			.filter(x => !devopsUsers.includes(x))
+			.filter(x => eligibleUsers.includes(x));
 		unassigned.forEach(function (x) {
 			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 			userRoleGr.newRecord();
-			userRoleGr.role.setDisplayValue('x_424426_devops.devops_admin');
+			userRoleGr.role.setDisplayValue('x_424426_devops.devops_user');
 			userRoleGr.user = x;
 			const sysID = userRoleGr.insert();
 			if (!sysID) {
@@ -125,12 +125,12 @@ addLoadEvent(function(){
 		});
 	}	
 	
-	response.sendRedirect('x_424426_devops_admins.do');
+	response.sendRedirect('x_424426_devops_users.do');
 
-	function cleanupDevOpsAdmins(allowedUserSysIDs) {
+	function cleanupDevOpsUsers(allowedUserSysIDs) {
 		const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 		userRoleGr.addQuery('user', 'NOT IN', allowedUserSysIDs);
-		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_user');
 		userRoleGr.addQuery('inherited', false);
 		userRoleGr.query();
 		
@@ -141,7 +141,7 @@ addLoadEvent(function(){
 		}
 	}
 
-	function getEligibleAdmins() {
+	function getEligibleUsers() {
 		const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 		userRoleGr.addQuery('user', 'IN', this.selected_devops_users);
 		userRoleGr.addQuery('role.name', 'admin');
@@ -155,10 +155,10 @@ addLoadEvent(function(){
 		return assigned;
 	}
 
-	function getDevOpAdmins() {
+	function getDevOpUsers() {
 		const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 		userRoleGr.addQuery('user', 'IN', this.selected_devops_users);
-		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_user');
 		userRoleGr.addQuery('inherited', false);
 		userRoleGr.query();
 		
@@ -173,15 +173,15 @@ addLoadEvent(function(){
 }).call(this, request, response);]]></processing_script>
         <sys_class_name>sys_ui_page</sys_class_name>
         <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-09 20:57:44</sys_created_on>
-        <sys_id>00f483c2971f2110d70ef207f053af24</sys_id>
-        <sys_mod_count>37</sys_mod_count>
-        <sys_name>admins</sys_name>
+        <sys_created_on>2023-06-13 20:21:19</sys_created_on>
+        <sys_id>71f2eb5b97d72110d70ef207f053af97</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>users</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name>sys_ui_page_00f483c2971f2110d70ef207f053af24</sys_update_name>
+        <sys_update_name>sys_ui_page_71f2eb5b97d72110d70ef207f053af97</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-13 20:17:31</sys_updated_on>
+        <sys_updated_on>2023-06-13 20:23:38</sys_updated_on>
     </sys_ui_page>
 </record_update>

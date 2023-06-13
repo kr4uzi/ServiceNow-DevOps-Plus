@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_user_role_contains">
     <sys_user_role_contains action="INSERT_OR_UPDATE">
-        <contains display_value="x_424426_devops.user" name="x_424426_devops.user">ada2cbc997d32110d70ef207f053af7f</contains>
-        <role display_value="x_424426_devops.admin" name="x_424426_devops.admin">b2f999d697576110d70ef207f053af52</role>
+        <contains display_value="x_424426_devops.devops_user" name="x_424426_devops.devops_user">ada2cbc997d32110d70ef207f053af7f</contains>
+        <role display_value="x_424426_devops.devops_admin" name="x_424426_devops.devops_admin">b2f999d697576110d70ef207f053af52</role>
         <sys_class_name>sys_user_role_contains</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-10 08:25:52</sys_created_on>
