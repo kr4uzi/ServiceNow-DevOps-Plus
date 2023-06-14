@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege">
+    <sys_scope_privilege action="DELETE">
+        <operation>create</operation>
+        <source_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</source_scope>
+        <status>allowed</status>
+        <sys_class_name>sys_scope_privilege</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 09:52:00</sys_created_on>
+        <sys_id>4d8cde2b97d36110d70ef207f053af6a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_user_preference</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_scope_privilege_4d8cde2b97d36110d70ef207f053af6a</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 09:52:00</sys_updated_on>
+        <target_name>sys_user_preference</target_name>
+        <target_scope display_value="Global">global</target_scope>
+        <target_type>sys_db_object</target_type>
+    </sys_scope_privilege>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_scope_privilege_4d8cde2b97d36110d70ef207f053af6a</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege"><sys_scope_privilege action="INSERT_OR_UPDATE"><operation>create</operation><source_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</source_scope><status>allowed</status><sys_class_name>sys_scope_privilege</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2023-06-14 09:52:00</sys_created_on><sys_id>4d8cde2b97d36110d70ef207f053af6a</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sys_user_preference</sys_name><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_scope_privilege_4d8cde2b97d36110d70ef207f053af6a</sys_update_name><sys_updated_by>admin</sys_updated_by><sys_updated_on>2023-06-14 09:52:00</sys_updated_on><target_name>sys_user_preference</target_name><target_scope display_value="Global">global</target_scope><target_type>sys_db_object</target_type></sys_scope_privilege></record_update>]]></payload>
+        <payload_hash>1304412939</payload_hash>
+        <record_name>sys_user_preference</record_name>
+        <reverted_from/>
+        <source>3b07afcd97572110d70ef207f053af20</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 09:52:00</sys_created_on>
+        <sys_id>898cde2b97d36110d70ef207f053af6c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>188b951b6d70000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 09:52:00</sys_updated_on>
+        <type>Cross scope privilege</type>
+        <update_guid>cd8cde2bf2d36110f3958356b6eb5e6b</update_guid>
+        <update_guid_history>cd8cde2bf2d36110f3958356b6eb5e6b:1304412939</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 18:10:27</sys_created_on>
+        <sys_db_object display_value="" name="sys_scope_privilege">sys_scope_privilege</sys_db_object>
+        <sys_id>b16037f2ee9548948391557393f0ac01</sys_id>
+        <sys_metadata>4d8cde2b97d36110d70ef207f053af6a</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_user_preference</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_scope_privilege_4d8cde2b97d36110d70ef207f053af6a</sys_update_name>
+        <sys_update_version display_value="sys_scope_privilege_4d8cde2b97d36110d70ef207f053af6a">898cde2b97d36110d70ef207f053af6c</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 18:10:27</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

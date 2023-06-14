@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.UserManagement</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>UserManagement</name>
+        <script><![CDATA[var UserManagement = Class.create();
+UserManagement.prototype = {
+    initialize: function() {
+    },
+
+	assignAdmins: function () {
+		const userPrefGr = new GlideRecord('sys_user_preference');
+		userPrefGr.addQuery('name', 'x_424426_devops_make_me_admin');
+		userPrefGr.addQuery('user.roles', 'admin');
+		userPrefGr.query();
+		
+		const adminUsers = [];
+		while (userPrefGr.next()) {
+			adminUsers.push(userPrefGr.getValue('user'));
+		}
+		
+		const userRoleGr = new GlideRecord('sys_user_has_role');
+		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+		userRoleGr.query();
+		
+		const existingAdmins = [];
+		while (userRoleGr.next()) {
+			existingAdmins.push(userRoleGr.getValue('user'));
+		}
+		
+		const newAdmins = adminUsers.filter(x => !existingAdmins.includes(x));
+		newAdmins.forEach(userSysID => {
+			const userRoleGr = new GlideRecord('sys_user_has_role');
+			userRoleGr.newRecord();
+			userRoleGr.user = userSysID;
+			userRoleGr.role.setDisplayValue('x_424426_devops.devops_admin');
+			userRoleGr.insert();
+		});
+	},
+	
+    type: 'UserManagement'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 06:21:02</sys_created_on>
+        <sys_id>f22ca1a797136110d70ef207f053afc1</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>UserManagement</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_f22ca1a797136110d70ef207f053afc1</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 09:36:54</sys_updated_on>
+    </sys_script_include>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_script_include_f22ca1a797136110d70ef207f053afc1</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_424426_devops.UserManagement&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description/&gt;&lt;name&gt;UserManagement&lt;/name&gt;&lt;script&gt;&lt;![CDATA[var UserManagement = Class.create();
+UserManagement.prototype = {
+    initialize: function() {
+    },
+
+	assignAdmins: function () {
+		const userPrefGr = new GlideRecord('sys_user_preference');
+		userPrefGr.addQuery('name', 'x_424426_devops_make_me_admin');
+		userPrefGr.addQuery('user.roles', 'admin');
+		userPrefGr.query();
+		
+		const adminUsers = [];
+		while (userPrefGr.next()) {
+			adminUsers.push(userPrefGr.getValue('user'));
+		}
+		
+		const userRoleGr = new GlideRecord('sys_user_has_role');
+		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+		userRoleGr.query();
+		
+		const existingAdmins = [];
+		while (userRoleGr.next()) {
+			existingAdmins.push(userRoleGr.getValue('user'));
+		}
+		
+		const newAdmins = adminUsers.filter(x =&gt; !existingAdmins.includes(x));
+		newAdmins.forEach(userSysID =&gt; {
+			const userRoleGr = new GlideRecord('sys_user_has_role');
+			userRoleGr.newRecord();
+			userRoleGr.user = userSysID;
+			userRoleGr.role.setDisplayValue('x_424426_devops.devops_admin');
+			userRoleGr.insert();
+		});
+	},
+	
+    type: 'UserManagement'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2023-06-14 06:21:02&lt;/sys_created_on&gt;&lt;sys_id&gt;f22ca1a797136110d70ef207f053afc1&lt;/sys_id&gt;&lt;sys_mod_count&gt;2&lt;/sys_mod_count&gt;&lt;sys_name&gt;UserManagement&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy&gt;read&lt;/sys_policy&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_f22ca1a797136110d70ef207f053afc1&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2023-06-14 09:36:54&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-390281460</payload_hash>
+        <record_name>UserManagement</record_name>
+        <reverted_from/>
+        <source>3b07afcd97572110d70ef207f053af20</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 09:36:54</sys_created_on>
+        <sys_id>ff091a6397d36110d70ef207f053af38</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>188b943e6450000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 09:36:54</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>77091a6358d36110e8309b05a3eb9538</update_guid>
+        <update_guid_history>77091a6358d36110e8309b05a3eb9538:-390281460,a56aceebb653611077c98e00c40947b6:-323121890,b63c2967d6136110307658361ad9fbf1:92578370</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 18:10:01</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>0075e256a8164ac4800de15a8168cf10</sys_id>
+        <sys_metadata>f22ca1a797136110d70ef207f053afc1</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>UserManagement</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_f22ca1a797136110d70ef207f053afc1</sys_update_name>
+        <sys_update_version display_value="sys_script_include_f22ca1a797136110d70ef207f053afc1">ff091a6397d36110d70ef207f053af38</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 18:10:01</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
