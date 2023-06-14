@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.UserManagement</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>UserManagement</name>
+        <script><![CDATA[var UserManagement = Class.create();
+UserManagement.prototype = {
+    initialize: function() {
+    },
+
+	assignAdmins: function () {
+		const userPrefGr = new GlideRecord('sys_user_preference');
+		userPrefGr.addQuery('name', 'x_424426_devops_make_me_admin');
+		userPrefGr.addQuery('user.roles', 'admin');
+		userPrefGr.query();
+		
+		const adminUsers = [];
+		while (userPrefGr.next()) {
+			adminUsers.push(userPrefGr.getValue('user'));
+		}
+		
+		const userRoleGr = new GlideRecord('sys_user_has_role');
+		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_admin');
+		userRoleGr.query();
+		
+		const existingAdmins = [];
+		while (userRoleGr.next()) {
+			existingAdmins.push(userRoleGr.getValue('user'));
+		}
+		
+		const newAdmins = adminUsers.filter(x => !existingAdmins.includes(x));
+		newAdmins.forEach(userSysID => {
+			const userRoleGr = new GlideRecord('sys_user_has_role');
+			userRoleGr.newRecord();
+			userRoleGr.user = userSysID;
+			userRoleGr.role.setDisplayValue('x_424426_devops.devops_admin');
+			userRoleGr.insert();
+		});
+	},
+	
+    type: 'UserManagement'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-14 06:21:02</sys_created_on>
+        <sys_id>f22ca1a797136110d70ef207f053afc1</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>UserManagement</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_f22ca1a797136110d70ef207f053afc1</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-14 09:36:54</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -2,17 +2,17 @@
     <sys_security_acl_role action="INSERT_OR_UPDATE">
         <sys_class_name>sys_security_acl_role</sys_class_name>
         <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-06 19:08:46</sys_created_on>
-        <sys_id>ea3fc70997172110d70ef207f053afb6</sys_id>
-        <sys_mod_count>3</sys_mod_count>
-        <sys_name>x_424426_devops_context_menu_item.x_424426_devops.devops_admin</sys_name>
+        <sys_created_on>2023-06-14 09:41:57</sys_created_on>
+        <sys_id>4e2a16a797d36110d70ef207f053afc3</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops_admins.x_424426_devops.devops_admin</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_security_acl display_value="x_424426_devops_context_menu_item">e23fc70997172110d70ef207f053afb3</sys_security_acl>
-        <sys_update_name>sys_security_acl_role_ea3fc70997172110d70ef207f053afb6</sys_update_name>
+        <sys_security_acl display_value="x_424426_devops_admins">76ab8f8a971f2110d70ef207f053af5f</sys_security_acl>
+        <sys_update_name>sys_security_acl_role_4e2a16a797d36110d70ef207f053afc3</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-14 09:38:46</sys_updated_on>
+        <sys_updated_on>2023-06-14 09:41:57</sys_updated_on>
         <sys_user_role display_value="x_424426_devops.devops_admin" name="x_424426_devops.devops_admin">b2f999d697576110d70ef207f053af52</sys_user_role>
         <transaction_id/>
     </sys_security_acl_role>
