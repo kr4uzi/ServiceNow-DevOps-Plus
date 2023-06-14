@@ -5,7 +5,7 @@
         <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_user">
     <sys_user action="INSERT_OR_UPDATE">
         <accumulated_roles/>
-        <active>true</active>
+        <active>false</active>
         <avatar/>
         <building/>
         <calendar_integration>1</calendar_integration>
@@ -55,9 +55,9 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>c3fed1e797df2110d70ef207f053afb6</sys_id>
-        <sys_mod_count>1</sys_mod_count>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-14 05:25:10</sys_updated_on>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_updated_by>fred.luddy</sys_updated_by>
+        <sys_updated_on>2023-06-14 06:11:51</sys_updated_on>
         <time_format/>
         <time_zone/>
         <title/>
@@ -73,14 +73,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-14 06:00:47</sys_created_on>
         <sys_id>0a97612397136110d70ef207f053af44</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>DevOps+ User Admin</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_metadata_link_0a97612397136110d70ef207f053af44</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-14 06:00:47</sys_updated_on>
+        <sys_updated_on>2023-06-14 17:45:47</sys_updated_on>
         <tablename>sys_user</tablename>
     </sys_metadata_link>
 </record_update>
