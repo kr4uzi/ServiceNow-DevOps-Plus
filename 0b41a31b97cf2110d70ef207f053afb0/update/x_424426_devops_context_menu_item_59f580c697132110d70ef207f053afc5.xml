@@ -130,6 +130,7 @@
 		});
 	});	
 })();]]></client_script>
+        <condition_script/>
         <label>sys.scripts</label>
         <order>100</order>
         <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
@@ -145,5 +146,6 @@
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-10 12:07:19</sys_updated_on>
         <type>breadcrumb</type>
+        <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>
 </record_update>

@@ -13,7 +13,7 @@
         <sys_update_name>sys_security_acl_role_a9bdd6d597d32110d70ef207f053af19</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-07 10:10:53</sys_updated_on>
-        <sys_user_role display_value="x_424426_devops.developer" name="x_424426_devops.developer">ada2cbc997d32110d70ef207f053af7f</sys_user_role>
+        <sys_user_role display_value="x_424426_devops.devops_user" name="x_424426_devops.devops_user">ada2cbc997d32110d70ef207f053af7f</sys_user_role>
         <transaction_id/>
     </sys_security_acl_role>
 </record_update>

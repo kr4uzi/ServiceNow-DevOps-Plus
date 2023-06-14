@@ -6,6 +6,7 @@
 	window.open('nav_to.do?uri=' + g_form.getTableName() + '_list.do?sysparm_query=' + encodeURIComponent('${FIELD}=' + g_form.getValue('${FIELD}')));
 	
 })();]]></client_script>
+        <condition_script/>
         <label>filter (${FIELD})</label>
         <order>200</order>
         <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
@@ -21,5 +22,6 @@
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-07 10:33:10</sys_updated_on>
         <type>field</type>
+        <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>
 </record_update>
