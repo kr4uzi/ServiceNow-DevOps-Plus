@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_macro">
+    <sys_ui_macro action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <category>general</category>
+        <description/>
+        <media_type/>
+        <name>sys_translated_translate</name>
+        <scoped_name>x_424426_devops_sys_translated_translate</scoped_name>
+        <sys_class_name>sys_ui_macro</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-27 10:43:11</sys_created_on>
+        <sys_id>4ed16d7b97eb2110d70ef207f053afd3</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_translated_translate</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_macro_4ed16d7b97eb2110d70ef207f053afd3</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-27 10:43:11</sys_updated_on>
+        <xml><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script>
+		function devops_translateSysTranslated(element, reference) {
+			try {
+				var displayValue = g_form.getDisplayBox(reference).value;
+				var title = new GwtMessage().getMessage("Showing records related to: {0} ", displayValue);
+				var s = reference.split('.');
+				var referenceField = s[s.length - 1];
+				var query = referenceField + '=' + g_form.getValue(reference);
+
+				var gdw = new GlideModal('show_list');
+				gdw.setTitle(title);
+				gdw.setSize(750);
+				gdw.setPreference('focusTrap', true);
+				gdw.setPreference('table', 'incident_list');
+				gdw.setPreference('sysparm_query', query);
+				gdw.setPreference('title', 'A New Title');
+				gdw.render();
+			} catch (e) {
+				jslog('error showing related list');
+				jslog(e);
+			}
+		} 
+	</script>
+	<g:reference_decoration field="${ref}" onclick="devops_translateSysTranslated(this, '${ref}'); "
+  title="${gs.getMessage('devops_translate')}" image="images/icons/tasks.gifx" icon="icon-tree-right"/>
+	
+</j:jelly>]]></xml>
+    </sys_ui_macro>
+</record_update>

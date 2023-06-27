@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.TranslateUtilClient</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>TranslateUtilClient</name>
+        <script><![CDATA[/* global global, sn_fd, gs */
+/* global Class, GlideRecordSecure */
+/* eslint no-undef: "error" */
+var TranslateUtilClient = Class.create();
+TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	initialize: function () {
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	translate: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const message = this.getParameter('message');
+		const language = this.getParameter('language');
+		if (message && language) {
+			result.status = 'success';
+			
+			const translatedGr = new GlideRecordSecure('sys_translated');
+			translatedGr.addQuery('value', message);
+			translatedGr.setLimit(1);
+			translatedGr.query();
+			if (translatedGr.next()) {
+				result.translated_message = translatedGr.label.toString();
+				result.status = 'success';
+				return JSON.stringify(result);
+			}
+			
+			const uiMessageGr = new GlideRecordSecure('sys_ui_message');
+			uiMessageGr.addQuery('key', message);
+			uiMessageGr.setLimit(1);
+			uiMessageGr.query();
+			if (uiMessageGr.next()) {
+				result.translated_message = uiMessageGr.message.toString();
+				result.status = 'success';
+				return JSON.stringify(result);
+			}
+			
+			try {
+				const outputs = sn_fd.FlowAPI.getRunner()
+					.action('x_424426_devops.translate_deepl')
+					.inForeground()
+					.withInputs({ 
+						'language': language,
+						'message': message
+					})
+					.run()
+					.getOutputs();
+
+				if (outputs.text) {
+					result.status = 'success';
+					result.translated_message = outputs.text;
+				} else {
+					result.message = gs.getMessage('mpl_token_check_failed_scopes');
+				}
+			} catch (e) {
+				result.status = 'error';
+				result.message = e.toString();
+
+				if (gs.hasRole('admin') && e.stack) {
+					result.message += '\nStack: ' + e.stack;
+				}
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
+	getTranslatedTextMessage: function () {
+		const result = {
+			status: 'error',
+			message: gs.getMessage('devops_record_unauthorized_or_invalid_record')
+		};
+		
+		const translatedTextSysID = this.getParameter('sys_id');
+		if (translatedTextSysID) {
+			const translatedTextGr = new GlideRecordSecure('sys_translated_text');
+			translatedTextGr.addQuery('sys_id', translatedTextSysID);
+			translatedTextGr.setLimit(1);
+			translatedTextGr.query();
+			if (translatedTextGr.next()) {
+				const anyGr = translatedTextGr.documentkey.getRefRecord();
+				if (anyGr.isValidRecord()) {
+					const field = translatedTextGr.fieldname.toString();
+					if (field && anyGr.isValidField(field)) {
+						result.status = 'success';
+						result.message = anyGr[field].toString();
+					}
+				}
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
+    type: 'TranslateUtilClient'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-27 10:54:43</sys_created_on>
+        <sys_id>39672dbf97eb2110d70ef207f053af5f</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>TranslateUtilClient</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_39672dbf97eb2110d70ef207f053af5f</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-27 12:02:24</sys_updated_on>
+    </sys_script_include>
+</record_update>

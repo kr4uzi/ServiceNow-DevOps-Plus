@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.translate</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+
+x_424426_devops.translate = (function() {
+	"use strict";
+	
+	x_424426_devops.loader.get('window', function ($window) {
+		$window.addLoadEvent(function () {
+			var g_form = $window.g_form;
+			var tableName = g_form.getTableName();
+			if (tableName == 'sys_translated') {
+				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+					if (fieldName == 'sys_translated.language') {
+						translate(g_form, g_form.getValue('value'), newValue, 'label');
+					}
+				});
+			} else if (tableName == 'sys_translated_text') {
+				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+					if (fieldName == 'sys_translated_text.language') {
+						// Note: This API is deprecated but we still use it because this way we do not create Cross Scope Access records!
+						var anyGr = new $window.GlideRecord(g_form.getValue('tablename'));
+						anyGr.addQuery('sys_id', g_form.getValue('documentkey'));
+						anyGr.setLimit(1);
+						anyGr.query(function (result) {
+							if (result.next()) {
+								var message = result[g_form.getValue('fieldname')];
+								translate(g_form, message, newValue, 'value');
+							}
+						});
+					}
+				});
+			}
+		});
+	});
+	
+	function translate(g_form, message, language, targetField) {
+		var ga = new GlideAjax('x_424426_devops.TranslateUtilClient');
+		ga.addParam('sysparm_name', 'translate');
+		ga.addParam('message', message);
+		ga.addParam('language', language);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				g_form.setValue(targetField, result.translated_message);
+			} else if (result.message) {
+				jslog(result.message, 'x_424426_devops.translate');
+			}
+		});
+	}
+
+	return {
+		type: 'translate'
+	};
+})();
+]]></script>
+        <script_name>translate</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-27 11:20:27</sys_created_on>
+        <sys_id>c67a25f3972f2110d70ef207f053af92</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>x_424426_devops.translate</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_c67a25f3972f2110d70ef207f053af92</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-27 12:19:17</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

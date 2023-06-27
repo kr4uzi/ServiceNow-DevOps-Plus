@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sn_codesearch_table">
+    <sn_codesearch_table action="INSERT_OR_UPDATE">
+        <additional_filter/>
+        <search_fields>question_text,dynamic_default_value,dynamic_ref_qual,	reference_qual_condition,attributes,default_html_value,record,reference_qual,lookup_label,type,macro,write_roles,name,choice_table,field,layout,table,choice_direction,default_value,record_producer_table,summary_macro,lookup_price,ui_page,create_roles,read_roles,reference,help_tag,list_table,tooltip,lookup_value,variable_name,choice_field,example_text,lookup_table,	map_to_field,rec_lookup_price,help_text,dynamic_value_dot_walk_path,dynamic_value_field,instructions,rich_text,published_ref,roles_to_use_also_request_for,sp_widget,description,variable_width,macroponent,validate_regex,delivery_plan,read_script,visibility,category,post_insert_script,save_script,variable_set,cat_item,workflow</search_fields>
+        <search_group display_value="x_424426_devops.DevOps+ Code Search">91fe125997d32110d70ef207f053af45</search_group>
+        <sys_class_name>sn_codesearch_table</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-25 11:44:01</sys_created_on>
+        <sys_id>4daf93c797236510d70ef207f053af40</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>wf_variable</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sn_codesearch_table_4daf93c797236510d70ef207f053af40</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-06-25 11:44:01</sys_updated_on>
+        <table>wf_variable</table>
+    </sn_codesearch_table>
+</record_update>
