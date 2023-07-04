@@ -14,17 +14,28 @@ x_424426_devops.config = (function() {
 		return x_424426_devops.config;
 	}
 	
-	x_424426_devops.loader.get('window', function ($window) {
-		var ga = new $window.GlideAjax('ContextMenuClient').setScope('x_424426_devops');
-		ga.addParam('sysparm_name', 'getConfig');
-		ga.getXMLAnswer(function (result) {
-			result = JSON.parse(result);
-			if (result.status == 'success') {
-				delete result.status;
-				x_424426_devops.loader.set('config', result);
-			}
-		});
+	var $window, g_user;
+	x_424426_devops.loader.get('window', function (_window) {
+		loadConfig($window = _window, g_user);
 	});
+	
+	x_424426_devops.loader.get('g_user', function (_g_user) {
+		loadConfig($window, g_user = _g_user);
+	});
+	
+	function loadConfig($window, g_user) {
+		if ($window && g_user && g_user.hasRoleExactly('x_424426_devops.devops_user')) {
+			var ga = new $window.GlideAjax('ContextMenuClient').setScope('x_424426_devops');
+			ga.addParam('sysparm_name', 'getConfig');
+			ga.getXMLAnswer(function (result) {
+				result = JSON.parse(result);
+				if (result.status == 'success') {
+					delete result.status;
+					x_424426_devops.loader.set('config', result);
+				}
+			});
+		}
+	}
 
 	return {
 		type: 'config'
@@ -36,14 +47,14 @@ x_424426_devops.config = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:32:50</sys_created_on>
         <sys_id>03e6834997d32110d70ef207f053af59</sys_id>
-        <sys_mod_count>4</sys_mod_count>
+        <sys_mod_count>5</sys_mod_count>
         <sys_name>x_424426_devops.config</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_03e6834997d32110d70ef207f053af59</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-10 09:29:39</sys_updated_on>
+        <sys_updated_on>2023-07-03 19:47:47</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
