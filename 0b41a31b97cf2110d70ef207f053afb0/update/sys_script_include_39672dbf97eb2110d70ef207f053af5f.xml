@@ -29,6 +29,7 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 			
 			const translatedGr = new GlideRecordSecure('sys_translated');
 			translatedGr.addQuery('value', message);
+			translatedGr.addQuery('language', language);
 			translatedGr.setLimit(1);
 			translatedGr.query();
 			if (translatedGr.next()) {
@@ -39,6 +40,7 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 			
 			const uiMessageGr = new GlideRecordSecure('sys_ui_message');
 			uiMessageGr.addQuery('key', message);
+			uiMessageGr.addQuery('language', language);
 			uiMessageGr.setLimit(1);
 			uiMessageGr.query();
 			if (uiMessageGr.next()) {
@@ -114,13 +116,13 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 10:54:43</sys_created_on>
         <sys_id>39672dbf97eb2110d70ef207f053af5f</sys_id>
-        <sys_mod_count>3</sys_mod_count>
+        <sys_mod_count>4</sys_mod_count>
         <sys_name>TranslateUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_39672dbf97eb2110d70ef207f053af5f</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 12:02:24</sys_updated_on>
+        <sys_updated_on>2023-07-06 15:56:45</sys_updated_on>
     </sys_script_include>
 </record_update>
