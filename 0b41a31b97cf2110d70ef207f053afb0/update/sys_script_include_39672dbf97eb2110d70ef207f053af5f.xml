@@ -110,19 +110,55 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 		return JSON.stringify(result);
 	},
 	
+	getCatalogFieldData: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+
+		const fieldSysID = this.getParameter('field');
+		if (fieldSysID) {
+			const itemOptionGr = new GlideRecordSecure('item_option_new');
+			itemOptionGr.addQuery('sys_id', fieldSysID);
+			itemOptionGr.setLimit(1);
+			itemOptionGr.query();
+			if (itemOptionGr.next()) {
+				result.table = 'sys_translated';
+				result.query = 'name=item_option_new^element=question_text^value=' + itemOptionGr.question_text;
+				result.status = 'success';
+			} else {
+				const variableSetGr = new GlideRecordSecure('item_option_new_set');
+				variableSetGr.addQuery('sys_id', fieldSysID);
+				variableSetGr.setLimit(1);
+				variableSetGr.query();
+				if (variableSetGr.next()) {
+					result.table = 'sys_translated';
+					result.query = 'name=item_option_new_set^element=title^value=' + variableSetGr.title;
+					result.status = 'success';
+				} else {
+					result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+				}
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
     type: 'TranslateUtilClient'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 10:54:43</sys_created_on>
         <sys_id>39672dbf97eb2110d70ef207f053af5f</sys_id>
-        <sys_mod_count>4</sys_mod_count>
+        <sys_mod_count>9</sys_mod_count>
         <sys_name>TranslateUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
-        <sys_policy>read</sys_policy>
+        <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_39672dbf97eb2110d70ef207f053af5f</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-06 15:56:45</sys_updated_on>
+        <sys_updated_on>2023-07-08 22:54:04</sys_updated_on>
     </sys_script_include>
 </record_update>

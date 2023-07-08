@@ -3,7 +3,12 @@
         <active>true</active>
         <client_script><![CDATA[(function () {
 	
-	window.open('nav_to.do?uri=' + g_form.getTableName() + '_list.do?sysparm_query=' + encodeURIComponent('${FIELD}=' + g_form.getValue('${FIELD}')));
+	if (g_form.getTableName() == 'ni') {
+		var variableSysID = g_form.getActualName('${FIELD}').split(':')[1];
+		window.open('nav_to.do?uri=sc_req_item_list.do?sysparm_query=' + encodeURIComponent('variables.' + variableSysID + '=' + g_form.getValue('${FIELD}')));
+	} else {
+		window.open('nav_to.do?uri=' + g_form.getTableName() + '_list.do?sysparm_query=' + encodeURIComponent('${FIELD}=' + g_form.getValue('${FIELD}')));
+	}
 	
 })();]]></client_script>
         <condition_script/>
@@ -13,14 +18,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:33:10</sys_created_on>
         <sys_id>7fc2a21d97d32110d70ef207f053afd5</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>filter</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_7fc2a21d97d32110d70ef207f053afd5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-03 13:59:48</sys_updated_on>
+        <sys_updated_on>2023-07-08 23:22:42</sys_updated_on>
         <type>field</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

@@ -6,12 +6,11 @@
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.translate</name>
         <script><![CDATA[var x_424426_devops = x_424426_devops || {};
-
 x_424426_devops.translate = (function() {
 	"use strict";
 	
 	x_424426_devops.loader.get('window', function ($window) {
-		$window.addLoadEvent(function () {
+		$window.addAfterPageLoadedEvent(function () {
 			var g_form = $window.g_form;
 			if (!g_form) {
 				// don't execute this UI Script on Lists
@@ -20,14 +19,19 @@ x_424426_devops.translate = (function() {
 			
 			var tableName = g_form.getTableName();
 			if (tableName == 'sys_translated') {
+				g_form.getControl('language').focus();
 				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
 					if (fieldName == 'sys_translated.language') {
+						g_form.addDecoration('label', 'icon-refreshing');
 						translate(g_form, g_form.getValue('value'), newValue, 'label');
 					}
 				});
 			} else if (tableName == 'sys_translated_text') {
+				g_form.getControl('language').focus();
 				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
 					if (fieldName == 'sys_translated_text.language') {
+						g_form.addDecoration('value', 'icon-refreshing');
+						
 						// Note: This API is deprecated but we still use it because this way we do not create Cross Scope Access records!
 						var anyGr = new $window.GlideRecord(g_form.getValue('tablename'));
 						anyGr.addQuery('sys_id', g_form.getValue('documentkey'));
@@ -56,6 +60,8 @@ x_424426_devops.translate = (function() {
 			} else if (result.message) {
 				jslog(result.message, 'x_424426_devops.translate');
 			}
+			
+			g_form.removeDecoration(targetField, 'icon-refreshing');
 		});
 	}
 
@@ -69,14 +75,14 @@ x_424426_devops.translate = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 11:20:27</sys_created_on>
         <sys_id>c67a25f3972f2110d70ef207f053af92</sys_id>
-        <sys_mod_count>5</sys_mod_count>
+        <sys_mod_count>10</sys_mod_count>
         <sys_name>x_424426_devops.translate</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_c67a25f3972f2110d70ef207f053af92</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 12:28:38</sys_updated_on>
+        <sys_updated_on>2023-07-08 23:09:45</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>

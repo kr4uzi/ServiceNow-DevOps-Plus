@@ -2,12 +2,31 @@
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
         <client_script><![CDATA[(function () {
+	if (g_form.getTableName() == 'ni') {
+		var ga = new GlideAjax('x_424426_devops.TranslateUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getCatalogFieldData');
+		ga.addParam('field', g_form.getActualName('${FIELD}').split(':')[1]);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				var gmf = new GlideModalForm('Translations for \'${FIELD}\'', result.table + '_list', function () {
+					// on render callback
+				}, false);
+				gmf.addParm('sysparm_query', result.query);
+				gmf.render();
+			} else if (result.message) {
+				g_form.addErrorMessage(result.message);
+			}
+		});
+		
+		return;
+	}
 	
 	var table = '';
+	var query = '';
 	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
-		var query = '';
 		if (type == 'translated_html' || type == 'translated_text') {
 			table = 'sys_translated_text';
 			query = 'tablename=' + g_form.getTableName()
@@ -29,6 +48,10 @@
 	
 })();]]></client_script>
         <condition_script><![CDATA[(function () {
+	if (g_form.getTableName() == 'ni') {
+		return true;
+	}
+	
 	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
@@ -49,14 +72,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>23</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 10:26:12</sys_updated_on>
+        <sys_updated_on>2023-07-08 22:54:31</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
