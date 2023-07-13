@@ -3,25 +3,38 @@
         <active>true</active>
         <client_script><![CDATA[(function () {
 	
-	window.open('nav_to.do?uri=' + g_form.getTableName() + '_list.do?sysparm_query=' + encodeURIComponent('sys_id=' + g_form.getUniqueValue()));
+	var tableName = g_form.getTableName();
+	var gmf = new GlideModalForm('Filter: ' + tableName, tableName + '_list', function () {
+		// on render callback
+	}, false);
+	gmf.addParm('sysparm_query', 'sys_id=' + g_form.getUniqueValue());
+	gmf.render();
+	
+	//window.open('nav_to.do?uri=' + g_form.getTableName() + '_list.do?sysparm_query=' + encodeURIComponent('sys_id=' + g_form.getUniqueValue()));
 	
 })();]]></client_script>
-        <condition_script/>
+        <condition_script><![CDATA[(function () {
+	
+	// dont show on catalog item view
+	return g_form.getTableName() != 'ni';
+	
+})();]]></condition_script>
+        <item_type>link</item_type>
         <label>filter (sys_id)</label>
         <order>350</order>
         <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:32:18</sys_created_on>
         <sys_id>4f9266d997d32110d70ef207f053af60</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>filter (sys_id)</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_4f9266d997d32110d70ef207f053af60</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-07 18:05:57</sys_updated_on>
+        <sys_updated_on>2023-07-13 08:20:03</sys_updated_on>
         <type>header</type>
-        <use_condition>false</use_condition>
+        <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
 </record_update>

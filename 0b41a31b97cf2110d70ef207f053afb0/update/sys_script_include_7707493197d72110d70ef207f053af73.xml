@@ -25,13 +25,14 @@ MetadataUtil.prototype = {
 		// only display the 'Show Versions' UI Action if there current user is an admin ...
 		if (this.hasUserRole) {
 			// ... and if there the 'Versions' Related List isn't already on the current view
-			var view = action.getGlideURI().get('sysparm_view') || '';
-			var table = metadataGr.getRecordClassName();
+			const view = action.getGlideURI().get('sysparm_view') || '';
+			const table = metadataGr.getRecordClassName();
 			
-			var relatedListEntryGr = new GlideRecord('sys_ui_related_list_entry');
-			relatedListEntryGr.addQuery('related_list', 'REL:' + this.ootbVersionRelationshipSysID);
+			const relatedListEntryGr = new GlideRecord('sys_ui_related_list_entry');
 			relatedListEntryGr.addQuery('list_id.name', table);
-			relatedListEntryGr.addQuery('list_id.view.name', view);
+			// check for 'Versions' on the 'Default view' if there related lists aren't configured on the current view
+			relatedListEntryGr.addQuery('list_id.view.name', (view && hasRelatedListsConfigured(table, view)) ? view : '');
+			relatedListEntryGr.addQuery('related_list', 'REL:' + this.ootbVersionRelationshipSysID);
 			relatedListEntryGr.setLimit(1);
 			relatedListEntryGr.query();
 			if (!relatedListEntryGr.hasNext()) {
@@ -40,6 +41,15 @@ MetadataUtil.prototype = {
 		}
 		
 		return false;
+		
+		function hasRelatedListsConfigured(table, view) {
+			const relatedListEntryGr = new GlideRecord('sys_ui_related_list_entry');
+			relatedListEntryGr.addQuery('list_id.name', table);
+			relatedListEntryGr.addQuery('list_id.view.name', view);
+			relatedListEntryGr.setLimit(1);
+			relatedListEntryGr.query();
+			return relatedListEntryGr.hasNext();
+		}
 	},
 
     type: 'MetadataUtil'
@@ -48,13 +58,13 @@ MetadataUtil.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-08 17:15:16</sys_created_on>
         <sys_id>7707493197d72110d70ef207f053af73</sys_id>
-        <sys_mod_count>4</sys_mod_count>
+        <sys_mod_count>5</sys_mod_count>
         <sys_name>MetadataUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_7707493197d72110d70ef207f053af73</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-13 13:09:32</sys_updated_on>
+        <sys_updated_on>2023-07-09 08:25:53</sys_updated_on>
     </sys_script_include>
 </record_update>

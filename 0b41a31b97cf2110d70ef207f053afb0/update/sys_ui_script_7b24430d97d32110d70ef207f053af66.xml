@@ -73,12 +73,22 @@ x_424426_devops.context_menu = (function() {
 								return;
 							}
 						}
-
+						
+						if (item.item_type == '' || item.item_type == 'link') {
+							devopsMenu.addHref(
+								item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
+								item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
+							);	
+						} else if (item.item_type == 'menu') {
+							devopsMenu.addMenu(
+								item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
+								$window.eval(item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName))
+							);
+						} else {
+							return;
+						}
+						
 						itemsAdded++;
-						devopsMenu.addHref(
-							item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
-							item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
-						);
 					});
 
 					if (itemsAdded) {
@@ -127,16 +137,32 @@ x_424426_devops.context_menu = (function() {
 									return;
 								}
 							}
-
+							
+							if (item.item_type == '' || item.item_type == 'link') {
+								devopsMenu.addHref(
+									item.label
+										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
+									item.script
+										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
+								);
+							} else if (item.item_type == 'menu') {
+								devopsMenu.addMenu(
+									item.label
+										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
+									$window.eval(
+										item.script
+											.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
+											.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
+									)
+								);
+							} else {
+								return;
+							}
+							
 							itemsAdded++;
-							devopsMenu.addHref(
-								item.label
-									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
-								item.script
-									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
-							);
 						});
 
 						if (itemsAdded) {
@@ -158,13 +184,25 @@ x_424426_devops.context_menu = (function() {
 	}
 	
 	function injectHeaderMenu($window, $config) {
-		if ($window.gcmSection) {
-			addHeaderMenuItems($window, $config, $window.gcmSection);
+		var headerMenu = $window.gcmSection || $window.headerGCM;
+		if (headerMenu) {
+			addHeaderMenuItems($window, $config, headerMenu);
 		} else {
 			Object.defineProperty($window, 'gcmSection', {
 				configurable: true,
 				set: function (v) {
 					Object.defineProperty($window, 'gcmSection', {
+						configurable: true, enumerable: true, writable: true, value: v 
+					});
+					
+					addHeaderMenuItems($window, $config, v);
+				}
+			});
+			
+			Object.defineProperty($window, 'headerGCM', {
+				configurable: true,
+				set: function (v) {
+					Object.defineProperty($window, 'headerGCM', {
 						configurable: true, enumerable: true, writable: true, value: v 
 					});
 					
@@ -189,8 +227,16 @@ x_424426_devops.context_menu = (function() {
 					}
 				}
 
+				
+				if (item.item_type == '' || item.item_type == 'link') {
+					devopsMenu.addHref(item.label, item.script);
+				} else if (item.item_type == 'menu') {
+					devopsMenu.addMenu(item.label, $window.eval(item.script));
+				} else {
+					return;
+				}
+				
 				itemsAdded++;
-				devopsMenu.addHref(item.label, item.script);
 			});
 
 			if (itemsAdded) {
@@ -206,14 +252,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>60</sys_mod_count>
+        <sys_mod_count>62</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-08 22:06:59</sys_updated_on>
+        <sys_updated_on>2023-07-13 08:12:51</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
