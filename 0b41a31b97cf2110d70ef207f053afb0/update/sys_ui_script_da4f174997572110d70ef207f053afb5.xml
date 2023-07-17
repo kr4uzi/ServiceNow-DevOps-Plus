@@ -17,43 +17,63 @@ x_424426_devops.text_capture = (function() {
 		type: 'text_capture'
 	};
 	
-	x_424426_devops.loader.get('window', function ($window) {
-		injectSearch($window);
+	var $window, $config;	
+	x_424426_devops.loader.get('window', function (_window) {
+		injectSearch($window = _window, $config);
 	});
 	
-	function injectSearch($window) {
-		$window.document.addEventListener('click', function () {
-			var text = getSelectionText($window);
-			if (text) {
-				textCapture.text = text; 
-			}
-		});
+	x_424426_devops.loader.get('config', function (_config) {
+		injectSearch($window, $config = _config);
+	});
+	
+	function injectSearch($window, $config) {
+		if ($window && $config) {
+			$window.document.addEventListener('click', function () {
+				var text = getSelectionText($window);
+				if (text) {
+					textCapture.text = text; 
+				}
+			});
 
-		var isMac = $window.navigator.userAgent.indexOf('Mac OS X') > -1;
-		$window.document.addEventListener('keydown', function (event) {
-			// do not open the code search dialog if either in studio or there is already a code search window opened
-			if ($window.isDevStudio || $window.location.href.indexOf('x_424426_devops_code_search') > -1) {
-				return;
-			}
-
-			if ((isMac ? event.metaKey : event.ctrlKey) && event.shiftKey && (event.key == 'f' || event.key == 'F')) {
-				event.preventDefault();
-
-				var gm = new GlideModal('devops_codesearch', false, 'modal-95');
-				gm.setTitle("Code Search");
-				gm.on('beforeclose', function () {
-
-				});
-
-				var iframe = '<iframe src="/x_424426_devops_code_search.do';
-				if (textCapture.text) {
-					iframe += '?search=' + encodeURIComponent(textCapture.text);
+			var isMac = $window.navigator.userAgent.indexOf('Mac OS X') > -1;
+			$window.document.addEventListener('keydown', function (event) {
+				// do not open the code search dialog if either in studio or there is already a code search window opened
+				if ($window.isDevStudio || $window.location.href.indexOf('x_424426_devops_code_search') > -1) {
+					return;
 				}
 
-				iframe += '" style="width: 100%; height: 650px; border: 0; overflow: hidden;" />';
-				gm.renderWithContent(iframe);
-			}
-		});
+				if ((isMac ? event.metaKey : event.ctrlKey) && event.shiftKey && (event.key == 'f' || event.key == 'F')) {
+					event.preventDefault();
+
+					var gm = new GlideModal('devops_codesearch', false, 'modal-95');
+					gm.setTitle('Code Search');
+					gm.setPreference('search', encodeURIComponent(textCapture.text));
+					var iFrameURL = 'x_424426_devops_code_search.do?sysparm_is_dialog_form=true';
+					if (textCapture.text) {
+						iFrameURL += '&search=' + encodeURIComponent(textCapture.text);
+					}
+
+					gm.renderIframe(iFrameURL, function () {
+						gm.maximizeHeight();
+					});
+				} else if ((isMac ? event.metaKey : event.ctrlKey) && event.shiftKey && (event.key == 'p' || event.key == 'P')) {
+					var msg = $window.prompt("Ask Chat GPT");
+					if (msg) {
+						var ga = new $window.GlideAjax('x_424426_devops.GPTUtil').setScope('x_424426_devops');
+						ga.addParam('sysparm_name', 'prompt');
+						ga.addParam('prompt', msg);
+						ga.getXMLAnswer(function (result) {
+							result = JSON.parse(result);
+							if (result.status == 'success') {
+								alert(result.response);
+							} else if (result.message) {
+								alert(result.message);
+							}
+						});
+					}
+				}
+			});
+		}
 	}
 
 	return textCapture;
@@ -81,14 +101,14 @@ x_424426_devops.text_capture = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 20:25:41</sys_created_on>
         <sys_id>da4f174997572110d70ef207f053afb5</sys_id>
-        <sys_mod_count>21</sys_mod_count>
+        <sys_mod_count>28</sys_mod_count>
         <sys_name>x_424426_devops.text_capture</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_da4f174997572110d70ef207f053afb5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-13 07:14:02</sys_updated_on>
+        <sys_updated_on>2023-07-17 19:11:51</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
