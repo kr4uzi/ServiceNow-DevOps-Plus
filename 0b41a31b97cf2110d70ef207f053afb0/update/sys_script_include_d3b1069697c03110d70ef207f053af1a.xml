@@ -18,15 +18,17 @@ GPTUtil.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 			message: ''
 		};
 		
-		const chatID = this.getParameter('chat_id');
-		const prompt = this.getParameter('prompt');
-		if (prompt) {
+		
+		let messages = this.getParameter('messages');
+		if (messages) {			
 			try {
+				messages = JSON.parse(messages);
+				
 				const outputs = sn_fd.FlowAPI.getRunner()
 					.action('x_424426_devops.prompt_gpt')
 					.inForeground()
 					.withInputs({ 
-						'message': prompt
+						'messages': messages
 					})
 					.run()
 					.getOutputs();
@@ -54,13 +56,13 @@ GPTUtil.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-07-17 19:10:14</sys_created_on>
         <sys_id>d3b1069697c03110d70ef207f053af1a</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>GPTUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_d3b1069697c03110d70ef207f053af1a</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-17 19:15:09</sys_updated_on>
+        <sys_updated_on>2023-07-20 13:10:00</sys_updated_on>
     </sys_script_include>
 </record_update>
