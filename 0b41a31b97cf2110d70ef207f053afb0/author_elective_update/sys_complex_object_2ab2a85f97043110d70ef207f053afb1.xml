@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_complex_object">
+    <sys_complex_object action="DELETE">
+        <label/>
+        <name>FD66b2a85f290431104b01ff4ecd0a4bb1</name>
+        <namespace>FlowDesigner</namespace>
+        <scope_name>0b41a31b97cf2110d70ef207f053afb0</scope_name>
+        <serialized_content>{"FlowDesigner:FD66b2a85f290431104b01ff4ecd0a4bb1":{"$COCollectionField":[{"message":{"role":"String","role.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Role\",\"mandatory\":\"true\",\"order\":\"1\",\"max_length\":\"0\"}"},"content":"String","content.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Content\",\"mandatory\":\"true\",\"order\":\"2\",\"max_length\":\"0\"}"}}}],"$COCollectionField.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Messages\",\"mandatory\":\"true\",\"child_name\":\"message\",\"uiUniqueId\":\"2a30ce46-72e5-4870-ae14-8a4e413bbfb3\",\"uiTypeLabel\":\"Array.Object\",\"co_type_name\":\"FD66b2a85f290431104b01ff4ecd0a4bb1\",\"child_label\":\"Message\",\"child_type_label\":\"Object\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"array.object\",\"child_type\":\"object\",\"order\":\"1\",\"max_length\":\"65000\",\"child_uiUniqueId\":\"11515ae8-22c6-44d6-9d6f-175274ff001b\"}"},"$COCollectionField.$field_facets":{"SimpleMapFacet":"{\"up-shift-collection-level\":\"true\"}"}},"FlowDesigner:FD66b2a85f290431104b01ff4ecd0a4bb1.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Messages\",\"mandatory\":\"true\",\"child_name\":\"message\",\"uiUniqueId\":\"2a30ce46-72e5-4870-ae14-8a4e413bbfb3\",\"uiTypeLabel\":\"Array.Object\",\"co_type_name\":\"FD66b2a85f290431104b01ff4ecd0a4bb1\",\"child_label\":\"Message\",\"child_type_label\":\"Object\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"array.object\",\"child_type\":\"object\",\"order\":\"1\",\"max_length\":\"65000\",\"child_uiUniqueId\":\"11515ae8-22c6-44d6-9d6f-175274ff001b\"}"}}</serialized_content>
+        <sys_class_name>sys_complex_object</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-20 13:08:30</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>2ab2a85f97043110d70ef207f053afb1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>FD66b2a85f290431104b01ff4ecd0a4bb1</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_complex_object_2ab2a85f97043110d70ef207f053afb1</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-20 13:08:30</sys_updated_on>
+        <type>complex_object_collection</type>
+    </sys_complex_object>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_complex_object_2ab2a85f97043110d70ef207f053afb1</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_complex_object"><sys_complex_object action="INSERT_OR_UPDATE"><label/><name>FD66b2a85f290431104b01ff4ecd0a4bb1</name><namespace>FlowDesigner</namespace><scope_name>0b41a31b97cf2110d70ef207f053afb0</scope_name><serialized_content>{"FlowDesigner:FD66b2a85f290431104b01ff4ecd0a4bb1":{"$COCollectionField":[{"message":{"role":"String","role.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Role\",\"mandatory\":\"true\",\"order\":\"1\",\"max_length\":\"0\"}"},"content":"String","content.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Content\",\"mandatory\":\"true\",\"order\":\"2\",\"max_length\":\"0\"}"}}}],"$COCollectionField.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Messages\",\"mandatory\":\"true\",\"child_name\":\"message\",\"uiUniqueId\":\"2a30ce46-72e5-4870-ae14-8a4e413bbfb3\",\"uiTypeLabel\":\"Array.Object\",\"co_type_name\":\"FD66b2a85f290431104b01ff4ecd0a4bb1\",\"child_label\":\"Message\",\"child_type_label\":\"Object\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"array.object\",\"child_type\":\"object\",\"order\":\"1\",\"max_length\":\"65000\",\"child_uiUniqueId\":\"11515ae8-22c6-44d6-9d6f-175274ff001b\"}"},"$COCollectionField.$field_facets":{"SimpleMapFacet":"{\"up-shift-collection-level\":\"true\"}"}},"FlowDesigner:FD66b2a85f290431104b01ff4ecd0a4bb1.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Messages\",\"mandatory\":\"true\",\"child_name\":\"message\",\"uiUniqueId\":\"2a30ce46-72e5-4870-ae14-8a4e413bbfb3\",\"uiTypeLabel\":\"Array.Object\",\"co_type_name\":\"FD66b2a85f290431104b01ff4ecd0a4bb1\",\"child_label\":\"Message\",\"child_type_label\":\"Object\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"array.object\",\"child_type\":\"object\",\"order\":\"1\",\"max_length\":\"65000\",\"child_uiUniqueId\":\"11515ae8-22c6-44d6-9d6f-175274ff001b\"}"}}</serialized_content><sys_class_name>sys_complex_object</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2023-07-20 13:08:30</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>2ab2a85f97043110d70ef207f053afb1</sys_id><sys_mod_count>0</sys_mod_count><sys_name>FD66b2a85f290431104b01ff4ecd0a4bb1</sys_name><sys_overrides/><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_complex_object_2ab2a85f97043110d70ef207f053afb1</sys_update_name><sys_updated_by>admin</sys_updated_by><sys_updated_on>2023-07-20 13:08:30</sys_updated_on><type>complex_object_collection</type></sys_complex_object></record_update>]]></payload>
+        <payload_hash>-1810865542</payload_hash>
+        <record_name>FD66b2a85f290431104b01ff4ecd0a4bb1</record_name>
+        <reverted_from/>
+        <source>aaa1ac9197003110d70ef207f053af44</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-20 13:08:30</sys_created_on>
+        <sys_id>eeb2a85f97043110d70ef207f053afb2</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>189736a8fd80000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-20 13:08:30</sys_updated_on>
+        <type>Complex Object</type>
+        <update_guid>26b2a85f7b043110da21df7265a2d3b2</update_guid>
+        <update_guid_history>26b2a85f7b043110da21df7265a2d3b2:-1810865542</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-25 07:14:52</sys_created_on>
+        <sys_db_object display_value="" name="sys_complex_object">sys_complex_object</sys_db_object>
+        <sys_id>0619021525b1437d802b099a4478f861</sys_id>
+        <sys_metadata>2ab2a85f97043110d70ef207f053afb1</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>FD66b2a85f290431104b01ff4ecd0a4bb1</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_complex_object_2ab2a85f97043110d70ef207f053afb1</sys_update_name>
+        <sys_update_version display_value="sys_complex_object_2ab2a85f97043110d70ef207f053afb1">eeb2a85f97043110d70ef207f053afb2</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-25 07:14:52</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

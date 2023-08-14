@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="DELETE">
+        <category>general</category>
+        <client_script><![CDATA[function devops_keydownHandler(element, event) {
+	if (event.key == 'Enter' && !event.shiftKey) {		
+		var userInputElement = document.createElement('li');
+		userInputElement.dataset.role = 'user';
+		userInputElement.appendChild(document.createTextNode(element.value));
+		
+		element.disabled = true;
+		element.value = '';
+		element.setSelectionRange(0, 0);
+		
+		var conversationElement = document.getElementById('devops_conversation');
+		conversationElement.insertBefore(userInputElement, element.parentNode);
+		
+		var messages = [];
+		for (var i = 0, length = conversationElement.children.length; i < length; i++) {
+			var child = conversationElement.children[i];
+			var role = child.dataset.role;
+			if (role == 'system' || role == 'user') {
+				messages.push({
+					role: child.dataset.role,
+					content: child.textContent
+				});
+			} else if (role == 'assistant') {
+				messages.push({
+					role: child.dataset.role,
+					content: child.firstChild._mdContent
+				});
+			}
+		}
+		
+		var ga = new GlideAjax('x_424426_devops.GPTUtilClient');
+		ga.addParam('sysparm_name', 'prompt');
+		ga.addParam('messages', JSON.stringify(messages));
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {				
+				var chatHistoryElement = document.createElement('li');
+				chatHistoryElement.dataset.role = 'assistant';
+				
+				var historyContent = document.createElement('md-block');
+				historyContent.innerHTML = result.response;
+				chatHistoryElement.appendChild(historyContent);
+
+				conversationElement.insertBefore(chatHistoryElement, element.parentNode);
+				
+				element.disabled = false;
+				element.focus();
+			} else if (result.message) {
+				jslog(result.message, 'devops_gpt_conversation');
+			}
+		});
+	}
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_gpt_conversation.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script type="module" src="https://md-block.verou.me/md-block.js"></script>
+	<g:evaluate>
+		const credentialsProvider = new sn_cc.StandardCredentialsProvider();
+		const gptSupported = !!credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.openai_gpt']);
+		const gptConfigInvalid = gs.getMessage('devops_gpt_config_invalid');
+		const gptInstructions = gs.getMessage('devops_gpt_config_instruction', [gs.getProperty('glide.servlet.uri')]);
+	</g:evaluate>
+	<style>
+		ul#devops_conversation {
+			list-style-type: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		ul#devops_conversation li[data-role="system"] {
+			background-color: grey;
+		}
+		
+		ul#devops_conversation li[data-role="user"] {
+			background-color: lightgrey;
+		}
+		
+		ul#devops_conversation li[data-role="assistant"] {
+		
+		}
+	</style>
+	
+	<ul id="devops_conversation">
+		<j:if test="${gptSupported}">
+			<li data-role="system">
+				Act as a co-pilot for a ServiceNow developer.
+			</li>
+			<li>
+				<textarea
+					style="width: 100%"
+					onkeydown="devops_keydownHandler(this, event)"
+					placeholder="Hit &lt;Enter&gt; to send your message"
+				/>
+			</li>
+		</j:if>
+	</ul>
+	
+	<j:if test="${!gptSupported}">
+		<script>
+			// JSON.stringify workaround is used to render dynamic HTML (properties are dynamic)
+			document.write(
+				'<span style="width: 100%; color: red;">'
+					+ ${JSON.stringify(gptConfigInvalid)}
+					+ ${JSON.stringify(gptInstructions)}
+				+ '</span>'
+			);
+		</script>
+	</j:if>
+</j:jelly>]]></html>
+        <name>gpt_conversation</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-19 19:49:50</sys_created_on>
+        <sys_id>cb24744797483110d70ef207f053afff</sys_id>
+        <sys_mod_count>78</sys_mod_count>
+        <sys_name>gpt_conversation</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_cb24744797483110d70ef207f053afff</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-21 19:26:12</sys_updated_on>
+    </sys_ui_page>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_ui_page_cb24744797483110d70ef207f053afff</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_page"&gt;&lt;sys_ui_page action="INSERT_OR_UPDATE"&gt;&lt;category&gt;general&lt;/category&gt;&lt;client_script&gt;&lt;![CDATA[function devops_keydownHandler(element, event) {
+	if (event.key == 'Enter' &amp;&amp; !event.shiftKey) {		
+		var userInputElement = document.createElement('li');
+		userInputElement.dataset.role = 'user';
+		userInputElement.appendChild(document.createTextNode(element.value));
+		
+		element.disabled = true;
+		element.value = '';
+		element.setSelectionRange(0, 0);
+		
+		var conversationElement = document.getElementById('devops_conversation');
+		conversationElement.insertBefore(userInputElement, element.parentNode);
+		
+		var messages = [];
+		for (var i = 0, length = conversationElement.children.length; i &lt; length; i++) {
+			var child = conversationElement.children[i];
+			var role = child.dataset.role;
+			if (role == 'system' || role == 'user') {
+				messages.push({
+					role: child.dataset.role,
+					content: child.textContent
+				});
+			} else if (role == 'assistant') {
+				messages.push({
+					role: child.dataset.role,
+					content: child.firstChild._mdContent
+				});
+			}
+		}
+		
+		var ga = new GlideAjax('x_424426_devops.GPTUtilClient');
+		ga.addParam('sysparm_name', 'prompt');
+		ga.addParam('messages', JSON.stringify(messages));
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {				
+				var chatHistoryElement = document.createElement('li');
+				chatHistoryElement.dataset.role = 'assistant';
+				
+				var historyContent = document.createElement('md-block');
+				historyContent.innerHTML = result.response;
+				chatHistoryElement.appendChild(historyContent);
+
+				conversationElement.insertBefore(chatHistoryElement, element.parentNode);
+				
+				element.disabled = false;
+				element.focus();
+			} else if (result.message) {
+				jslog(result.message, 'devops_gpt_conversation');
+			}
+		});
+	}
+}]]&gt;&lt;/client_script&gt;&lt;description/&gt;&lt;direct&gt;false&lt;/direct&gt;&lt;endpoint&gt;x_424426_devops_gpt_conversation.do&lt;/endpoint&gt;&lt;html&gt;&lt;![CDATA[&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+	&lt;script type="module" src="https://md-block.verou.me/md-block.js"&gt;&lt;/script&gt;
+	&lt;g:evaluate&gt;
+		const credentialsProvider = new sn_cc.StandardCredentialsProvider();
+		const gptSupported = !!credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.openai_gpt']);
+		const gptConfigInvalid = gs.getMessage('devops_gpt_config_invalid');
+		const gptInstructions = gs.getMessage('devops_gpt_config_instruction', [gs.getProperty('glide.servlet.uri')]);
+	&lt;/g:evaluate&gt;
+	&lt;style&gt;
+		ul#devops_conversation {
+			list-style-type: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		ul#devops_conversation li[data-role="system"] {
+			background-color: grey;
+		}
+		
+		ul#devops_conversation li[data-role="user"] {
+			background-color: lightgrey;
+		}
+		
+		ul#devops_conversation li[data-role="assistant"] {
+		
+		}
+	&lt;/style&gt;
+	
+	&lt;ul id="devops_conversation"&gt;
+		&lt;j:if test="${gptSupported}"&gt;
+			&lt;li data-role="system"&gt;
+				Act as a co-pilot for a ServiceNow developer.
+			&lt;/li&gt;
+			&lt;li&gt;
+				&lt;textarea
+					style="width: 100%"
+					onkeydown="devops_keydownHandler(this, event)"
+					placeholder="Hit &amp;lt;Enter&amp;gt; to send your message"
+				/&gt;
+			&lt;/li&gt;
+		&lt;/j:if&gt;
+	&lt;/ul&gt;
+	
+	&lt;j:if test="${!gptSupported}"&gt;
+		&lt;script&gt;
+			// JSON.stringify workaround is used to render dynamic HTML (properties are dynamic)
+			document.write(
+				'&lt;span style="width: 100%; color: red;"&gt;'
+					+ ${JSON.stringify(gptConfigInvalid)}
+					+ ${JSON.stringify(gptInstructions)}
+				+ '&lt;/span&gt;'
+			);
+		&lt;/script&gt;
+	&lt;/j:if&gt;
+&lt;/j:jelly&gt;]]&gt;&lt;/html&gt;&lt;name&gt;gpt_conversation&lt;/name&gt;&lt;processing_script/&gt;&lt;sys_class_name&gt;sys_ui_page&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2023-07-19 19:49:50&lt;/sys_created_on&gt;&lt;sys_id&gt;cb24744797483110d70ef207f053afff&lt;/sys_id&gt;&lt;sys_mod_count&gt;78&lt;/sys_mod_count&gt;&lt;sys_name&gt;gpt_conversation&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ui_page_cb24744797483110d70ef207f053afff&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2023-07-21 19:26:12&lt;/sys_updated_on&gt;&lt;/sys_ui_page&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-2121548659</payload_hash>
+        <record_name>gpt_conversation</record_name>
+        <reverted_from/>
+        <source>aaa1ac9197003110d70ef207f053af44</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-21 19:26:12</sys_created_on>
+        <sys_id>38c2cf2797443110d70ef207f053af0e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>18979eab49c0000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-21 19:26:12</sys_updated_on>
+        <type>UI Page</type>
+        <update_guid>fcc2cf27704431100638357e0799db0d</update_guid>
+        <update_guid_history>fcc2cf27704431100638357e0799db0d:-2121548659,32d10727a544311036c7d6dcfa363306:183952841,a62103279244311038d863c250d2fc8e:620175889,12f0c7e316443110475228e4a608351a:-1098948357,fd60cfa345443110dfead86335399a68:1730438882,8c10c323934431108800ae0bfac072ab:-236577014,aeef7ea35d443110a060ad055c17e9f5:-250626155,144df223c5443110941dc2540cd818a3:-265797730,2c1dbeefbc0431104c39977992e43735:1131844594,31ccfaefff04311001a1d793961a4f31:-899984236,28bc3eafab0431101176c1c169d4cde4:150746832,30dbb6af730431108720771a771de95e:1364083140,0ecbb6affb0431101f726f91a49a5d37:-713555100,4aabf22fa804311049770f3c1a4bf831:-532451734,8f5bba2f9a0431109fe38eb273d5efa5:1170165450,de3aba2f8f0431107ad0bbd803591da0:1027919108,e11aba2feb0431108c770b9abff99098:-1812890427,dcd9b22f4204311045f44a5734e31bf2:367919798,65a9f22f9b043110a7472afa8d365eff:332144161,5d997eebd4043110180f102908b3547f:-265178270,de79baab7b04311050258213d42abc94:-2134624918,fb597eeb03043110271aa89dd195f55c:-2037404134,e1493eabcc0431105ec84d175e5e2538:-962263969,a58872ebba043110fe7f3f364adc6433:664135345,fa78fe6bdc0431107c8fcfeac451a1e2:471293352,f14832abb50431100be9a3fd9313ddaa:664135345,ae3872ab7e0431107b5b07ab61614507:842042993,6b97fe6bf80431106462e11ecfa93da3:-805315614,fc97ba2b8e043110a1908e557c2bb751:1183152417,51873a6b5f043110e019aa24a880fa82:2071889533,d0773a6b39043110fa302dbb31bbf79a:1625791970,c566322b73043110af58ddf1f3f37602:-1726450188,7e16fee794043110ea91c528a2d692e3:-2096231253,0cd5f6e709043110a12f31d3326de039:-1614795710,77b57ee75d0431108a57140b6ed1b777:-2019749121,e4b5bae75e043110d4eb460d3c982f4e:-1575925816,3b55b2e71e043110d0fe1a792bb34c20:-397656248,0055bea7780431105289addf919bda08:-1162964347,b145b2e7c50431107264546898139e18:-551103745,97d43ea7d7043110345c6003ea811191:-1756578750,57c47ea7e4043110d6249ff500ec1e3c:-1766296779,14c43ea74704311059fa99fe44b44e8b:-1756578750,8db4b2a7030431106fc77da8542a5ce7:57768043,7134f2a77c0431101384bc4946e9fd2e:-61077090,2f24b2a7fd043110e31e2fb8902ec9d5:506574551,bbd33e27e40431103eea1513bab4da51:1844946524,b9b37a27cd04311082043160720ff674:-839509312,caa336673d04311099941f4a20b3b7c4:-322438082,65b3a0d738043110798660de5d6eefda:12860936,9eab90977c043110a7ecad26a998429b:1937108293,1b4b9c57100431109c4ac58dd6bab62a:1138856398,5d5ae3c32a4031106933f3b44e897037:2023060386,50d923c37b403110a98ce0d6b312478a:634050304,f6a923c3e0403110359d6b6a7fa63b86:-230802226,3f696783f74031106836070bb38be16b:-416053986,3f5927830f403110de036ee726c00de1:473041154,b92967830f403110cbe4e23d6847f190:1953783838,a2f86783814031105d653838b04ae466:1313662203,f498a343a8403110bcc3d9e0187704ff:1498189123,2f96abcf880031105b5efb330858c6ce:-407252582,de8667cf47003110dcc14c3c77bb3dcf:-1570293641,9666a7cf1c0031103f70ffa5d85005c7:-1718266351,5f56eb4f2b003110bbf8b17e8d51be4c:1786851432,f11663cf2b0031107ea23171a7929287:-1718266351,1ff563cf1d003110099e1079421cd271:-1325531325,6de563cf89003110f589f3d239976b6c:235305228,cdffbccf0c483110493a416a95a59e38:1351528373,6abf70438d88311050f936be1df1fdd1:-193454318,b77ebccfe1483110ae8c491df4f9a925:182962988,9d4e784f9248311068ca73692803c8e2:-1251496865,4f4cb08b254831107e22bd1afa78be74:-1937383451,544cb08b194831108823735c662031d2:-1671502928,bc2cb08b67483110bc17de73f9fdfa6e:1313267696,da67340b2a483110b3c96736633a23e5:1345192609,32f6f887b2483110f85b6a5b421c594d:904017247,cdb6f04751483110b491b61bbacd3df2:-1079220275,dc5638c7f3483110833cc0184833e9e2:1182784498,3c75f887da483110b861a81c16b87108:-185371195,a7f4f0875348311058bb0a0e580e6b3b:-19192827</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-25 07:06:58</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_page">sys_ui_page</sys_db_object>
+        <sys_id>127d55eaa8cc4522b112fab912d2ba09</sys_id>
+        <sys_metadata>cb24744797483110d70ef207f053afff</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>gpt_conversation</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_page_cb24744797483110d70ef207f053afff</sys_update_name>
+        <sys_update_version display_value="sys_ui_page_cb24744797483110d70ef207f053afff">38c2cf2797443110d70ef207f053af0e</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-25 07:06:58</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

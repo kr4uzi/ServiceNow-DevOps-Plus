@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_alias">
+    <sys_alias action="DELETE">
+        <configuration_template/>
+        <connection_type>http_connection</connection_type>
+        <id>x_424426_devops.openai_gpt</id>
+        <multiple_connections>false</multiple_connections>
+        <name>openai_gpt</name>
+        <parent/>
+        <retry_policy display_value="Default HTTP Retry Policy">ef751ff07301330025d71afe2ff6a7f9</retry_policy>
+        <sys_class_name>sys_alias</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-14 07:56:33</sys_created_on>
+        <sys_id>bcb128d197403110d70ef207f053afd8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.openai_gpt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_alias_bcb128d197403110d70ef207f053afd8</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-14 07:56:33</sys_updated_on>
+        <type>credential</type>
+    </sys_alias>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_alias_bcb128d197403110d70ef207f053afd8</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_alias"><sys_alias action="INSERT_OR_UPDATE"><configuration_template/><connection_type>http_connection</connection_type><id>x_424426_devops.openai_gpt</id><multiple_connections>false</multiple_connections><name>openai_gpt</name><parent/><retry_policy display_value="Default HTTP Retry Policy">ef751ff07301330025d71afe2ff6a7f9</retry_policy><sys_class_name>sys_alias</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2023-07-14 07:56:33</sys_created_on><sys_id>bcb128d197403110d70ef207f053afd8</sys_id><sys_mod_count>0</sys_mod_count><sys_name>x_424426_devops.openai_gpt</sys_name><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_alias_bcb128d197403110d70ef207f053afd8</sys_update_name><sys_updated_by>admin</sys_updated_by><sys_updated_on>2023-07-14 07:56:33</sys_updated_on><type>credential</type></sys_alias></record_update>]]></payload>
+        <payload_hash>231677419</payload_hash>
+        <record_name>x_424426_devops.openai_gpt</record_name>
+        <reverted_from/>
+        <source>aaa1ac9197003110d70ef207f053af44</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-14 07:56:33</sys_created_on>
+        <sys_id>dec12cd197403110d70ef207f053afa1</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>1895366cc030000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-14 07:56:33</sys_updated_on>
+        <type>Connection &amp; Credential Aliases</type>
+        <update_guid>d2c12cd1cd4031103630e95d346dcea1</update_guid>
+        <update_guid_history>d2c12cd1cd4031103630e95d346dcea1:231677419</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-25 07:05:46</sys_created_on>
+        <sys_db_object display_value="" name="sys_alias">sys_alias</sys_db_object>
+        <sys_id>24d846489cc04c06918565f529affc84</sys_id>
+        <sys_metadata>bcb128d197403110d70ef207f053afd8</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.openai_gpt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_alias_bcb128d197403110d70ef207f053afd8</sys_update_name>
+        <sys_update_version display_value="sys_alias_bcb128d197403110d70ef207f053afd8">dec12cd197403110d70ef207f053afa1</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-25 07:05:46</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

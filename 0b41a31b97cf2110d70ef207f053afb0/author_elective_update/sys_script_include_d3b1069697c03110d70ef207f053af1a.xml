@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.GPTUtilClient</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>GPTUtilClient</name>
+        <script><![CDATA[/* global global, sn_fd, Class, gs */
+/* eslint no-undef: "error" */
+var GPTUtilClient = Class.create();
+GPTUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	initialize: function(request, responseXML, gc) {
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	prompt: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		
+		let messages = this.getParameter('messages');
+		if (messages) {			
+			try {
+				messages = JSON.parse(messages);
+				
+				const outputs = sn_fd.FlowAPI.getRunner()
+					.action('x_424426_devops.prompt_gpt')
+					.inForeground()
+					.withInputs({ 
+						'messages': messages
+					})
+					.run()
+					.getOutputs();
+
+				result.response = outputs.response;
+				result.status = 'success';
+			} catch (e) {
+				result.status = 'error';
+				result.message = e.toString();
+
+				if (gs.hasRole('admin') && e.stack) {
+					result.message += '\nStack: ' + e.stack;
+				}
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+
+    type: 'GPTUtilClient'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-17 19:10:14</sys_created_on>
+        <sys_id>d3b1069697c03110d70ef207f053af1a</sys_id>
+        <sys_mod_count>7</sys_mod_count>
+        <sys_name>GPTUtilClient</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_d3b1069697c03110d70ef207f053af1a</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-21 17:43:36</sys_updated_on>
+    </sys_script_include>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>071f9d4fdb9a159c3050ac44d496190e</instance_id>
+        <instance_name>dev139763</instance_name>
+        <name>sys_script_include_d3b1069697c03110d70ef207f053af1a</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_424426_devops.GPTUtilClient&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;true&lt;/client_callable&gt;&lt;description/&gt;&lt;name&gt;GPTUtilClient&lt;/name&gt;&lt;script&gt;&lt;![CDATA[/* global global, sn_fd, Class, gs */
+/* eslint no-undef: "error" */
+var GPTUtilClient = Class.create();
+GPTUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	initialize: function(request, responseXML, gc) {
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	prompt: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		
+		let messages = this.getParameter('messages');
+		if (messages) {			
+			try {
+				messages = JSON.parse(messages);
+				
+				const outputs = sn_fd.FlowAPI.getRunner()
+					.action('x_424426_devops.prompt_gpt')
+					.inForeground()
+					.withInputs({ 
+						'messages': messages
+					})
+					.run()
+					.getOutputs();
+
+				result.response = outputs.response;
+				result.status = 'success';
+			} catch (e) {
+				result.status = 'error';
+				result.message = e.toString();
+
+				if (gs.hasRole('admin') &amp;&amp; e.stack) {
+					result.message += '\nStack: ' + e.stack;
+				}
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+
+    type: 'GPTUtilClient'
+});]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2023-07-17 19:10:14&lt;/sys_created_on&gt;&lt;sys_id&gt;d3b1069697c03110d70ef207f053af1a&lt;/sys_id&gt;&lt;sys_mod_count&gt;7&lt;/sys_mod_count&gt;&lt;sys_name&gt;GPTUtilClient&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy&gt;read&lt;/sys_policy&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_d3b1069697c03110d70ef207f053af1a&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2023-07-21 17:43:36&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>1177609431</payload_hash>
+        <record_name>GPTUtilClient</record_name>
+        <reverted_from/>
+        <source>aaa1ac9197003110d70ef207f053af44</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-21 17:43:36</sys_created_on>
+        <sys_id>0a4b262f97c03110d70ef207f053af38</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>189798cc8d30000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-21 17:43:36</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>ce4b262fd5c03110c30473439e2ab637</update_guid>
+        <update_guid_history>ce4b262fd5c03110c30473439e2ab637:1177609431,1813609ffc043110ac82fc1a475f4e74:1791543984,23da2307ba403110c98c097e44c6be8b:-175456449,4e56af4fa0003110de76d29239f5c258:-2005623784,543667cf3300311070f5471a7fd6c621:-1986885908,ff75afc7bb0031108bf35106308a1a35:177172481,50e9d21278443110c2efe05400311194:-486021682,50c856dee5043110688bdfcb6582aea1:-1953345226</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-07-25 07:06:34</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>51ac6d55d9a14a80b5cadd9da9bac900</sys_id>
+        <sys_metadata>d3b1069697c03110d70ef207f053af1a</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>GPTUtilClient</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_d3b1069697c03110d70ef207f053af1a</sys_update_name>
+        <sys_update_version display_value="sys_script_include_d3b1069697c03110d70ef207f053af1a">0a4b262f97c03110d70ef207f053af38</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-07-25 07:06:34</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

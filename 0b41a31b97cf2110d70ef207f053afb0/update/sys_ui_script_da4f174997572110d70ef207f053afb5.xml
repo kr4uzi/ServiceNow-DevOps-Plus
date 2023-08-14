@@ -2,8 +2,7 @@
     <sys_ui_script action="INSERT_OR_UPDATE">
         <active>true</active>
         <description>- Get the Highlighted/Selected text for easy code search e.g. from a selected System Log&#13;
-- Enable CTRL (win) / CMD (mac) + SHIFT + F for code search on all forms/lists&#13;
-- Enable CTRL (win) / CMD (mac) + SHIFT + P for GPT prompt on all forms/lists</description>
+- Enable CTRL (win) / CMD (mac) + SHIFT + F for code search on all forms/lists</description>
         <global>false</global>
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.text_capture</name>
@@ -57,16 +56,6 @@ x_424426_devops.text_capture = (function() {
 					gm.renderIframe(iFrameURL, function () {
 						gm.maximizeHeight();
 					});
-				} else if ((isMac ? event.metaKey : event.ctrlKey) && event.shiftKey && (event.key == 'p' || event.key == 'P')) {
-					if ($window.isDevStudio || $window.location.href.indexOf('x_424426_devops_gpt_conversation') > -1) {
-						return;
-					}
-					
-					var gm = new GlideModal('devops_gpt_conversation', false, 'modal-md');
-					gm.setTitle('Chat GPT');
-					gm.renderIframe('x_424426_devops_gpt_conversation.do?sysparm_is_dialog_form=true', function () {
-						gm.maximizeHeight();
-					});
 				}
 			});
 		}
@@ -97,14 +86,14 @@ x_424426_devops.text_capture = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 20:25:41</sys_created_on>
         <sys_id>da4f174997572110d70ef207f053afb5</sys_id>
-        <sys_mod_count>30</sys_mod_count>
+        <sys_mod_count>31</sys_mod_count>
         <sys_name>x_424426_devops.text_capture</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_da4f174997572110d70ef207f053afb5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-20 12:40:10</sys_updated_on>
+        <sys_updated_on>2023-07-25 07:04:11</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
