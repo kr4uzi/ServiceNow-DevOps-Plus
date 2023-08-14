@@ -30,7 +30,7 @@
  */ 
 ]]></dynamic_actions_script>
         <menu>list_title</menu>
-        <name/>
+        <name>(separator)</name>
         <on_show_script><![CDATA[/**
  * This client-side script is used to dynamically change the context menu before it is displayed.
  * It is called before showing the context menu if the Run onShow script flag is checked.
@@ -54,15 +54,15 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>0dfec17197372110d70ef207f053afb6</sys_id>
-        <sys_mod_count>1</sys_mod_count>
-        <sys_name/>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>(separator)</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_context_menu_0dfec17197372110d70ef207f053afb6</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-03 14:17:04</sys_updated_on>
+        <sys_updated_on>2023-08-14 10:03:30</sys_updated_on>
         <table>global</table>
         <track_selected>false</track_selected>
         <type>line</type>
