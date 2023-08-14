@@ -61,7 +61,7 @@ addLoadEvent(function () {
 			gel('progress-container').style.display = '';
 			gel('progress-header').style.display = '';
 			
-			var searchGroup = 'x_424426_devops_search_group';
+			var searchGroup = 'x_424426_devops.Search Group';
 			getTables(searchGroup, function (tables) {
 				if (tables.length) {
 					var i = 0;
@@ -203,19 +203,32 @@ function addTable(tableName, hits, open, searchTerm) {
 }
 
 function getTables(searchGroup, callback) {
-	var client = new XMLHttpRequest();
-	client.open('GET', '/api/sn_codesearch/code_search/tables?search_group=' + encodeURIComponent(searchGroup));
-	client.setRequestHeader('X-UserToken', window.g_ck);
-	client.setRequestHeader('Accept','application/json');
-	client.setRequestHeader('Content-Type','application/json');
-
-	client.onreadystatechange = function() { 
-		if (this.readyState == this.DONE) {
-			callback(JSON.parse(this.response).result);
+	var ga = new window.GlideAjax('x_424426_devops.CodeSearchUtilClient').setScope('x_424426_devops');
+	ga.addParam('sysparm_name', 'getTables');
+	ga.addParam('search_group', searchGroup);
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			callback(result.tables);
+		} else if (result.message) {
+			jslog(result.message);
 		}
-	};
+	});
 	
-	client.send();
+	// the OOTB search group fails when a table has a special character in its label
+// 	var client = new XMLHttpRequest();
+// 	client.open('GET', '/api/sn_codesearch/code_search/tables?search_group=' + encodeURIComponent(searchGroup));
+// 	client.setRequestHeader('X-UserToken', window.g_ck);
+// 	client.setRequestHeader('Accept','application/json');
+// 	client.setRequestHeader('Content-Type','application/json');
+
+// 	client.onreadystatechange = function() { 
+// 		if (this.readyState == this.DONE) {
+// 			callback(JSON.parse(this.response).result);
+// 		}
+// 	};
+	
+// 	client.send();
 }
 
 function searchTable(table, term, scope, allScopes, searchGroup, callback) {
@@ -333,13 +346,13 @@ function searchTable(table, term, scope, allScopes, searchGroup, callback) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>12</sys_mod_count>
+        <sys_mod_count>15</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-08-14 09:22:31</sys_updated_on>
+        <sys_updated_on>2023-08-14 09:49:23</sys_updated_on>
     </sys_ui_page>
 </record_update>

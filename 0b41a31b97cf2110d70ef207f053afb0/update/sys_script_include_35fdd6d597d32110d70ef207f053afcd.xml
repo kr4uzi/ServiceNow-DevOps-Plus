@@ -7,10 +7,51 @@
         <client_callable>true</client_callable>
         <description/>
         <name>CodeSearchUtilClient</name>
-        <script><![CDATA[var CodeSearchUtilClient = Class.create();
+        <script><![CDATA[/* global Class, global, GlideRecordSecure, GlideStringUtil, gs */
+/* eslint no-undef: "error" */
+var CodeSearchUtilClient = Class.create();
 CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	getTables: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const searchGroup = this.getParameter('search_group');
+		if (searchGroup) {
+			const tables = [];
+			const searchTableGr = new GlideRecordSecure('sn_codesearch_table');
+			searchTableGr.addQuery('search_group.name', searchGroup);
+			searchTableGr.query();
+			while (searchTableGr.next()) {
+				tables.push({
+					name: searchTableGr.table.toString(),
+					label: ''
+				});
+			}
+
+			const tableGr = new GlideRecordSecure('sys_db_object');
+			tableGr.addQuery('name', 'IN', tables.map(t => t.name));
+			tableGr.query();
+			while (tableGr.next()) {
+				const tableName = tableGr.name.toString();
+				const table = tables.find(t => t.name == tableName);
+				if (table) {
+					table.label = tableGr.getDisplayValue();
+				}
+			}
+			
+			result.tables = tables;
+			result.status = 'success';
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
 	},
 	
 	getScriptIncludeInfo: function () {
@@ -52,13 +93,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-13 07:07:56</sys_updated_on>
+        <sys_updated_on>2023-08-14 09:54:17</sys_updated_on>
     </sys_script_include>
 </record_update>
