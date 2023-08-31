@@ -2,7 +2,7 @@
     <sn_codesearch_table action="INSERT_OR_UPDATE">
         <additional_filter/>
         <search_fields>question_text,dynamic_default_value,dynamic_ref_qual,	reference_qual_condition,attributes,default_html_value,record,reference_qual,lookup_label,type,macro,write_roles,name,choice_table,field,layout,table,choice_direction,default_value,record_producer_table,summary_macro,lookup_price,ui_page,create_roles,read_roles,reference,help_tag,list_table,tooltip,lookup_value,variable_name,choice_field,example_text,lookup_table,	map_to_field,rec_lookup_price,help_text,dynamic_value_dot_walk_path,dynamic_value_field,instructions,rich_text,published_ref,roles_to_use_also_request_for,sp_widget,description,variable_width,macroponent,validate_regex,delivery_plan,read_script,visibility,category,post_insert_script,save_script,variable_set,cat_item,global_prop,error_text,regex,bp_cat_item,pool,filter,	cmp_variable_set,stage_resource_operation,cmp_variable_set</search_fields>
-        <search_group display_value="x_424426_devops.DevOps+ Code Search">91fe125997d32110d70ef207f053af45</search_group>
+        <search_group display_value="x_424426_devops.Search Group">91fe125997d32110d70ef207f053af45</search_group>
         <sys_class_name>sn_codesearch_table</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-25 11:45:36</sys_created_on>
