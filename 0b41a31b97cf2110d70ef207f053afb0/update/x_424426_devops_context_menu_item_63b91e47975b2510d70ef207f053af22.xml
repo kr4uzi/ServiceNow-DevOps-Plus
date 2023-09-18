@@ -27,17 +27,20 @@
 	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
+		// the translations need to happen with the base table of the translated field
+		var t = Table.get(g_form.getTableName());
+		var e = t.getElement("${FIELD}");
+		var fieldTable = e.getTableName();
+		
 		if (type == 'translated_html' || type == 'translated_text') {
+			// need to get the base table of the field
 			table = 'sys_translated_text';
-			query = 'tablename=' + g_form.getTableName()
+			query = 'tablename=' + fieldTable
 				+ '^fieldname=${FIELD}'
 				+ '^documentkey=' +  g_form.getUniqueValue();
 		} else if (type == 'translated_field') {
-			// need to get the base table of the field
-			var t = Table.get(g_form.getTableName());
-			var e = t.getElement("${FIELD}");
 			table = 'sys_translated';
-			query = 'name=' + e.getTableName() + '^element=${FIELD}^value=' + g_form.getValue('${FIELD}');
+			query = 'name=' + fieldTable + '^element=${FIELD}^value=' + g_form.getValue('${FIELD}');
 		}
 	}
 	
@@ -46,6 +49,13 @@
 			// on render callback
 		}, false);
 		gmf.addParm('sysparm_query', query);
+		
+		// if in Studio, add the currently selected scoped so that
+		// the translations are created in the currently selected application
+		if (isDevStudio && typeof devStudioAPI !== "undefined") {
+			gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+		}
+		
 		gmf.render();
 	}
 	
@@ -76,14 +86,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>32</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-09-13 16:24:36</sys_updated_on>
+        <sys_updated_on>2023-09-18 20:11:57</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
