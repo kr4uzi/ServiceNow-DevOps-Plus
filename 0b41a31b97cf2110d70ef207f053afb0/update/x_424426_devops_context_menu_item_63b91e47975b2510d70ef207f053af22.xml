@@ -52,7 +52,7 @@
 		
 		// if in Studio, add the currently selected scoped so that
 		// the translations are created in the currently selected application
-		if (isDevStudio && typeof devStudioAPI !== "undefined") {
+		if (typeof devStudioAPI !== "undefined") {
 			gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
 		}
 		
@@ -86,14 +86,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>32</sys_mod_count>
+        <sys_mod_count>33</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-09-18 20:11:57</sys_updated_on>
+        <sys_updated_on>2023-09-20 19:43:21</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
