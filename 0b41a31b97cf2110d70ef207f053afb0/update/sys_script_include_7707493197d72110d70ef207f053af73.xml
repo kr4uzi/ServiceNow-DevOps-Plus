@@ -21,6 +21,14 @@ MetadataUtil.prototype = {
 		this.hasUserRole = hasRoleGr.hasNext() && gs.hasRole('admin');
     },
 	
+	shouldDisplayDomainSeparationWarning: function (metadataGr) {
+		if (this.hasUserRole) {
+			return metadataGr.canWrite() && metadataGr.isValidField("sys_domain");
+		}
+		
+		return false;
+	},
+	
 	shouldDisplayShowVersionUIAction: function (metadataGr, action) {
 		// only display the 'Show Versions' UI Action if there current user is an admin ...
 		if (this.hasUserRole) {
@@ -58,13 +66,13 @@ MetadataUtil.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-08 17:15:16</sys_created_on>
         <sys_id>7707493197d72110d70ef207f053af73</sys_id>
-        <sys_mod_count>5</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>MetadataUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_7707493197d72110d70ef207f053af73</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-09 08:25:53</sys_updated_on>
+        <sys_updated_on>2023-09-21 07:50:25</sys_updated_on>
     </sys_script_include>
 </record_update>
