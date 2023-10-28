@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[(function () {
+        <client_script><![CDATA[/* global x_424426_devops, g_form, getPreference, setPreference, GlideModal, GlideModalForm */
+/* eslint no-undef: "error" */
+(function () {
 	
 	var $window = x_424426_devops.loader.get('window');
 	var languages = x_424426_devops.loader.get('config').languages;
@@ -43,7 +45,9 @@
 	}
 	
 })();]]></client_script>
-        <condition_script><![CDATA[(function () {
+        <condition_script><![CDATA[/* global x_424426_devops */
+/* eslint no-undef: "error" */
+(function () {
 	
 	var config = x_424426_devops.loader.get('config');
 	// only show if at least one other language than system language is available
@@ -57,14 +61,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-07-13 08:05:57</sys_created_on>
         <sys_id>a279c3f497003110d70ef207f053af83</sys_id>
-        <sys_mod_count>11</sys_mod_count>
+        <sys_mod_count>12</sys_mod_count>
         <sys_name>translated</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_a279c3f497003110d70ef207f053af83</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-13 13:21:36</sys_updated_on>
+        <sys_updated_on>2023-10-28 14:50:24</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

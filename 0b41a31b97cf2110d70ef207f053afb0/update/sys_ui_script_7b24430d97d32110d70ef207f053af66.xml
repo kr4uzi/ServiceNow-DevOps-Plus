@@ -60,29 +60,27 @@ x_424426_devops.context_menu = (function() {
 					var itemsAdded = 0;
 					var devopsMenu = new $window.GwtContextMenu('devops_field_menu');
 					devopsMenu.clear();
-
-					var sncVariableWorkaround = '{FIELD}';
-					$config.fieldItems.forEach(function (item) {
+					
+					var $context = {
+						FIELD: fieldName
+					};
+					
+					$config.fieldItems.forEach(function (item) {						
 						var conditionScript = item.condition_script;
 						if (conditionScript) {
-							conditionScript = conditionScript
-								.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
-							;
-
-							if ($window.eval(conditionScript) != true) {
+							if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
 								return;
 							}
 						}
 						
 						if (item.item_type == '' || item.item_type == 'link') {
-							devopsMenu.addHref(
-								item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
-								item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName)
-							);	
+							devopsMenu.addFunc(item.label, function () {
+								new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
+							});	
 						} else if (item.item_type == 'menu') {
 							devopsMenu.addMenu(
-								item.label.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName),
-								$window.eval(item.script.replace(new RegExp('\\$' + sncVariableWorkaround, 'g'), fieldName))
+								item.label,
+								new $window.Function('script', '$context', 'return eval(script)')( conditionScript, $context)
 							);
 						} else {
 							return;
@@ -113,7 +111,41 @@ x_424426_devops.context_menu = (function() {
 			type: 'DevopsContextMenu'
 		});
 		
-		$window.document.querySelectorAll('a.breadcrumb_link').forEach(function (element) {
+		var observer = new $window.MutationObserver(function (mutations) {
+			for (var i = 0; i < mutations.length; i++) {
+				var mutation = mutations[i];
+				if (mutation.addedNodes) {
+					for (var j = 0; j < mutation.addedNodes.length; j++) {
+						var node = mutation.addedNodes[j];
+						if (node.classList && node.classList.contains('breadcrumb_link')) {
+							injectBreadCrumbContextMenu(node);
+						}
+					}
+				}
+			}   
+		});
+		
+		observer.observe($window.document, {
+			childList: true,
+			subtree: true
+		});
+		/*$window.addAfterPageLoadedEvent(function () {
+			$window.document.querySelectorAll('.breadcrumb_link').forEach(function (element) {
+				injectBreadCrumbContextMenu(element);
+			});
+		});*/
+		
+		var breadCrumbInjected = [];
+		/*$window.document.querySelectorAll('.breadcrumb_link').forEach(function (element) {
+			injectBreadCrumbContextMenu(element);
+		});*/
+		
+		function injectBreadCrumbContextMenu(element) {
+			if (breadCrumbInjected.indexOf(element) != -1) {
+				return;
+			}
+			
+			breadCrumbInjected.push(element);
 			element.addEventListener('contextmenu', function () {
 				var listID = element.closest('span.breadcrumb_container').getAttribute('list_id');
 				var filter = getFilter(element);
@@ -123,41 +155,24 @@ x_424426_devops.context_menu = (function() {
 						var devopsMenu = new $window.GwtContextMenu('devops_breadcrumbs_menu');
 						devopsMenu.clear();
 
-						var sncVariableWorkaround1 = '{LISTID}';
-						var sncVariableWorkaround2 = '{FILTER}';
+						var $context = {
+							LISTID: listID,
+							FILTER: filter
+						};
 						$config.breadcrumbItems.forEach(function (item) {
 							var conditionScript = item.condition_script;
 							if (conditionScript) {
-								conditionScript = conditionScript
-									.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-									.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
-								;
-								
-								if ($window.eval(conditionScript) != true) {
+								if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
 									return;
 								}
 							}
 							
 							if (item.item_type == '' || item.item_type == 'link') {
-								devopsMenu.addHref(
-									item.label
-										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
-									item.script
-										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
-								);
+								devopsMenu.addFunc(item.label, function () {
+									new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
+								});
 							} else if (item.item_type == 'menu') {
-								devopsMenu.addMenu(
-									item.label
-										.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-										.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter),
-									$window.eval(
-										item.script
-											.replace(new RegExp('\\$' + sncVariableWorkaround1, 'g'), listID)
-											.replace(new RegExp('\\$' + sncVariableWorkaround2, 'g'), filter)
-									)
-								);
+								devopsMenu.addMenu(item.label, new $window.Function('script', '$context', 'return eval(script)')(item.script, $context));
 							} else {
 								return;
 							}
@@ -172,7 +187,7 @@ x_424426_devops.context_menu = (function() {
 					}
 				});
 			});
-		});
+		}
 		
 		function getFilter(element) {
 			while (element && !element.hasAttribute('filter')) {
@@ -195,7 +210,11 @@ x_424426_devops.context_menu = (function() {
 						configurable: true, enumerable: true, writable: true, value: v 
 					});
 					
-					addHeaderMenuItems($window, $config, v);
+					// right after setting the value, the menu gets .clear()-ed
+					// the DevOps+ menu building needs to be postponed slightly
+					$window.setTimeout(function () {
+						addHeaderMenuItems($window, $config, v);
+					});
 				}
 			});
 			
@@ -206,7 +225,11 @@ x_424426_devops.context_menu = (function() {
 						configurable: true, enumerable: true, writable: true, value: v 
 					});
 					
-					addHeaderMenuItems($window, $config, v);
+					// right after setting the value, the menu gets .clear()-ed
+					// the DevOps+ menu building needs to be postponed slightly
+					$window.setTimeout(function () {
+						addHeaderMenuItems($window, $config, v);
+					});
 				}
 			});
 		}
@@ -220,18 +243,21 @@ x_424426_devops.context_menu = (function() {
 			var itemsAdded = 0;
 			var devopsMenu = new $window.GwtContextMenu('devops_header_menu');
 			$config.headerItems.forEach(function (item) {
+				var $context = {};
 				var conditionScript = item.condition_script;
 				if (conditionScript) {
-					if ($window.eval(conditionScript) != true) {
+					if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
 						return;
 					}
 				}
 
 				
 				if (item.item_type == '' || item.item_type == 'link') {
-					devopsMenu.addHref(item.label, item.script);
+					devopsMenu.addFunc(item.label, function () {
+						new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
+					});
 				} else if (item.item_type == 'menu') {
-					devopsMenu.addMenu(item.label, $window.eval(item.script));
+					devopsMenu.addMenu(item.label, new $window.Function('script', '$context', 'return eval(script)')(item.script, $context));
 				} else {
 					return;
 				}
@@ -252,14 +278,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>62</sys_mod_count>
+        <sys_mod_count>76</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-13 08:12:51</sys_updated_on>
+        <sys_updated_on>2023-10-28 16:00:36</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>

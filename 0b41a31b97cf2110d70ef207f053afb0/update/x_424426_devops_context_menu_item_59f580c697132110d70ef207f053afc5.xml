@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[(function () {
+        <client_script><![CDATA[/* global window, GlideList2, GlideAjax */
+/* eslint no-undef: "error" */
+(function ($context) {
 	
-	var list = GlideList2.get('${LISTID}');	
+	var list = GlideList2.get($context.LISTID);	
 	var tableName = list.getTableName();
-	var query = '${FILTER}';
+	var query = $context.FILTER;
 
 	var fixedQuery = list.getFixedQuery();
 	if (fixedQuery) {
@@ -144,7 +146,7 @@
 			});
 		});
 	});	
-})();]]></client_script>
+})($context);]]></client_script>
         <condition_script/>
         <item_type>link</item_type>
         <label>sys.scripts</label>
@@ -153,14 +155,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-09 07:04:08</sys_created_on>
         <sys_id>59f580c697132110d70ef207f053afc5</sys_id>
-        <sys_mod_count>21</sys_mod_count>
+        <sys_mod_count>23</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_59f580c697132110d70ef207f053afc5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-13 07:34:49</sys_updated_on>
+        <sys_updated_on>2023-10-28 14:45:23</sys_updated_on>
         <type>breadcrumb</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

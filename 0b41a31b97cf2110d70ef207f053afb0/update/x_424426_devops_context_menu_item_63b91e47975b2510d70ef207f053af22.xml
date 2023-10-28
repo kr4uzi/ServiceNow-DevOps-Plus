@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[(function () {
+        <client_script><![CDATA[/* global $context, g_form, GlideAjax, GlideModalForm, Table, devStudioAPI */
+/* eslint no-undef: "error" */
+(function ($context) {
 	if (g_form.getTableName() == 'ni') {
 		var ga = new GlideAjax('x_424426_devops.TranslateUtilClient').setScope('x_424426_devops');
 		ga.addParam('sysparm_name', 'getCatalogFieldData');
-		ga.addParam('field', g_form.getActualName('${FIELD}').split(':')[1]);
+		ga.addParam('field', g_form.getActualName($context.FIELD).split(':')[1]);
 		ga.getXMLAnswer(function (result) {
 			result = JSON.parse(result);
 			if (result.status == 'success') {
-				var gmf = new GlideModalForm('Translations for \'${FIELD}\'', result.table + '_list', function () {
+				var gmf = new GlideModalForm('Translations for "' + $context.FIELD + '"', result.table + '_list', function () {
 					// on render callback
 				}, false);
 				gmf.addParm('sysparm_query', result.query);
@@ -24,28 +26,28 @@
 	
 	var table = '';
 	var query = '';
-	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
+	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
 		// the translations need to happen with the base table of the translated field
 		var t = Table.get(g_form.getTableName());
-		var e = t.getElement("${FIELD}");
+		var e = t.getElement($context.FIELD);
 		var fieldTable = e.getTableName();
 		
 		if (type == 'translated_html' || type == 'translated_text') {
 			// need to get the base table of the field
 			table = 'sys_translated_text';
-			query = 'tablename=' + fieldTable
-				+ '^fieldname=${FIELD}'
-				+ '^documentkey=' +  g_form.getUniqueValue();
+			query = 'tablename=' + fieldTable +
+				'^fieldname=' + $context.FIELD +
+				'^documentkey=' +  g_form.getUniqueValue();
 		} else if (type == 'translated_field') {
 			table = 'sys_translated';
-			query = 'name=' + fieldTable + '^element=${FIELD}^value=' + g_form.getValue('${FIELD}');
+			query = 'name=' + fieldTable + '^element=' + $context.FIELD + '^value=' + g_form.getValue($context.FIELD);
 		}
 	}
 	
 	if (table) {
-		var gmf = new GlideModalForm('Translations for \'${FIELD}\'', table + '_list', function () {
+		var gmf = new GlideModalForm('Translations for "' + $context.FIELD + '"', table + '_list', function () {
 			// on render callback
 		}, false);
 		gmf.addParm('sysparm_query', query);
@@ -59,13 +61,16 @@
 		gmf.render();
 	}
 	
-})();]]></client_script>
-        <condition_script><![CDATA[(function () {
+})($context);]]></client_script>
+        <condition_script><![CDATA[/* global $context, g_form */
+/* eslint no-undef: "error" */
+(function ($context) {
+	debugger;
 	if (g_form.getTableName() == 'ni') {
 		return true;
 	}
 	
-	var typeElement = g_form.getLabel('${FIELD}').closest('[type]');
+	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
 		if (type == 'translated_html') {
@@ -78,7 +83,7 @@
 	}
 
 	return false;
-})();]]></condition_script>
+})($context);]]></condition_script>
         <item_type>link</item_type>
         <label>translations</label>
         <order>500</order>
@@ -86,14 +91,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>33</sys_mod_count>
+        <sys_mod_count>37</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-09-20 19:43:21</sys_updated_on>
+        <sys_updated_on>2023-10-28 15:01:18</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
