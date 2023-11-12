@@ -7,12 +7,14 @@
         <client_callable>true</client_callable>
         <description/>
         <name>ConfigUtilClient</name>
-        <script><![CDATA[/* global global, Class, gs, sn_cc, GlideRecordSecure */
+        <script><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecordSecure */
 /* eslint no-undef: "error" */
 var ConfigUtilClient = Class.create();
 ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	initialize: function(request, responseXML, gc) {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+		this.configUtil = new x_424426_devops.ConfigUtil();
 	},
 
 	getConfig: function() {
@@ -22,14 +24,12 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 		};
 		
 		if (gs.hasRole('x_424426_devops.devops_user')) {
-			const credentialsProvider = new sn_cc.StandardCredentialsProvider();
-			result.gpt_support = !!credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.openai_gpt']);
-			result.deepl_support = !!credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.deepl']);
-			
+			result.deepl_support = this.configUtil.hasDeeplSupport();
 			result.headerItems = [];
 			result.fieldItems = [];
 			result.breadcrumbItems = [];
-			result.languages = [];
+			result.languages = this.configUtil.getLanguages();
+			result.showNavTo = this.configUtil.showNavTo();
 			
 			const itemGr = new GlideRecordSecure('x_424426_devops_context_menu_item');
 			itemGr.addQuery('active', true);
@@ -51,16 +51,6 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 					result.breadcrumbItems.push(item);
 				}
 			}
-
-			const languageGr = new GlideRecordSecure('sys_language');
-			languageGr.addQuery('active', true);
-			languageGr.query();
-			while (languageGr.next()) {
-				result.languages.push({
-					name: languageGr.getDisplayValue('name'),
-					id: languageGr.id.toString()
-				});
-			}
 			
 			result.status = 'success';
 		} else {
@@ -76,13 +66,13 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:23:15</sys_created_on>
         <sys_id>ef60538997172110d70ef207f053af6d</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>ConfigUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_ef60538997172110d70ef207f053af6d</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-07-21 18:07:06</sys_updated_on>
+        <sys_updated_on>2023-11-12 15:25:24</sys_updated_on>
     </sys_script_include>
 </record_update>

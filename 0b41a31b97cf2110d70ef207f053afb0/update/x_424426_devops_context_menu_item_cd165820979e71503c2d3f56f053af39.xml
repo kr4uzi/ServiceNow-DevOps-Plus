@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI */
+/* eslint no-undef: "error" */
+(function ($context) {
+	var gmf;
+	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
+	if (typeElement) {
+		var type = typeElement.getAttribute('type');
+		if (type == 'table_name') {
+			gmf = new GlideModalForm(
+				'Open "' + $context.FIELD + '"',
+				g_form.getValue($context.FIELD) + '_list'
+			);
+		} else {
+			var uiElement = g_form.getGlideUIElement($context.FIELD);
+			gmf = new GlideModalForm(
+				'Open "' + $context.FIELD + '"',
+				uiElement.reference
+			);
+			gmf.setSysID(g_form.getValue($context.FIELD));
+		}
+	}
+	
+	if (gmf) {
+		// if in Studio, add the currently selected scoped so that
+		// the translations are created in the currently selected application
+		if (typeof devStudioAPI !== "undefined") {
+			gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+		}
+
+		gmf.render();
+	}
+	
+})($context);]]></client_script>
+        <condition_script><![CDATA[/* global $context, g_form, Table */
+/* eslint no-undef: "error" */
+(function ($context) {
+	if (g_form.getTableName() == 'ni') {
+		return false;
+	}
+	
+	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
+	if (typeElement) {
+		var type = typeElement.getAttribute('type');
+		if (type == 'reference') {
+			if (g_form.getValue($context.FIELD)) {
+				var table = Table.get(g_form.getTableName());
+				if (table) {
+					var element = table.getElement($context.FIELD);
+					if (element) {
+						if (element.attributes.attributes && element.attributes.attributes.indexOf('readonly_clickthrough=true') > -1) {
+							return false;
+						}
+						
+						return true;
+					}
+				}
+			}
+		} else if (type == 'table_name') {
+			return true;
+		}
+	}
+
+	return false;
+})($context);]]></condition_script>
+        <item_type>link</item_type>
+        <label>open</label>
+        <order>450</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-10-31 20:23:36</sys_created_on>
+        <sys_id>cd165820979e71503c2d3f56f053af39</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>open</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_cd165820979e71503c2d3f56f053af39</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-11-11 14:14:39</sys_updated_on>
+        <type>field</type>
+        <use_condition>true</use_condition>
+    </x_424426_devops_context_menu_item>
+</record_update>

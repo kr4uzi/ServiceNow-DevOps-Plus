@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_message">
+    <sys_ui_message action="INSERT_OR_UPDATE">
+        <application/>
+        <code/>
+        <commented_message/>
+        <key>devops_translate_empty</key>
+        <language>en</language>
+        <message>Translation (Deepl) returned empty translation</message>
+        <sys_class_name>sys_ui_message</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-11-12 15:41:47</sys_created_on>
+        <sys_id>45a4d59897e635103c2d3f56f053af5d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>devops_translate_empty</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_message_45a4d59897e635103c2d3f56f053af5d</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-11-12 15:41:47</sys_updated_on>
+    </sys_ui_message>
+</record_update>

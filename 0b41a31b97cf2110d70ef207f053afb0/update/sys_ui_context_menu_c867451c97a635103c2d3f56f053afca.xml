@@ -10,11 +10,22 @@
  *    'g_sysId' the sys_id of the row or form that the script is running against
  *    'rowSysId' is also set to the sys_id of the row to support legacy actions, but g_sysId is preferred
  */
- 
+function devops_showTranslatedList(langID, langName) {
+	// all available variables are cleared after this script is executed
+	// setPreference accesses this later, therefore g_list needs to be saved
+	var gList = g_list;
+	var originalLanguage = getPreference('user.language') || '';
+	setPreference('user.language', langID, function () {
+		var gmf = new GlideModalForm('Translation (' + langName + ')', gList.getTableName() + '_list');
+		gmf.setOnloadCallback(setPreference.bind(null, 'user.language', originalLanguage));
+		gmf.addParm('sysparm_query', gList.getQuery());
+		gmf.render();
+	});
+}
 ]]></action_script>
         <active>true</active>
         <comments/>
-        <condition>gs.hasRole('x_424426_devops.devops_user') &amp;&amp; gs.hasRole('admin')</condition>
+        <condition/>
         <do_not_cache>false</do_not_cache>
         <dynamic_actions_script><![CDATA[/** 
  * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
@@ -27,10 +38,22 @@
  * 
  * Add items to the context menu by calling: 
  *    g_contextMenu.addAction(item_id, label, script_string, order); 
- */ 
+ */
+(function () {
+	const originalLanguageID = gs.getUser().getPreference('user.language') || 'en';
+	const config = new x_424426_devops.ConfigUtil();
+	config.getLanguages().forEach(function (lang, index) {
+		if (lang.id != originalLanguageID) {
+			const itemId = 'translated_' + lang.id;
+			const script = 'devops_showTranslatedList("' + lang.id + '", "' + lang.name + '");';
+			g_contextMenu.addAction(itemId, lang.name, script, index);
+		}
+	});
+
+})();
 ]]></dynamic_actions_script>
         <menu>list_title</menu>
-        <name>DevOps+</name>
+        <name>Translated Items</name>
         <on_show_script><![CDATA[/**
  * This client-side script is used to dynamically change the context menu before it is displayed.
  * It is called before showing the context menu if the Run onShow script flag is checked.
@@ -42,27 +65,29 @@
  *    'g_fieldName' the name of the field that the context menu is running against (only valid for List context menus)
  *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
  *    'g_sysId' the sys_id of the row or form that the script is running against
- */]]></on_show_script>
-        <order>100001</order>
-        <parent/>
+ */
+ 
+]]></on_show_script>
+        <order>1000</order>
+        <parent display_value="translated">e817011c97a635103c2d3f56f053af5c</parent>
         <run_on_show_script>false</run_on_show_script>
         <sys_class_name>sys_ui_context_menu</sys_class_name>
         <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-07-03 14:16:30</sys_created_on>
+        <sys_created_on>2023-11-12 14:49:46</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
-        <sys_id>384fcd3197372110d70ef207f053afd6</sys_id>
-        <sys_mod_count>6</sys_mod_count>
-        <sys_name>DevOps+</sys_name>
+        <sys_id>c867451c97a635103c2d3f56f053afca</sys_id>
+        <sys_mod_count>21</sys_mod_count>
+        <sys_name>Translated Items</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name>sys_ui_context_menu_384fcd3197372110d70ef207f053afd6</sys_update_name>
+        <sys_update_name>sys_ui_context_menu_c867451c97a635103c2d3f56f053afca</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 15:12:38</sys_updated_on>
+        <sys_updated_on>2023-11-12 17:09:17</sys_updated_on>
         <table>global</table>
         <track_selected>false</track_selected>
-        <type>menu</type>
+        <type>dynamic</type>
     </sys_ui_context_menu>
 </record_update>

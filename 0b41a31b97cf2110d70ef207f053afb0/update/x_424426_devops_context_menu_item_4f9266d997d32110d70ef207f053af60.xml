@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global g_form, GlideModalForm */
+        <client_script><![CDATA[/* global g_form, GlideModalForm, devStudioAPI */
 /* eslint no-undef: "error" */
 (function () {
 	
@@ -10,6 +10,13 @@
 		// on render callback
 	}, false);
 	gmf.addParm('sysparm_query', 'sys_id=' + g_form.getUniqueValue());
+	
+	// if in Studio, add the currently selected scoped so that
+	// the translations are created in the currently selected application
+	if (typeof devStudioAPI !== "undefined") {
+		gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+	}
+	
 	gmf.render();
 	
 })();]]></client_script>
@@ -28,14 +35,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:32:18</sys_created_on>
         <sys_id>4f9266d997d32110d70ef207f053af60</sys_id>
-        <sys_mod_count>7</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>filter (sys_id)</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_4f9266d997d32110d70ef207f053af60</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-10-28 14:48:23</sys_updated_on>
+        <sys_updated_on>2023-11-11 13:36:00</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
