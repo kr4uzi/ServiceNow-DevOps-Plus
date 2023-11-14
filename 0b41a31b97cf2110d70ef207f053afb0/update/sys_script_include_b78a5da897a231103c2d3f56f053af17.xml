@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.ContextMenuUtilClient</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>ContextMenuUtilClient</name>
+        <script><![CDATA[/* global global, gs */
+/* global Class, GlideRecordSecure */
+/* eslint no-undef: "error" */
+var ContextMenuUtilClient = Class.create();
+ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	initialize: function () {
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	normalizeVariable: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		let table = this.getParameter('table');
+		if (table) {
+			if (table.startsWith('u_') || table.startsWith('sys_') || table.startsWith('cmdb_')) {
+				table = table.substr(table.indexOf('_') + 1);
+			} else {
+				const dbObjectGr = new GlideRecordSecure('sys_db_object');
+				dbObjectGr.addQuery('name', table);
+				dbObjectGr.setLimit(1);
+				dbObjectGr.query();
+				if (dbObjectGr.next()) {
+					const scopeIdentifier = dbObjectGr.sys_scope.scope.toString();
+					// strip [SCOPE]_ from table
+					// e.g. table = [x_424426_devops_]context_menu_item => context_menu_item
+					table = table.substr(scopeIdentifier.length + 1);
+				}
+			}
+			
+			result.variable_name = table.split('_').reduce((s, c) => 
+				s + (c.charAt(0).toUpperCase() + c.slice(1))
+			);
+			result.status = 'success';
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+
+    type: 'ContextMenuUtilClient'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-11-13 10:56:29</sys_created_on>
+        <sys_id>b78a5da897a231103c2d3f56f053af17</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>ContextMenuUtilClient</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_b78a5da897a231103c2d3f56f053af17</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-11-14 12:35:49</sys_updated_on>
+    </sys_script_include>
+</record_update>

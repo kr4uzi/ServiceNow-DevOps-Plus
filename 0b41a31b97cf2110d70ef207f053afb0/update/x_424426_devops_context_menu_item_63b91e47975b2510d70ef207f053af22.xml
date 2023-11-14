@@ -5,6 +5,7 @@
 /* eslint no-undef: "error" */
 (function ($context) {
 	if (g_form.getTableName() == 'ni') {
+		// ni => catalog item
 		var ga = new GlideAjax('x_424426_devops.TranslateUtilClient').setScope('x_424426_devops');
 		ga.addParam('sysparm_name', 'getCatalogFieldData');
 		ga.addParam('field', g_form.getActualName($context.FIELD).split(':')[1]);
@@ -14,6 +15,13 @@
 				var gmf = new GlideModalForm('Translations for "' + $context.FIELD + '"', result.table + '_list', function () {
 					// on render callback
 				}, false);
+				
+				// if in Studio, add the currently selected scoped so that
+				// the translations are created in the currently selected application
+				if (typeof devStudioAPI !== "undefined") {
+					gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+				}
+				
 				gmf.addParm('sysparm_query', result.query);
 				gmf.render();
 			} else if (result.message) {
@@ -100,14 +108,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>42</sys_mod_count>
+        <sys_mod_count>43</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-11 13:54:49</sys_updated_on>
+        <sys_updated_on>2023-11-14 12:09:05</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

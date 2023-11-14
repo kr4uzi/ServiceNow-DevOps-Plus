@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global window, GlideList2, GlideAjax */
+        <client_script><![CDATA[/* global $context, console, window, GlideList2, GlideAjax */
 /* eslint no-undef: "error" */
 (function ($context) {
 	
-	var list = GlideList2.get($context.LISTID);	
-	var tableName = list.getTableName();
-	var query = $context.FILTER;
-
-	var fixedQuery = list.getFixedQuery();
+	const x = window.event.screenX - 500;
+	const y = window.event.screenY - 250;
+	const list = GlideList2.get($context.LISTID);	
+	const tableName = list.getTableName();
+	
+	let query = $context.FILTER;
+	const fixedQuery = list.getFixedQuery();
 	if (fixedQuery) {
 		query = fixedQuery + '^' + query;
 	}
 
-	var relatedQuery = list.getRelatedQuery();
+	const relatedQuery = list.getRelatedQuery();
 	if (relatedQuery) {
 		query = relatedQuery + '^' + query;
 	}
 	
-	var orderBy = list.orderBy.map(function (order) {
+	const orderBy = list.orderBy.map(function (order) {
 		if (order.startsWith('ORDERBYDESC')) {
 			return {
 				dir: 'DESC',
@@ -33,119 +35,144 @@
 		}
 	});
 	
-	var groupBy = list.groupBy.map(function (group) {
+	const groupBy = list.groupBy.map(function (group) {
 		return group.substr('GROUPBY'.length);
 	});
 	
-	var ga = new GlideAjax('QueryParseAjax');
+	const ga = new GlideAjax('QueryParseAjax');
 	ga.addParam('sysparm_chars', query);
 	ga.addParam('sysparm_name', tableName);
 	ga.addParam('sysparm_version2', 'true');
 	ga.getXML(function (xml) {
-		var objName = groupBy.length ? 'recordGa' : 'recordGr';
-		var objClass = groupBy.length ? 'GlideAggregate' : 'GlideRecord';
-		var script = 'var ' + objName + ' = new ' + objClass + '("' + tableName + '");';
-		// Need to count the numbers of '^NQ's those OR queries cannot be built in "one go"...
-		// For each NQ-part, the query has to be built up and then temporarily stored in a variable.
-		// After all NQ queries have been built, the can be joined into one query.
-		// This is because you cannot do a .addEncodedQuery('^NQ') -> not only will this give an "invalid query"
-		// error message, but a ^EQ will also be added on top of the ^NQ...
-		var nqs = 0; 
-		
-		var items = xml.responseXML.documentElement.getElementsByTagName('item');
-		for (var i = 0; i < items.length; i++) {
-			var item = items[i];
-			if (item.getAttribute('endquery') == 'false') {
-				if (item.getAttribute('newquery') == 'true') {
-					script += '\nvar nq' + (++nqs) + ' = recordGr.getEncodedQuery();'
-						+ '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");';
-				}
-				
-				var operator = item.getAttribute('operator');
-				if (item.getAttribute('or') == 'false') {
-					if (operator == 'ISEMPTY') {
-						script += '\n' + objName + '.addNullQuery';
-					} else if (operator == 'ISNOTEMPTY') {
-						script += '\n' + objName + '.addNotNullQuery';
+		getNormalizedVariableName(tableName, function (variableName) {
+			const objName = groupBy.length ? (variableName + 'Ga') : (variableName + 'Gr');
+			const objClass = groupBy.length ? 'GlideAggregate' : 'GlideRecord';
+			let script = 'var ' + objName + ' = new ' + objClass + '("' + tableName + '");';
+			// Need to count the numbers of '^NQ's those OR queries cannot be built in "one go"...
+			// For each NQ-part, the query has to be built up and then temporarily stored in a variable.
+			// After all NQ queries have been built, the can be joined into one query.
+			// This is because you cannot do a .addEncodedQuery('^NQ') -> not only will this give an "invalid query"
+			// error message, but a ^EQ will also be added on top of the ^NQ...
+			let nqs = 0; 
+
+			const items = xml.responseXML.documentElement.getElementsByTagName('item');
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i];
+				if (item.getAttribute('endquery') == 'false') {
+					if (item.getAttribute('newquery') == 'true') {
+						script += '\nvar nq' + (++nqs) + ' = recordGr.getEncodedQuery();'
+							+ '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");';
+					}
+
+					const operator = item.getAttribute('operator');
+					if (item.getAttribute('or') == 'false') {
+						if (operator == 'ISEMPTY') {
+							script += '\n' + objName + '.addNullQuery';
+						} else if (operator == 'ISNOTEMPTY') {
+							script += '\n' + objName + '.addNotNullQuery';
+						} else {
+							script += '\n' + objName + '.addQuery';
+						}
 					} else {
-						script += '\n' + objName + '.addQuery';
+						script += '\n  .addOrCondition';
 					}
-				} else {
-					script += '\n  .addOrCondition';
-				}
-				
-				script += '("' + item.getAttribute('field') + '"';
-				if (operator == 'ISEMPTY' || operator == 'ISNOTEMPTY') {
-					script += ')';
-				} else {
-					if (item.getAttribute('operator') != '=') {
-						script += ', "' + item.getAttribute('operator') + '"';
+
+					script += '("' + item.getAttribute('field') + '"';
+					if (operator == 'ISEMPTY' || operator == 'ISNOTEMPTY') {
+						script += ')';
+					} else {
+						if (item.getAttribute('operator') != '=') {
+							script += ', "' + item.getAttribute('operator') + '"';
+						}
+
+						script += ', ' + JSON.stringify(item.getAttribute('value')) + ')';
 					}
-					
-					script += ', ' + JSON.stringify(item.getAttribute('value')) + ')';
-				}
-				
-				if ((i + 1) >= items.length || items[i + 1].getAttribute('or') == 'false') {
-					script += ';';
+
+					if ((i + 1) >= items.length || items[i + 1].getAttribute('or') == 'false') {
+						script += ';';
+					}
 				}
 			}
-		}
-		
-		if (nqs) {
-			// add the last NQ - query
-			script += '\nvar nq' + (++nqs) + ' = ' + objName + '.getEncodedQuery();';
-			
-			// now build the final query (gr.addEncodedQuery(nq1); gr.addEncodedQuery(nq2); ...)
-			script += '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");'
-				+ '\n' + objName + '.addEncodedQuery(nq1);';
-			
-			for (var nq = 2; nq <= nqs; nq++) {
-				script += '\n' + objName + '.addEncodedQuery("^NQ" + nq' + nq + ');';
+
+			if (nqs) {
+				// add the last NQ - query
+				script += '\nvar nq' + (++nqs) + ' = ' + objName + '.getEncodedQuery();';
+
+				// now build the final query (gr.addEncodedQuery(nq1); gr.addEncodedQuery(nq2); ...)
+				script += '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");'
+					+ '\n' + objName + '.addEncodedQuery(nq1);';
+
+				for (var nq = 2; nq <= nqs; nq++) {
+					script += '\n' + objName + '.addEncodedQuery("^NQ" + nq' + nq + ');';
+				}
 			}
-		}
-		
-		orderBy.forEach(function (order) {
-			if (order.dir == 'DESC') {
-				script += '\n' + objName + '.orderByDesc("' + order.field + '");';
-			} else if (order.dir == 'ASC') {
-				script += '\n' + objName + '.orderBy("' + order.field + '");';
+
+			orderBy.forEach(function (order) {
+				if (order.dir == 'DESC') {
+					script += '\n' + objName + '.orderByDesc("' + order.field + '");';
+				} else if (order.dir == 'ASC') {
+					script += '\n' + objName + '.orderBy("' + order.field + '");';
+				}
+			});
+
+			groupBy.forEach(function (group) {
+				script += '\n' + objName + '.groupBy("' + group + '");';
+			});
+
+			if (groupBy.length == 0) {
+				// setLimit is not supported by GlideAggregate
+				script += '\n' + objName + '.setLimit(' + list.totalRows + ');';
 			}
-		});
-		
-		groupBy.forEach(function (group) {
-			script += '\n' + objName + '.groupBy("' + group + '");';
-		});
-		
-		if (groupBy.length == 0) {
-			// setLimit is not supported by GlideAggregate
-			script += '\n' + objName + '.setLimit(' + list.totalRows + ');';
-		}
-		
-		script +=  '\n' + objName + '.query();'
-			+ '\nwhile (' + objName + '.next()) {';
-		
-		groupBy.forEach(function (group) {
-			script += '\n  var ' + group + ' = ' + objName + '.getValue("' + group + '");';
-		});
-		
-		if (groupBy.length == 0) {
-			script += '\n  ' + objName + '.setWorkflow(false);'
-				+ '\n  ' + objName + '.update();';
-		}
-		
-		script += '\n}';
-		
-		var x = window.event.screenX - 500;
-		var y = window.event.screenY - 250;
-		var bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
-		bgs.addEventListener('DOMContentLoaded', function () {
-			bgs.document.getElementById('runscript').value = script;
-			
-			bgs.setTimeout(function () {
-				bgs.document.querySelector('select[name="sys_scope"]').value = 'global';
+
+			script +=  '\n' + objName + '.query();'
+				+ '\nwhile (' + objName + '.next()) {';
+
+			groupBy.forEach(function (group) {
+				script += '\n  var ' + group + ' = ' + objName + '.getValue("' + group + '");';
+			});
+
+			if (groupBy.length == 0) {
+				script += '\n  ' + objName + '.setWorkflow(false);'
+					+ '\n  ' + objName + '.update();';
+			}
+
+			script += '\n}';
+
+			const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+			bgs.addEventListener('DOMContentLoaded', function () {
+				bgs.document.getElementById('runscript').value = script;
+
+				bgs.setTimeout(function selectGlobalScope() {
+					const scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
+					const options = scopeSelector && scopeSelector.querySelectorAll('option');
+					for (let i = 0; options && i < options.length; i++) {
+						// PDIs have the global scope option with value global
+						// Customer Instances have global with SysID value
+						if (options[i].innerText == 'global' || options[i].value == 'global') {
+							scopeSelector.value = options[i].value;
+							return;
+						}
+					}
+
+					bgs.setTimeout(selectGlobalScope, 100);
+				});
 			});
 		});
-	});	
+	});
+	
+	function getNormalizedVariableName(table, cb) {
+		const ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'normalizeVariable');
+		ga.addParam('table', table);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				cb(result.variable_name);
+			} else if (result.message) {
+				console.error(result.message);
+			}
+		});
+	}
 })($context);]]></client_script>
         <condition_script/>
         <item_type>link</item_type>
@@ -155,14 +182,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-09 07:04:08</sys_created_on>
         <sys_id>59f580c697132110d70ef207f053afc5</sys_id>
-        <sys_mod_count>23</sys_mod_count>
+        <sys_mod_count>25</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_59f580c697132110d70ef207f053afc5</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-10-28 14:45:23</sys_updated_on>
+        <sys_updated_on>2023-11-14 12:31:23</sys_updated_on>
         <type>breadcrumb</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

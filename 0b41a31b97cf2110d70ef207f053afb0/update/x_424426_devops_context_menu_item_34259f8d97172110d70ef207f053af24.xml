@@ -1,28 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, window, g_form */
+        <client_script><![CDATA[/* global $context, window, g_form, GlideAjax, console */
 /* eslint no-undef: "error" */
 (function ($context) {
-	var x = window.event.screenX - 500;
-	var y = window.event.screenY - 250;
-	var bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
-	bgs.addEventListener('DOMContentLoaded', function () {
-		bgs.document.getElementById('runscript').value =
-			'var recordGr = new GlideRecord(\'' + g_form.getTableName() + '\');'
-			+ '\nrecordGr.addQuery(\'sys_id\', \'' + g_form.getUniqueValue() + '\');'
-			+ '\nrecordGr.setLimit(1);'
-			+ '\nrecordGr.query();'
-			+ '\nif (recordGr.next()) {'
-			+ '\n  recordGr.setWorkflow(false);'
-			+ '\n  recordGr.update();'
-			+ '\n}'
-		;
+	const x = window.event.screenX - 500;
+	const y = window.event.screenY - 250;
+	const table = g_form.getTableName();
+	getNormalizedVariableName(table, function (variableName) {
+		variableName += 'Gr';
 		
-		bgs.setTimeout(function () {
-			bgs.document.querySelector('select[name="sys_scope"]').value = 'global';
+		const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+		bgs.addEventListener('DOMContentLoaded', function () {
+			bgs.document.getElementById('runscript').value =
+				'var ' + variableName + ' = new GlideRecord(\'' + g_form.getTableName() + '\');'
+				+ '\n' + variableName + '.addQuery(\'sys_id\', \'' + g_form.getUniqueValue() + '\');'
+				+ '\n' + variableName + '.setLimit(1);'
+				+ '\n' + variableName + '.query();'
+				+ '\nif (' + variableName + '.next()) {'
+				+ '\n  ' + variableName + '.setWorkflow(false);'
+				+ '\n  ' + variableName + '.update();'
+				+ '\n}'
+			;
+
+			bgs.setTimeout(function selectGlobalScope() {
+				const scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
+				const options = scopeSelector && scopeSelector.querySelectorAll('option');
+				for (let i = 0; options && i < options.length; i++) {
+					// PDIs have the global scope option with value global
+					// Customer Instances have global with SysID value
+					if (options[i].innerText == 'global' || options[i].value == 'global') {
+						scopeSelector.value = options[i].value;
+						return;
+					}
+				}
+				
+				bgs.setTimeout(selectGlobalScope, 100);
+			});
 		});
-	});
+	});	
+	
+	function getNormalizedVariableName(table, cb) {
+		const ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'normalizeVariable');
+		ga.addParam('table', table);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				cb(result.variable_name);
+			} else if (result.message) {
+				console.error(result.message);
+			}
+		});
+	}
 })($context);]]></client_script>
         <condition_script><![CDATA[/* global $context, g_form */
 /* eslint no-undef: "error" */
@@ -39,14 +69,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:43:47</sys_created_on>
         <sys_id>34259f8d97172110d70ef207f053af24</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>24</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_34259f8d97172110d70ef207f053af24</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-10-28 14:57:44</sys_updated_on>
+        <sys_updated_on>2023-11-14 12:31:02</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

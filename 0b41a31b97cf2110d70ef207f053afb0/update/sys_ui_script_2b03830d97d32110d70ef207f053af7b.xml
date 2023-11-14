@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
     <sys_ui_script action="INSERT_OR_UPDATE">
         <active>true</active>
-        <description>v.1.0.23</description>
+        <description/>
         <global>true</global>
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.loader</name>
@@ -15,8 +15,8 @@ x_424426_devops.loader = (function() {
 		return x_424426_devops.loader;
 	}
 	
-	var resources = {};
-	var resourceCallbacks = {};
+	const resources = {};
+	const resourceCallbacks = {};
 	
 	if (typeof window !== 'undefined' && window) {
 		resources['window'] = window;
@@ -34,7 +34,8 @@ x_424426_devops.loader = (function() {
 		});
 	});
 	
-	var version = '1.0.23';
+	const version = '1.0.24';
+	x_424426_devops.version = version;
 	createScript('x_424426_devops.config.jsdbx?v=' + version);
 	createScript('x_424426_devops.context_menu.jsdbx?v=' + version);
 	createScript('x_424426_devops.text_capture.jsdbx?v=' + version);
@@ -71,7 +72,7 @@ x_424426_devops.loader = (function() {
 	
 	function createScript(src) {
 		getResource('window', function ($window) {
-			var script = $window.document.createElement('script');
+			const script = $window.document.createElement('script');
 			script.src = src;
 			$window.document.head.appendChild(script);
 		});
@@ -83,14 +84,14 @@ x_424426_devops.loader = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:20:23</sys_created_on>
         <sys_id>2b03830d97d32110d70ef207f053af7b</sys_id>
-        <sys_mod_count>71</sys_mod_count>
+        <sys_mod_count>74</sys_mod_count>
         <sys_name>x_424426_devops.loader</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_2b03830d97d32110d70ef207f053af7b</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 16:50:42</sys_updated_on>
+        <sys_updated_on>2023-11-14 12:03:51</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
