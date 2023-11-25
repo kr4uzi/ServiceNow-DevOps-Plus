@@ -4,102 +4,158 @@
         <client_script><![CDATA[/* global addLoadEvent, gel, getMessage, jslog, GlideAjax, XMLHttpRequest, window, setTimeout */
 /* eslint no-undef: "error" */
 addLoadEvent(function () {
-	x_424426_devops_ValuesChanged();
-	
-	['x_424426_devops_script_include'].forEach(function (fieldId) {
-		var ref = gel(fieldId);
-		// unfortunately the ootb event weren't registered using propert addEventListener...
-		var onChange = ref.getAttribute('onchange');
-		ref.setAttribute('onchange', 'x_424426_devops_ValuesChanged();' + onChange);
-	});
+	var record = gel('devops_metadata');
+	recordSelected(record);
 });
 
-function x_424426_devops_ValuesChanged() {
-	var okButton = gel('x_424426_devops_ok');
-	var mandatoryFilled = true;
-	['x_424426_devops_script_include'].forEach(function (fieldId) {
-		var ref = gel(fieldId);
-		var row = ref.closest('div.row');
-		if (ref.value) {
-			row.classList.add('is-filled');
-		} else {
-			mandatoryFilled = false;
-			row.classList.remove('is-filled');
-		}
-	});
+function recordSelected(element) {
+	updateMandatoryness(element);
 	
-	if (mandatoryFilled) {
+	var fields = gel('devops_fields');
+	fields.options.length = 0;
+	fields.setAttribute('disabled', '');
+	fields.dispatchEvent(new window.Event('change'));
+	
+	if (element.value) {
+		hideError();
+
+		var ga = new GlideAjax('x_424426_devops.DecryptUtilClient');
+		ga.addParam('sysparm_name', 'getMetadataInfo');
+		ga.addParam('metadata', element.value);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				gel('devops_table').value = result.table;
+				addOption(fields, '', '-- None --');
+				
+				result.decryptable_fields.forEach(function (field) {
+					addOption(fields, field.name, field.label);
+				});
+				
+				if (result.decryptable_fields.length == 1) {
+					fields.options[1].setAttribute('selected', '');
+					fields.dispatchEvent(new window.Event('change'));
+				}
+
+				fields.removeAttribute('disabled');
+			} else {
+				onError(result.message);
+			}
+		});
+	} else {
+		hideError();
+		addOption(fields, '', 'Select a record first');
+	}
+	
+	function addOption(selectElement, value, label) {
+		var option = window.document.createElement('OPTION');
+		option.value = value;
+		option.innerHTML = label;
+		selectElement.appendChild(option);
+	}
+}
+
+function fieldSelected(element) {
+	updateMandatoryness(element);
+	
+	var okButton = gel('devops_ok');
+	if (element.value) {
 		okButton.removeAttribute('disabled');
 	} else {
 		okButton.setAttribute('disabled', '');
 	}
 }
 
-function x_424426_devops_onOK() {
-	var scriptInclude = gel('x_424426_devops_script_include').value;
-	if (scriptInclude) {
-		gel('x_424426_devops_error_row').style.display = 'none';
-		gel('x_424426_devops_loading').style.display = '';
-		gel('x_424426_devops_ok').setAttribute('disabled', '');
+function updateMandatoryness(ref) {
+	var row = ref.closest('div.row');
+	if (ref.value) {
+		row.classList.add('is-filled');
+	} else {
+		row.classList.remove('is-filled');
+	}
+}
+
+function devops_onOK() {
+	hideError();
+	
+	var recordTable = gel('devops_table').value;
+	var recordSysId = gel('devops_metadata').value;
+	var columnName = gel('devops_fields').value;
+	if (recordTable && recordSysId && columnName) {
+		gel('devops_error_row').style.display = 'none';
+		gel('devops_loading').style.display = '';
+		gel('devops_ok').setAttribute('disabled', '');
 		var progressBar = gel('devops-progress-bar');
 		progressBar.setAttribute('aria-valuenow', '0');
 		progressBar.style.width = '0%';
-		decryptScriptInclude(scriptInclude);
+		decryptMetadata(gel('devops_scope').value, recordTable, recordSysId, columnName, gel('sys_display.devops_metadata').value);
 	} else {
-		getMessage(['{0} is mandatory!', 'Script Include', 'Credentials'], function (msgs) {
-			gel('x_424426_devops_error_row').style.display = '';
+		getMessage(['{0} is mandatory!', 'Application File', 'Column'], function (msgs) {
+			gel('devops_error_row').style.display = '';
 			var errorMessages = [];
-			if (!scriptInclude) {
-				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Script Include'] + '"']));
+			if (!recordSysId) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Application File'] + '"']));
 			}
 			
-			gel('x_424426_devops_error_message').innerHTML = errorMessages.join('<br />');
+			if (!columnName) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Column'] + '"']));
+			}
+			
+			onError(errorMessages.join('<br />'));
 		});
 	}
 }
 
-function decryptScriptInclude(scriptIncludeSysID) {
-	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', ': function', 'Packages'];
+function decryptMetadata(recordScope, recordTable, recordSysId, columnName, displayValue) {
+	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', ': function', 'Packages', 'j:jelly'];
 	var maxIterations = 500;
 	
-	getScriptIncludeInfo(scriptIncludeSysID, function (info) {
-		var context = {
-			scriptIncludeInfo: info,
-			iteration: 0,
-			done: false,
-			searchedTerms: [],
-			searchTerm: info.name,
-			lines: [],
-			onDone: function () {
-				gel('x_424426_devops_ok').removeAttribute('disabled');
-				gel('x_424426_devops_loading').style.display = 'none';
-				gel('x_424426_devops_code_row').style.display = '';
-				var codeNode = gel('x_424426_devops_code');
-				
-				if (context.lines.length) {
-					var code = '';
-					for (var i = 1; i < context.lines.length; i++) {
-						code += 'Line ' + i + ': ';
+	var context = {
+		metadata: {
+			scope: recordScope,
+			table: recordTable,
+			sys_id: recordSysId
+		},
+		column: columnName,
+		iteration: 0,
+		done: false,
+		searchedTerms: [],
+		searchTerm: displayValue,
+		lines: [],
+		onDone: function () {
+			gel('devops_ok').removeAttribute('disabled');
+			gel('devops_loading').style.display = 'none';
+			gel('devops_code_row').style.display = '';
+			var codeNode = gel('devops_code');
 
-						if (context.lines[i] === undefined) {
-							code += '/* Unable to decrypt */';
-						} else {
-							code += context.lines[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-						}
+			if (context.lines.length) {
+				var code = '';
+				for (var i = 1; i < context.lines.length; i++) {
+					code += 'Line ' + i + ': ';
 
-						code += '<br />';
+					if (context.lines[i] === undefined) {
+						code += '/* Unable to decrypt */';
+					} else {
+						code += context.lines[i]
+							.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;')
+							.replace(/"/g, '&quot;')
+							.replace(/'/g, '&#039;');
 					}
 
-					codeNode.setAttribute('rows', context.lines.length);
-					codeNode.innerHTML = code;
-				} else {
-					codeNode.innerHTML = 'Unable to decrypt Script Include ...';
+					code += '<br />';
 				}
+
+				codeNode.setAttribute('rows', context.lines.length);
+				codeNode.innerHTML = code;
+			} else {
+				codeNode.innerHTML = 'Unable to decrypt Application File ...';
 			}
-		};
-		
-		decrypt(context);
-	}, onError);
+		}
+	};
+
+	decrypt(context);
 	
 	function decrypt(context) {
 		var progressBar = gel('devops-progress-bar');
@@ -107,19 +163,19 @@ function decryptScriptInclude(scriptIncludeSysID) {
 		if (context.done) {
 			context.onDone(context);
 		} else if (context.iteration++ < maxIterations) {
-			x_424426_devops_search('sys_script_include', context.searchTerm, context.scriptIncludeInfo.scope.sys_id, false, function (searchResult) {
+			devops_search(context.metadata.table, context.searchTerm, context.metadata.scope, false, function (searchResult) {
 				context.searchedTerms.push(context.searchTerm);
 				context.done = true;
 				
 				if (searchResult.hits && searchResult.hits.length > 0) {
 					// we are only interested in hits of your script include!
-					var scriptIncludeResult = searchResult.hits.find(function (x) { return x.sysId == context.scriptIncludeInfo.sys_id; });
-					if (scriptIncludeResult) {
+					var metadataResults = searchResult.hits.find(function (x) { return x.sysId == context.metadata.sys_id; });
+					if (metadataResults) {
 						// we are only interested in hits in script-field!
-						var scriptResult = scriptIncludeResult.matches.find(function (x) { return x.field == 'script'; });
-						if (scriptResult) {
+						var fieldResult = metadataResults.matches.find(function (x) { return x.field == context.column; });
+						if (fieldResult) {
 							// merge new matches with saved code
-							scriptResult.lineMatches.filter(function (l) { return !(l.line in context.lines); }).forEach(function (l) {
+							fieldResult.lineMatches.filter(function (l) { return !(l.line in context.lines); }).forEach(function (l) {
 								context.lines[l.line] = l.context;
 							});
 						}
@@ -162,35 +218,21 @@ function decryptScriptInclude(scriptIncludeSysID) {
 			onError('Max iterations!');
 		}
 	}
-	
-	function onError(errorMessage) {
-		gel('x_424426_devops_ok').removeAttribute('disabled');
-		gel('x_424426_devops_loading').style.display = 'none';
-		gel('x_424426_devops_error_row').style.display = '';
-		gel('x_424426_devops_error_message').innerHTML = errorMessage;
-		jslog(errorMessage, 'x_424426_devops');
-	}
 }
 
-function getScriptIncludeInfo(scriptIncludeSysID, onSuccess, onError) {
-	var ga = new GlideAjax('CodeSearchUtilClient');
-	ga.addParam('sysparm_name', 'getScriptIncludeInfo');
-	ga.addParam('script_include', scriptIncludeSysID);
-	ga.getXMLAnswer(function (answer) {
-		try {
-			var result = JSON.parse(answer);
-			if (result.status == 'success') {
-				onSuccess(result.script_include);
-			} else {
-				throw new Error(result.message);
-			}
-		} catch (e) {
-			onError(e.message);
-		}
-	});
+function onError(errorMessage) {
+	gel('devops_ok').removeAttribute('disabled');
+	gel('devops_loading').style.display = 'none';
+	gel('devops_error_row').style.display = '';
+	gel('devops_error_message').innerHTML = errorMessage;
+	jslog(errorMessage, 'devops');
 }
 
-function x_424426_devops_search(table, term, scopeSysID, allScopes, onSuccess, onError) {
+function hideError() {
+	gel('devops_error_row').style.display = 'none';
+}
+
+function devops_search(table, term, scopeSysID, allScopes, onSuccess, onError) {
 	var url = 'api/sn_codesearch/code_search/search';
 	url += '?search_all_scopes=' + String(!!allScopes);
 	
@@ -217,48 +259,69 @@ function x_424426_devops_search(table, term, scopeSysID, allScopes, onSuccess, o
 }]]></client_script>
         <description/>
         <direct>false</direct>
-        <endpoint>x_424426_devops_decrypt_script_include.do</endpoint>
+        <endpoint>x_424426_devops_decrypt.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
-	<g:evaluate var="jvar_script_include_sys_id" expression="RP.getParameterValue('script_include')" />
-	<g:evaluate var="jvar_script_include_displayvalue" object="true">
-		var displayValue = '';
-		var siSysID = RP.getParameterValue('script_include');
-		if (siSysID) {
-			var scriptIncludeGr = new GlideRecordSecure('sys_script_include');
-			scriptIncludeGr.addQuery('sys_id', siSysID);
-			scriptIncludeGr.setLimit(1);
-			scriptIncludeGr.query();
-			if (scriptIncludeGr.next()) {
-				displayValue = scriptIncludeGr.getDisplayValue();
+	<g:evaluate>
+		let recordDisplayValue = '';
+		let recordTable = '';
+		let recordScope = '';
+		const metadataSysId = RP.getParameterValue('metadata');
+		const metadataGr = new GlideRecordSecure('sys_metadata');
+		if (metadataSysId) {
+			metadataGr.addQuery('sys_id', metadataSysId);
+			metadataGr.setLimit(1);
+			metadataGr.query();
+			if (metadataGr.next()) {
+				recordDisplayValue = metadataGr.getDisplayValue();
+				recordTable = metadataGr.getRecordClassName();
+				recordScope = metadataGr.getValue('sys_scope');
 			}
 		}
-		
-		displayValue;
 	</g:evaluate>
 	<style>
-		.x_424426_devops_decrypt_script_include_cancel_button {
+		.devops-decrypt-cancel {
 			display: none;
+		}
+		
+		.row {
+			margin-top: 5px;
 		}
 	</style>
 	<div class="container">
 		<div class="row">
 			<div class="col-md-12">
-				<p>Welcome to DevOps+ Script Include Decrypter</p>
-				<p>Using this tool, you will be able to decrypt almost every "protected" script include.</p>
+				<p>Welcome to DevOps+ Application File Decrypter</p>
+				<p>Using this tool, you will be able to decrypt almost every "protected" application file.</p>
 			</div>
 		</div>
 		<div class="row">
 			<div class="form-group is-required form-horizontal">
 				<div class="col-md-2">
-					<g:form_label>${gs.getMessage('Script Include')}</g:form_label>
+					<g:form_label>${metadataGr.getLabel()}</g:form_label>
 				</div>
 				<div class="col-md-6">
-					<g:ui_reference name="x_424426_devops_script_include"
-						table="sys_script_include" query="sys_policy=protected"
-						value="${jvar_script_include_sys_id}"
-						displayvalue="${jvar_script_include_displayvalue}"
+					<g:ui_reference name="devops_metadata"
+						table="sys_metadata" query="sys_policy=protected"
+						completer="AJAXTableCompleter" 
+						columns="sys_class_name;sys_name"
+						value="${metadataSysId}"
+						displayvalue="${recordDisplayValue}"
+						onchange="recordSelected(this)"
 					/>
+					<input type="hidden" id="devops_table" value="${recordTable}" />
+					<input type="hidden" id="devops_scope" value="${recordScope}" />
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="form-group is-required form-horizontal">
+				<div class="col-md-2">
+					<g:form_label>${gs.getMessage('Column')}</g:form_label>
+				</div>
+				<div class="col-md-6">
+					<select id="devops_fields" class="form-control" onchange="fieldSelected(this)" disabled="disabled">
+					</select>
 				</div>
 			</div>
 		</div>
@@ -267,43 +330,43 @@ function x_424426_devops_search(table, term, scopeSysID, allScopes, onSuccess, o
 				<div class="col-md-8 text-right">
 					<g:dialog_buttons_ok_cancel
 						ok_type     = "button"
-						ok_id       = "x_424426_devops_ok"
-						ok          = "return x_424426_devops_onOK()"
-						ok_text     = "${gs.getMessage('Decrypt')}"
-						cancel_style_class = "x_424426_devops_decrypt_script_include_cancel_button"
+						ok_id       = "devops_ok"
+						ok          = "return devops_onOK()"
+						ok_text     = "${gs.getMessage('devops_button_decrypt')}"
+						cancel_style_class = "devops-decrypt-cancel"
 					/>
 				</div>
 			</div>
 		</div>
-		<div class="row" id="x_424426_devops_loading" style="display: none; margin-top: 1rem;">
+		<div class="row" id="devops_loading" style="display: none; margin-top: 1rem;">
 			<div class="progress">
 				<div id="devops-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
 				</div>
 			</div>
 		</div>
-		<div class="row" style="margin-top: 1rem; display: none;" id="x_424426_devops_error_row">
-			<p class="col-md-8" id="x_424426_devops_error_message" style="color: red;"></p>
+		<div class="row" style="margin-top: 1rem; display: none;" id="devops_error_row">
+			<p class="col-md-8" id="devops_error_message" style="color: red;"></p>
 		</div>
-		<div class="row" id="x_424426_devops_code_row" style="margin-top: 1rem; display: none;">
+		<div class="row" id="devops_code_row" style="margin-top: 1rem; display: none;">
 			<div class="col-md-12">
-				<pre id="x_424426_devops_code" class="javascript hljs" cols="80" title="Script Include Decrypted"></pre>
+				<pre id="devops_code" class="javascript hljs" cols="80" title="Decrypted"></pre>
 			</div>
 		</div>
 	</div>
 </j:jelly>]]></html>
-        <name>decrypt_script_include</name>
+        <name>decrypt</name>
         <processing_script/>
         <sys_class_name>sys_ui_page</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:11:42</sys_created_on>
         <sys_id>bbcdd6d597d32110d70ef207f053afe0</sys_id>
-        <sys_mod_count>8</sys_mod_count>
-        <sys_name>decrypt_script_include</sys_name>
+        <sys_mod_count>53</sys_mod_count>
+        <sys_name>decrypt</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_bbcdd6d597d32110d70ef207f053afe0</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-07 18:33:48</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:25:01</sys_updated_on>
     </sys_ui_page>
 </record_update>

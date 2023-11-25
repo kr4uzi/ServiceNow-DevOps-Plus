@@ -29,7 +29,6 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 			result.fieldItems = [];
 			result.breadcrumbItems = [];
 			result.languages = this.configUtil.getLanguages();
-			result.showNavTo = this.configUtil.showNavTo();
 			
 			const itemGr = new GlideRecordSecure('x_424426_devops_context_menu_item');
 			itemGr.addQuery('active', true);
@@ -66,13 +65,13 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:23:15</sys_created_on>
         <sys_id>ef60538997172110d70ef207f053af6d</sys_id>
-        <sys_mod_count>20</sys_mod_count>
+        <sys_mod_count>22</sys_mod_count>
         <sys_name>ConfigUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
-        <sys_policy>read</sys_policy>
+        <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_ef60538997172110d70ef207f053af6d</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 15:25:24</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:30:42</sys_updated_on>
     </sys_script_include>
 </record_update>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_about.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate>
+		const appGr = new GlideRecordSecure('sys_app');
+		appGr.addQuery('sys_id', '0b41a31b97cf2110d70ef207f053afb0');
+		appGr.setLimit(1);
+		appGr.query();
+		let devopsVersion = '';
+		if (appGr.next()) {
+			devopsVersion = appGr.version.toString();
+		}
+	</g2:evaluate>
+	<p>DevOps+ v.$[devopsVersion] made by Markus Kraus</p>
+	<p>More applications: https://github.com/kr4uzi</p>
+</j:jelly>]]></html>
+        <name>about</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2023-11-24 23:43:26</sys_created_on>
+        <sys_id>5315b05c973a31503c2d3f56f053af40</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>about</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_5315b05c973a31503c2d3f56f053af40</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:45:29</sys_updated_on>
+    </sys_ui_page>
+</record_update>

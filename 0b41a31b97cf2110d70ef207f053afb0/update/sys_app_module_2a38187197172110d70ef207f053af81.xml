@@ -26,17 +26,17 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>2a38187197172110d70ef207f053af81</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_name>Context Menu Items</sys_name>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>Form Context Menu</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_app_module_2a38187197172110d70ef207f053af81</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-08 13:44:39</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-23 17:08:16</sys_updated_on>
         <timeline_page/>
-        <title>Context Menu Items</title>
+        <title>Form Context Menu</title>
         <uncancelable>false</uncancelable>
         <view_name/>
         <window_name/>

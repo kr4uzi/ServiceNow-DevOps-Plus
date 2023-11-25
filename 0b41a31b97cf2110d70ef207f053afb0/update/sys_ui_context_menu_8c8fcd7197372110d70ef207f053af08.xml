@@ -12,7 +12,7 @@
  */
 (function () {
 
-	if (NOW.isPolarisEnabled) {
+	if (NOW.isPolarisEnabled == 'true') {
 		var gm = new GlideModal('glide_warn', false);
 		gm.setTitle("Please use the Polaris built-in feature");
 		gm.setPreference("title", "The Polaris UI has a built-in feature which opens all new windows with the navigation header.<br /><br/>Please click on your Profile > Preferences > Display > 'Always show top navigation'");
@@ -25,7 +25,7 @@
 })();]]></action_script>
         <active>true</active>
         <comments/>
-        <condition>new x_424426_devops.ConfigUtil().showNavTo()</condition>
+        <condition/>
         <do_not_cache>false</do_not_cache>
         <dynamic_actions_script><![CDATA[/** 
  * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
@@ -53,26 +53,43 @@
  *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
  *    'g_sysId' the sys_id of the row or form that the script is running against
  */
+(function () {
+	var visible = true;
+	if (NOW.isPolarisEnabled == 'true') {
+		// with polaris enabled, this property will load every page with "nav_to"
+		if (getPreference('glide.ui.polaris.ui16_tabs_inside_polaris') == 'true') {
+			visible = false;
+		}
+	} else if (getNavWindow()) {
+		visible = false;
+	}
+	
+	if (visible) {
+		 g_menu.setVisible(g_item);
+	} else {
+		g_menu.setHidden(g_item);
+	}
+})();
  
 ]]></on_show_script>
         <order>1000</order>
         <parent display_value="DevOps+">384fcd3197372110d70ef207f053afd6</parent>
-        <run_on_show_script>false</run_on_show_script>
+        <run_on_show_script>true</run_on_show_script>
         <sys_class_name>sys_ui_context_menu</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-07-03 14:17:52</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>8c8fcd7197372110d70ef207f053af08</sys_id>
-        <sys_mod_count>16</sys_mod_count>
+        <sys_mod_count>18</sys_mod_count>
         <sys_name>/nav_to</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_context_menu_8c8fcd7197372110d70ef207f053af08</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 15:29:49</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:34:19</sys_updated_on>
         <table>global</table>
         <track_selected>false</track_selected>
         <type>action</type>

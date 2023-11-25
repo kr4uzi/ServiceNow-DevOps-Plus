@@ -23,51 +23,6 @@ MetadataUtil.prototype = {
 		this.hasUserRole = hasRoleGr.hasNext() && gs.hasRole('admin');
     },
 	
-	shouldDisplayRevertToBaseUIAction: function (metadataGr, action) {		
-		if (this.hasUserRole && metadataGr.canWrite()) {
-			// when Update Versions exist, there is no need to show the hard-revert
-			return !hasUpdateVersion(metadataGr) && hasUpgradeHistoryLog(metadataGr);
-		}
-		
-		return false;
-		
-		function hasUpdateVersion(metadataGr) {
-			return false;
-			
-			const extensionPoints = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
-			if (extensionPoints.length) {
-				// always use the extension point with the lowest order
-				const ext = extensionPoints[0];
-				ext.initialize();
-				if (ext.hasUpdateVersion(metadataGr)) {
-					return true;
-				}
-			}
-			
-			return false;
-			
-			const versionGr = new GlideRecord('sys_update_version');
-			versionGr.addQuery('name', metadataGr.sys_update_name);
-			versionGr.setLimit(1);
-			versionGr.query();
-			return versionGr.hasNext();
-		}
-		
-		function hasUpgradeHistoryLog(metadataGr) {
-			const extensionPoints = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
-			if (extensionPoints.length) {
-				// always use the extension point with the lowest order
-				const ext = extensionPoints[0];
-				ext.initialize();
-				if (ext.hasUpgradeDetails(metadataGr)) {
-					return true;
-				}
-			}
-			
-			return false;
-		}
-	},
-	
 	shouldDisplayShowVersionUIAction: function (metadataGr, action) {
 		// only display the 'Show Versions' UI Action if there current user is an admin ...
 		if (this.hasUserRole && metadataGr.canRead()) {
@@ -105,13 +60,13 @@ MetadataUtil.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-08 17:15:16</sys_created_on>
         <sys_id>7707493197d72110d70ef207f053af73</sys_id>
-        <sys_mod_count>19</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>MetadataUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_7707493197d72110d70ef207f053af73</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 10:02:17</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:57:23</sys_updated_on>
     </sys_script_include>
 </record_update>

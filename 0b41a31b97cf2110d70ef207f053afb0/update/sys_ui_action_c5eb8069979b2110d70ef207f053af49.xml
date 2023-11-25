@@ -34,7 +34,7 @@
 	var gm = new GlideModal('', false, 'modal-95');
 	gm.setTitle('Decrypt Script Include');
 
-	var iframe = '<iframe src="/x_424426_devops_decrypt_script_include.do?script_include=' 
+	var iframe = '<iframe src="/x_424426_devops_decrypt.do?metadata=' 
 		+ g_form.getUniqueValue() + '" style="width: 100%; height: 650px; border: 0; overflow: hidden;" />';
 	gm.renderWithContent(iframe);
 }]]></script>
@@ -48,19 +48,18 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>c5eb8069979b2110d70ef207f053af49</sys_id>
-        <sys_mod_count>8</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>Decrypt</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_action_c5eb8069979b2110d70ef207f053af49</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-10 12:11:31</sys_updated_on>
-        <table/>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-11-24 23:56:20</sys_updated_on>
+        <table>sys_metadata</table>
         <ui11_compatible>false</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
-        <x_376096_cxp_style/>
         <x_376096_pxp_client_script><![CDATA[/* eslint no-undef: "error" */
 function onClick(g_form) {
 
