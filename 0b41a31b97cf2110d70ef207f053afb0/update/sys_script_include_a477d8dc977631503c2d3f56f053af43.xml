@@ -29,11 +29,8 @@ DecryptUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor,
 			metadataGr.setLimit(1);
 			metadataGr.query();
 			if (metadataGr.next()) {
-				result.scope = metadataGr.getValue('sys_scope');
-				result.table = metadataGr.getRecordClassName();
-				
-				result.decryptable_fields = [];
-				const tables = new GlideTableHierarchy(result.table).getTables();
+				const table = metadataGr.getRecordClassName();				
+				const tables = new GlideTableHierarchy(table).getTables();
 				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
 				dictionaryGr.addQuery('name', 'IN', tables);
 				dictionaryGr.addQuery('internal_type.name', 'CONTAINS', 'script')
@@ -48,6 +45,9 @@ DecryptUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor,
 					});
 				}
 				
+				result.table = table;
+				result.scope = metadataGr.getValue('sys_scope');
+				result.decryptable_fields = fields;
 				result.status = 'success';
 			} else {
 				result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
@@ -72,13 +72,13 @@ DecryptUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor,
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2023-11-24 21:33:13</sys_created_on>
         <sys_id>a477d8dc977631503c2d3f56f053af43</sys_id>
-        <sys_mod_count>7</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>DecryptUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_a477d8dc977631503c2d3f56f053af43</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-11-24 23:47:46</sys_updated_on>
+        <sys_updated_on>2023-12-13 06:31:33</sys_updated_on>
     </sys_script_include>
 </record_update>
