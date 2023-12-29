@@ -10,40 +10,58 @@
 	getNormalizedVariableName(tableName, function (variableName) {
 		variableName += 'Gr';
 		
-		const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
-		bgs.addEventListener('DOMContentLoaded', function () {
-			var script = 'var ' + variableName + ' = new GlideRecord(\'' + tableName + '\');'
-				+ '\n' + variableName + '.addQuery(\'sys_id\', \'' + g_form.getUniqueValue() + '\');'
-				+ '\n' + variableName + '.setLimit(1);'
-				+ '\n' + variableName + '.query();'
-				+ '\nif (' + variableName + '.next()) {'
-				+ '\n  ' + variableName + '.' + $context.FIELD + ' = ' + JSON.stringify(g_form.getValue($context.FIELD)) + ';'
-				+ '\n  ' + variableName + '.setWorkflow(false);'
-				+ '\n  ' + variableName + '.update();'
-				+ '\n}'
-			;
+		getChoiceValues(tableName, $context.FIELD, function (choices) {
+			const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+			bgs.addEventListener('DOMContentLoaded', function () {
+				var script = 'var ' + variableName + ' = new GlideRecord(\'' + tableName + '\');'
+					+ '\n' + variableName + '.addQuery(\'sys_id\', \'' + g_form.getUniqueValue() + '\');'
+					+ '\n' + variableName + '.setLimit(1);'
+					+ '\n' + variableName + '.query();'
+					+ '\nif (' + variableName + '.next()) {'
+					+ '\n  ' + variableName + '.' + $context.FIELD + ' = ' + JSON.stringify(g_form.getValue($context.FIELD)) + ';'
+					+ (choices.length ? (' //' + choices.map(c => '[' + c.value + ']' + c.label).join(',')) : '')
+					+ '\n  ' + variableName + '.setWorkflow(false);'
+					+ '\n  ' + variableName + '.update();'
+					+ '\n}'
+				;
 
-			const cursorPos = script.indexOf(variableName + '.' + $context.FIELD) + variableName.length + $context.FIELD.length + 5;
-			const scriptInput = bgs.document.getElementById('runscript');
-			scriptInput.value = script;
-			scriptInput.setSelectionRange(cursorPos, cursorPos);	
+				const cursorPos = script.indexOf(variableName + '.' + $context.FIELD) + variableName.length + $context.FIELD.length + 5;
+				const scriptInput = bgs.document.getElementById('runscript');
+				scriptInput.value = script;
+				scriptInput.setSelectionRange(cursorPos, cursorPos);	
 
-			bgs.setTimeout(function selectGlobalScope() {
-				const scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
-				const options = scopeSelector && scopeSelector.querySelectorAll('option');
-				for (let i = 0; options && i < options.length; i++) {
-					// PDIs have the global scope option with value global
-					// Customer Instances have global with SysID value
-					if (options[i].innerText == 'global' || options[i].value == 'global') {
-						scopeSelector.value = options[i].value;
-						return;
+				bgs.setTimeout(function selectGlobalScope() {
+					const scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
+					const options = scopeSelector && scopeSelector.querySelectorAll('option');
+					for (let i = 0; options && i < options.length; i++) {
+						// PDIs have the global scope option with value global
+						// Customer Instances have global with SysID value
+						if (options[i].innerText == 'global' || options[i].value == 'global') {
+							scopeSelector.value = options[i].value;
+							return;
+						}
 					}
-				}
-				
-				bgs.setTimeout(selectGlobalScope, 100);
+
+					bgs.setTimeout(selectGlobalScope, 100);
+				});
 			});
 		});
 	});
+	
+	function getChoiceValues(table, field, cb) {
+		const ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getChoiceValues');
+		ga.addParam('table', table);
+		ga.addParam('field', field);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				cb(result.choices);
+			} else if (result.message) {
+				console.error(result.message);
+			}
+		});
+	}
 	
 	function getNormalizedVariableName(table, cb) {
 		const ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
@@ -73,14 +91,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 20:05:28</sys_created_on>
         <sys_id>9d3c5f4197572110d70ef207f053af3c</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_9d3c5f4197572110d70ef207f053af3c</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-14 12:32:45</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-12-29 20:38:43</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
