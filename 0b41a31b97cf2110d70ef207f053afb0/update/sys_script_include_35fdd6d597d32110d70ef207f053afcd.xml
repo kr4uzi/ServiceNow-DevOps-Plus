@@ -8,12 +8,240 @@
         <description/>
         <name>CodeSearchUtilClient</name>
         <script><![CDATA[/* global global, gs */
-/* global Class, GlideRecordSecure, GlideStringUtil, GlideTableHierarchy */
+/* global Class, GlideRecordSecure, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
 CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	// the OOTB code search only allows for sys_metadata tables to be searched - even though you can configure the sn_codesearch_table otherwise,
+	// this is "by design" and won't be fixed (this is the response for a HI ticket I've created...)
+	// therefore the following function is mostly a replica of the OOTB search functionality:
+	// /nav_to.do?uri=sys_script_include.do?sys_id=1717eb60d7120200b6bddb0c825203da
+	searchTerm: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const table = this.getParameter('table');
+		const term = this.getParameter('term');
+		const scope = this.getParameter('scope');
+		const allScopes = this.getParameter('allScopes');
+		
+		const limit = this.getParameter('limit');
+		
+		// column + record => decrypt, searchGroup => generic code search
+		const column = this.getParameter('column');
+		const record = this.getParameter('record');
+		const searchGroup = this.getParameter('searchGroup');
+		
+		if (table && (searchGroup || (record && column)) && term, gs.tableExists(table)) {
+			let additionalFilter = '';
+			let fields = [];
+			
+			if (searchGroup) {
+				const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+				searchGroupGr.addQuery('name', searchGroup);
+				searchGroupGr.setLimit(1);
+				searchGroupGr.query();
+				if (searchGroupGr.next()) {
+					const tableConfigGr = new GlideRecordSecure('sn_codesearch_table');
+					tableConfigGr.addQuery('search_group', searchGroupGr.sys_id);
+					tableConfigGr.addQuery('table', table);
+					tableConfigGr.setLimit(1);
+					tableConfigGr.query();
+					if (tableConfigGr.next()) {
+						if (tableConfigGr.additional_filter) {
+							additionalFilter = tableConfigGr.additional_filter.toString();
+						}
+
+						if (tableConfigGr.search_fields) {
+							fields = tableConfigGr.search_fields.split(',').map(f => f.trim()).filter(f => !!f);
+						}
+					}
+
+					if (searchGroupGr.extended_matching) {
+						const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+						dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+						dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+						dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
+						dictionaryGr.addQuery('element', '!=', 'sys_update_name');
+						dictionaryGr.addQuery('max_length', '>=', 80);
+						dictionaryGr.query();
+						while (dictionaryGr.next()) {
+							const fieldName = dictionaryGr.element.toString();
+							if (!fields.includes(fieldName)) {
+								fields.push(fieldName);
+							}
+						}
+					}
+				}
+			} else {
+				// called by application file decrypter
+				additionalFilter = 'sys_id=' + record;
+				fields.push(column);
+			}
+			
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('name', table);
+			dbObjectGr.setLimit(1);
+			dbObjectGr.query();
+			if (dbObjectGr.next()) {
+				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+				scriptGr.setLimit(1);
+				scriptGr.query();
+				if (scriptGr.next()) {
+					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
+					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
+					scriptGr.script = 
+						'(function () {try {\n' +
+							'var anyGr = new GlideRecord(table);\n' +
+							'var tableFields = fields.split(",").filter(function (f) {\n' +
+								'return anyGr.isValidField(f);\n' +
+							'});\n' +
+							'var fieldQuery = tableFields.map(function (f) {\n' +
+								'return f + "LIKE" + term;\n' +
+							'}).join("^OR");\n' +
+							'\n' +
+							'var query = (additionalFilter ? additionalFilter + "^" : "") + "sys_id=" + term;\n' +
+							'anyGr.addEncodedQuery(query + (fieldQuery ? "^OR" : "") + fieldQuery);\n' +
+							'\n' +
+							'if (!allScopes && anyGr.isValidField("sys_scope") && scope) {\n' +
+								'anyGr.addQuery("sys_scope", scope).addOrCondition("sys_scope.scope", scope);\n' +
+							'}\n' +
+							'\n' +
+							'if (anyGr.isValidField("sys_class_name")) {\n' +
+								'anyGr.orderBy("sys_class_name");\n' +
+							'}\n' +
+							'\n' +
+							'if (anyGr.isValidField("sys_name")) {\n' +
+								'anyGr.orderBy("sys_name");\n' +
+							'}\n' +
+							'\n' +
+							'anyGr.query();\n' +
+							'\n' +
+							'var result = {\n' +
+								'recordType: table,\n' +
+								'tableLabel: anyGr.getLabel(),\n' +
+								'hits: []\n' +
+							'};\n' +
+							'\n' +
+							'while (anyGr.next()) {\n' +
+								'var matches = getMatches(anyGr, tableFields, term);\n' +
+								'if (matches.length) {\n' +
+									'var gdt = new GlideDateTime();\n' +
+									'gdt.setValue(anyGr.getValue("sys_updated_on"));\n' +
+									'result.hits.push({\n' +
+										'name: anyGr.getDisplayValue(),\n' +
+										'className: anyGr.getRecordClassName(),\n' +
+										'tableLabel: anyGr.getTableName(),\n' +
+										'matches: matches,\n' +
+										'sysId: anyGr.getUniqueValue(),\n' +
+										'modified: gdt.getNumericValue()\n' +
+									'});\n' +
+								'}\n' +
+							'}\n' +
+							'\n' +
+							'return result;}catch(e){gs.info("MKR error: " + e.message); gs.info("MKR stack: " + (e.stack ? e.stack : "no stack"));}\n' +
+							'\n' +
+							'function getMatches(anyGr, fields, term) {\n' +
+								'var matches = [];\n' +
+								'fields.forEach(function (field) {\n' +
+									'try {\n' +
+										'var match = {\n' +
+											'field: field,\n' +
+											'fieldLabel: anyGr.getElement(field).getLabel(),\n' +
+											'lineMatches: [],\n' +
+											'count : 0\n' +
+										'};\n' +
+										'\n' +
+										'var text = anyGr.getValue(field);\n' +
+										'if (text && hasTerm(text, term)) {\n' +
+											'match.count = countTerm(text, term);\n' +
+											'match.lineMatches = getMatchingLines(text, term);\n' +
+										'}\n' +
+										'\n' +
+										'if (match.lineMatches.length > 0) {\n' +
+											'matches.push(match);\n' +
+										'}\n' +
+									'} catch (e) {\n' +
+										'// Unable to read field. This is usually an ACL error and not a real problem\n' +
+									'}\n' +
+								'});\n' +
+								'\n' +
+								'return matches;\n' +
+							'}\n' +
+							'\n' +
+							'function countTerm(text, term) {\n' +
+								'if (!term) {\n' +
+									'return 0;\n' +
+								'}\n' +
+								'\n' +
+								'term = escapeSpecial(term);\n' +
+								'return text.match(new RegExp(term, "gi")).length;\n' +
+							'}\n' +
+							'\n' +
+							'function escapeSpecial(text) {\n' +
+								'return text.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, "\\\\$&");\n' +
+							'}\n' +
+							'\n' +
+							'function getMatchingLines(text, term) {\n' +
+								'var lineMatches = [];\n' +
+								'var scanProgress = 0;\n' +
+								'var lines = text.split(/\\r\\n|\\r|\\n/g);\n' +
+								'for (var j = 0; j < lines.length; j++) {\n' +
+									'var line = lines[j];\n' +
+									'if (hasTerm(line, term)) {\n' +
+										'if (j > 0 && j > scanProgress + 1) {\n' +
+											'lineMatches.push({line: (j), context: lines[j - 1], escaped: encodeURIComponent(lines[j - 1])});\n' +
+										'}\n' +
+										'\n' +
+										'lineMatches.push({line: (j + 1), context: line, escaped: encodeURIComponent(line)});\n' +
+										'\n' +
+										'if (j < lines.length - 1) {\n' +
+											'lineMatches.push({line: (j + 2), context: lines[j + 1], escaped: encodeURIComponent(lines[++j])});\n' +
+										'}\n' +
+										'\n' +
+										'scanProgress = j;\n' +
+									'}\n' +
+								'}\n' +
+								'\n' +
+								'return lineMatches;\n' +
+							'}\n' +
+							'\n' +
+							'function hasTerm(text, term) {\n' +
+								'if (!text || !term)\n' +
+									'return false;\n' +
+								'\n' +
+								'return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);\n' +
+							'}\n' +
+						'})();';
+						
+					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+						table: table,
+						additionalFilter: additionalFilter,
+						fields: fields.join(','),
+						term: term,
+						allScopes: allScopes,
+						scope: scope
+					});
+					
+					result.status = 'success';
+				} else {
+					result.message = 'Unable to run script';
+				}
+			} else {
+				result.message = 'Unable to find table';
+			}
+		} else {
+			result.message = 'Invalid parameters!';
+		}
+		
+		return JSON.stringify(result);
 	},
 	
 	// A query to /api/sn_codesearch/code_search/tables will crash when there is a table
@@ -37,7 +265,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 					label: ''
 				});
 			}
-
+			
 			const tableGr = new GlideRecordSecure('sys_db_object');
 			tableGr.addQuery('name', 'IN', tables.map(t => t.name));
 			tableGr.query();
@@ -65,13 +293,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>61</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-11-24 23:57:51</sys_updated_on>
+        <sys_updated_on>2023-12-29 20:34:43</sys_updated_on>
     </sys_script_include>
 </record_update>
