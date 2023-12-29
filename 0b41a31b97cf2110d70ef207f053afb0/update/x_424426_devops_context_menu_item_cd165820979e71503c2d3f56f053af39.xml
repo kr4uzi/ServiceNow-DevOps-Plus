@@ -1,20 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI */
+        <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI, navigator, event, g_navigation */
 /* eslint no-undef: "error" */
-(function ($context) {
+(function ($context) {					
 	var gmf;
+	var isMac = navigator.userAgent.indexOf('Mac OS X') > -1;
+	var openInWindow = isMac ? event.metaKey : event.ctrlKey;
 	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
 	if (typeElement) {
 		var type = typeElement.getAttribute('type');
 		if (type == 'table_name') {
+			if (openInWindow) {
+				g_navigation.openPopup('nav_to.do?uri=' + g_form.getValue($context.FIELD) + '_list.do');
+				return;
+			}
+		
 			gmf = new GlideModalForm(
 				'Open "' + $context.FIELD + '"',
 				g_form.getValue($context.FIELD) + '_list'
 			);
-		} else {
+		} else {			
 			var uiElement = g_form.getGlideUIElement($context.FIELD);
+			if (openInWindow) {
+				g_navigation.openPopup('nav_to.do?uri=' + uiElement.reference + '.do%3Fsys_id%3D' + g_form.getValue($context.FIELD));
+				return;
+			}
+			
 			gmf = new GlideModalForm(
 				'Open "' + $context.FIELD + '"',
 				uiElement.reference
@@ -72,14 +84,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-10-31 20:23:36</sys_created_on>
         <sys_id>cd165820979e71503c2d3f56f053af39</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>13</sys_mod_count>
         <sys_name>open</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_cd165820979e71503c2d3f56f053af39</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-11 14:14:39</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-12-18 10:10:20</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

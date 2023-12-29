@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI */
+        <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI, navigator, event, g_navigation */
 /* eslint no-undef: "error" */
 (function ($context) {
+	
+	var isMac = navigator.userAgent.indexOf('Mac OS X') > -1;
+	var openInWindow = isMac ? event.metaKey : event.ctrlKey;
 	
 	var table = g_form.getTableName();
 	var query = $context.FIELD + '=' + g_form.getValue($context.FIELD);
@@ -14,6 +17,12 @@
 	}
 	
 	var tableName = g_form.getTableName();
+	if (openInWindow) {
+		var uri = 'nav_to.do?uri=' + tableName + '_list.do%3Fsysparm_query%3D' + encodeURIComponent(query);
+		g_navigation.openPopup(uri);
+		return;
+	}
+	
 	var gmf = new GlideModalForm('Filter: ' + tableName, tableName + '_list', function () {
 		// on render callback
 	}, false);
@@ -36,14 +45,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:33:10</sys_created_on>
         <sys_id>7fc2a21d97d32110d70ef207f053afd5</sys_id>
-        <sys_mod_count>7</sys_mod_count>
+        <sys_mod_count>10</sys_mod_count>
         <sys_name>filter</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_7fc2a21d97d32110d70ef207f053afd5</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-11 13:34:00</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-12-18 10:13:36</sys_updated_on>
         <type>field</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>
