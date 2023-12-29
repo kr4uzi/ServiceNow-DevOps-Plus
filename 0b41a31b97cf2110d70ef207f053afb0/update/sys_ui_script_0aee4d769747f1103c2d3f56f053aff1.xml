@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Shows the "Language Select" Widget for all OOTB portals for DevOps+ Users and when there is more than one available language.</description>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.portal_lang_select</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.portal_lang_select = (function() {
+	"use strict";
+	/* global setTimeout */
+	/* eslint no-undef: "error" */
+	if (x_424426_devops.portal_lang_select) {
+		return x_424426_devops.portal_lang_select;
+	}
+	
+	var ootbLangSelect = '4ec9343d29b1c510f8779f284c7771c0';
+	
+	setTimeout(function () {
+		var $window = this;
+		
+		var observer = new $window.MutationObserver(function (mutations) {
+			for (var i = 0; i < mutations.length; i++) {
+				var mutation = mutations[i];
+				if (mutation.addedNodes) {
+					for (var j = 0; j < mutation.addedNodes.length; j++) {
+						var node = mutation.addedNodes[j];
+						if (node.classList && node.classList.contains('v' + ootbLangSelect)) {
+							if (!node.classList.contains('devops-lang-injected')) {
+								node.classList.add('devops-lang-injected');
+								new DevOpsLangInject($window, node);
+							}
+						}
+					}
+				}
+			}   
+		});
+
+		observer.observe($window.document, {
+			childList: true,
+			subtree: true
+		});
+	});
+	
+	return {
+		type: 'portal_lang_select'
+	};
+	
+	function DevOpsLangInject($window, node) {
+		const $scope = $window.angular.element(node).scope();
+		
+		// only show if at least one other language than system language is available
+		const ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getConfig');
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result && result.status == 'success') {
+				if (result.languages.length > 1) {
+					$scope.$evalAsync(function () {
+						$scope.data.enableLangSelector = true;
+					});
+				}
+			}
+		});
+	}
+})();
+]]></script>
+        <script_name>portal_lang_select</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2023-12-15 06:15:49</sys_created_on>
+        <sys_id>0aee4d769747f1103c2d3f56f053aff1</sys_id>
+        <sys_mod_count>23</sys_mod_count>
+        <sys_name>x_424426_devops.portal_lang_select</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_0aee4d769747f1103c2d3f56f053aff1</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2023-12-28 17:08:35</sys_updated_on>
+        <ui_type>1</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>
