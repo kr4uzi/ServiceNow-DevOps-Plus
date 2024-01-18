@@ -27,15 +27,15 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>b0e4357f972f2110d70ef207f053afa2</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>0</sys_mod_count>
         <sys_name>Translate (Deepl)</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_hub_action_type_definition_b0e4357f972f2110d70ef207f053afa2</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 12:18:31</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-01-18 11:01:13</sys_updated_on>
         <system_level>false</system_level>
         <type/>
     </sys_hub_action_type_definition>
@@ -158,6 +158,7 @@
         <variable display_value="Credential Alias">6bd65a8be7011010493520c343f6a909</variable>
     </sys_variable_value>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_flow_step_definition_input_95eeb235e7011010493520c343f6a983^id=80a5bdbf972f2110d70ef207f053af34"/>
+    <sys_translated_text action="delete_multiple" query="documentkey=80a5bdbf972f2110d70ef207f053af34"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=80a5bdbf972f2110d70ef207f053af34"/>
     <sys_hub_step_ext_output action="delete_multiple" query="model=80a5bdbf972f2110d70ef207f053af34"/>
     <sys_hub_input_scripts action="delete_multiple" query="instance=80a5bdbf972f2110d70ef207f053af34"/>
@@ -510,6 +511,7 @@
         <table>var__m_sys_flow_step_definition_input_07a762fb47222200b4fad7527c9a7129</table>
         <value/>
     </sys_element_mapping>
+    <sys_translated_text action="delete_multiple" query="documentkey=8ca5bdbf972f2110d70ef207f053af55"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=8ca5bdbf972f2110d70ef207f053af55"/>
     <sys_hub_step_ext_output action="delete_multiple" query="model=8ca5bdbf972f2110d70ef207f053af55"/>
     <sys_hub_input_scripts action="delete_multiple" query="instance=8ca5bdbf972f2110d70ef207f053af55"/>
@@ -577,18 +579,6 @@
     </sys_variable_value>
     <sys_element_mapping action="delete_multiple" query="id=f9767dff972f2110d70ef207f053af39"/>
     <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>application</field>
-        <id>f9767dff972f2110d70ef207f053af39</id>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-27 11:59:56</sys_created_on>
-        <sys_id>35767dff972f2110d70ef207f053af5c</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
-        <table>var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7</table>
-        <value/>
-    </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
         <field>response_body</field>
         <id>f9767dff972f2110d70ef207f053af39</id>
         <sys_created_by>admin</sys_created_by>
@@ -600,20 +590,9 @@
         <table>var__m_sys_hub_step_ext_input_f9767dff972f2110d70ef207f053af39</table>
         <value>{{step[64d04b0b-7ea4-44ca-a5f9-96cb73fbf357].response_body}}</value>
     </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>script</field>
-        <id>f9767dff972f2110d70ef207f053af39</id>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-27 11:59:56</sys_created_on>
-        <sys_id>f5767dff972f2110d70ef207f053af5c</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
-        <table>var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7</table>
-        <value/>
-    </sys_element_mapping>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_hub_step_ext_output_f9767dff972f2110d70ef207f053af39^id=f9767dff972f2110d70ef207f053af39"/>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7^id=f9767dff972f2110d70ef207f053af39"/>
+    <sys_translated_text action="delete_multiple" query="documentkey=f9767dff972f2110d70ef207f053af39"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=f9767dff972f2110d70ef207f053af39^sys_idNOT INfd767dff972f2110d70ef207f053af40"/>
     <sys_hub_step_ext_input action="INSERT_OR_UPDATE">
         <active>true</active>
@@ -880,11 +859,11 @@
         <sys_created_on>2023-06-27 11:59:56</sys_created_on>
         <sys_id>35767dff972f2110d70ef207f053af58</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Text</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_step_ext_output_f9767dff972f2110d70ef207f053af39_text_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
         <url/>
@@ -903,11 +882,11 @@
         <sys_created_on>2023-06-27 11:59:56</sys_created_on>
         <sys_id>3d767dff972f2110d70ef207f053af54</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Detected Source Language</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_step_ext_output_f9767dff972f2110d70ef207f053af39_detected_source_language_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
         <url/>
@@ -1418,11 +1397,11 @@
         <sys_created_on>2023-06-27 11:56:16</sys_created_on>
         <sys_id>0ca5bdbf972f2110d70ef207f053af31</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Message</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_input_b0e4357f972f2110d70ef207f053afa2_message_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:56:16</sys_updated_on>
         <url/>
@@ -1441,11 +1420,11 @@
         <sys_created_on>2023-06-27 11:56:16</sys_created_on>
         <sys_id>48a5bdbf972f2110d70ef207f053af2d</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Language</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_input_b0e4357f972f2110d70ef207f053afa2_language_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:56:16</sys_updated_on>
         <url/>
@@ -1466,11 +1445,11 @@
         <sys_created_on>2023-06-27 11:59:56</sys_created_on>
         <sys_id>3d767dff972f2110d70ef207f053af6d</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Don't Treat as Error</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_b0e4357f972f2110d70ef207f053afa2___dont_treat_as_error___en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
         <url/>
@@ -1489,11 +1468,11 @@
         <sys_created_on>2023-06-27 11:59:56</sys_created_on>
         <sys_id>71767dff972f2110d70ef207f053af64</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Action Status</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_b0e4357f972f2110d70ef207f053afa2___action_status___en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
         <url/>
@@ -1512,11 +1491,11 @@
         <sys_created_on>2023-06-27 11:59:56</sys_created_on>
         <sys_id>71767dff972f2110d70ef207f053af68</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Text</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_b0e4357f972f2110d70ef207f053afa2_text_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:56</sys_updated_on>
         <url/>
@@ -1992,6 +1971,7 @@
         <table>var__m_sys_flow_step_definition_input_07a762fb47222200b4fad7527c9a7129</table>
         <value/>
     </sys_element_mapping>
+    <sys_translated_text action="delete_multiple" query="documentkey=4a767dff972f2110d70ef207f053afd2"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=4a767dff972f2110d70ef207f053afd2"/>
     <sys_hub_step_ext_output action="delete_multiple" query="model=4a767dff972f2110d70ef207f053afd2"/>
     <sys_hub_input_scripts action="delete_multiple" query="instance=4a767dff972f2110d70ef207f053afd2"/>
@@ -2047,6 +2027,7 @@
         <variable display_value="Credential Alias">6bd65a8be7011010493520c343f6a909</variable>
     </sys_variable_value>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_flow_step_definition_input_95eeb235e7011010493520c343f6a983^id=4e767dff972f2110d70ef207f053afcc"/>
+    <sys_translated_text action="delete_multiple" query="documentkey=4e767dff972f2110d70ef207f053afcc"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=4e767dff972f2110d70ef207f053afcc"/>
     <sys_hub_step_ext_output action="delete_multiple" query="model=4e767dff972f2110d70ef207f053afcc"/>
     <sys_hub_input_scripts action="delete_multiple" query="instance=4e767dff972f2110d70ef207f053afcc"/>
@@ -2114,18 +2095,6 @@
     </sys_variable_value>
     <sys_element_mapping action="delete_multiple" query="id=5e767dff972f2110d70ef207f053afe7"/>
     <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>application</field>
-        <id>5e767dff972f2110d70ef207f053afe7</id>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-27 11:59:58</sys_created_on>
-        <sys_id>12767dff972f2110d70ef207f053affa</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
-        <table>var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7</table>
-        <value/>
-    </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
         <field>response_body</field>
         <id>5e767dff972f2110d70ef207f053afe7</id>
         <sys_created_by>admin</sys_created_by>
@@ -2137,20 +2106,9 @@
         <table>var__m_sys_hub_step_ext_input_5e767dff972f2110d70ef207f053afe7</table>
         <value>{{step[64d04b0b-7ea4-44ca-a5f9-96cb73fbf357].response_body}}</value>
     </sys_element_mapping>
-    <sys_element_mapping action="INSERT_OR_UPDATE">
-        <field>script</field>
-        <id>5e767dff972f2110d70ef207f053afe7</id>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-06-27 11:59:58</sys_created_on>
-        <sys_id>d2767dff972f2110d70ef207f053affa</sys_id>
-        <sys_mod_count>0</sys_mod_count>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
-        <table>var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7</table>
-        <value/>
-    </sys_element_mapping>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_hub_step_ext_output_5e767dff972f2110d70ef207f053afe7^id=5e767dff972f2110d70ef207f053afe7"/>
     <sys_element_mapping action="delete_multiple" query="table=var__m_sys_flow_step_definition_input_106afb6647032200b4fad7527c9a71e7^id=5e767dff972f2110d70ef207f053afe7"/>
+    <sys_translated_text action="delete_multiple" query="documentkey=5e767dff972f2110d70ef207f053afe7"/>
     <sys_hub_step_ext_input action="delete_multiple" query="model=5e767dff972f2110d70ef207f053afe7^sys_idNOT IN52767dff972f2110d70ef207f053afeb"/>
     <sys_hub_step_ext_input action="INSERT_OR_UPDATE">
         <active>true</active>
@@ -2417,11 +2375,11 @@
         <sys_created_on>2023-06-27 11:59:58</sys_created_on>
         <sys_id>96767dff972f2110d70ef207f053aff6</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Text</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_step_ext_output_5e767dff972f2110d70ef207f053afe7_text_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
         <url/>
@@ -2440,11 +2398,11 @@
         <sys_created_on>2023-06-27 11:59:58</sys_created_on>
         <sys_id>9e767dff972f2110d70ef207f053aff2</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Detected Source Language</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_step_ext_output_5e767dff972f2110d70ef207f053afe7_detected_source_language_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
         <url/>
@@ -2955,11 +2913,11 @@
         <sys_created_on>2023-06-27 11:59:57</sys_created_on>
         <sys_id>4a767dff972f2110d70ef207f053afc6</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Language</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_input_4a767dff972f2110d70ef207f053afbf_language_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:57</sys_updated_on>
         <url/>
@@ -2978,11 +2936,11 @@
         <sys_created_on>2023-06-27 11:59:57</sys_created_on>
         <sys_id>c6767dff972f2110d70ef207f053afca</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Message</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_input_4a767dff972f2110d70ef207f053afbf_message_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:57</sys_updated_on>
         <url/>
@@ -3003,11 +2961,11 @@
         <sys_created_on>2023-06-27 11:59:58</sys_created_on>
         <sys_id>5a76bdff972f2110d70ef207f053af05</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Text</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_4a767dff972f2110d70ef207f053afbf_text_en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
         <url/>
@@ -3026,11 +2984,11 @@
         <sys_created_on>2023-06-27 11:59:58</sys_created_on>
         <sys_id>9a76bdff972f2110d70ef207f053af01</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Action Status</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_4a767dff972f2110d70ef207f053afbf___action_status___en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
         <url/>
@@ -3049,11 +3007,11 @@
         <sys_created_on>2023-06-27 11:59:58</sys_created_on>
         <sys_id>d276bdff972f2110d70ef207f053af0b</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name/>
+        <sys_name>Don't Treat as Error</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name/>
+        <sys_update_name>sys_documentation_var__m_sys_hub_action_output_4a767dff972f2110d70ef207f053afbf___dont_treat_as_error___en</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
         <sys_updated_on>2023-06-27 11:59:58</sys_updated_on>
         <url/>

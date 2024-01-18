@@ -4,7 +4,6 @@
         <can_delegate>true</can_delegate>
         <description>Can modify Context Menu Items and is able to assign the DevOps+ User role to fellow admins.</description>
         <elevated_privilege>false</elevated_privilege>
-        <encryption_context/>
         <grantable>true</grantable>
         <includes_roles/>
         <name>x_424426_devops.devops_admin</name>

@@ -181,13 +181,13 @@ addLoadEvent(function(){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-13 20:21:19</sys_created_on>
         <sys_id>71f2eb5b97d72110d70ef207f053af97</sys_id>
-        <sys_mod_count>13</sys_mod_count>
+        <sys_mod_count>14</sys_mod_count>
         <sys_name>users</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
-        <sys_policy>read</sys_policy>
+        <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_71f2eb5b97d72110d70ef207f053af97</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-14 16:10:18</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-01-18 11:03:16</sys_updated_on>
     </sys_ui_page>
 </record_update>
