@@ -31,15 +31,15 @@
 /* eslint no-undef: "error" */
 (function executeRule(current, previous /*null when async*/) {
 
-	g_scratchpad.devops = {
+	g_scratchpad.devops_plus = {
 		update_name: current.sys_update_name.toString(),
 		fields: {
-			sys_scope: getFieldInfo(current, 'sys_scope'),
-			description: getFieldInfo(current, 'description')
+			sys_scope: getFieldInfo(current, 'sys_scope', false),
+			description: getFieldInfo(current, 'description', true)
 		}
 	};
 	
-	function getFieldInfo(anyGr, field) {
+	function getFieldInfo(anyGr, field, enableWrite) {
 		const fieldInfo = {
 			valid: anyGr.isValidField(field)
 		};
@@ -47,6 +47,8 @@
 		if (fieldInfo.valid) {
 			fieldInfo.value = anyGr.getValue(field);
 			fieldInfo.display_value = anyGr.getDisplayValue(field);
+			fieldInfo.label = anyGr.getElement(field).getLabel();
+			fieldInfo.write = enableWrite;
 		}
 		
 		return fieldInfo;
@@ -59,7 +61,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>d0cae139975b2110d70ef207f053af6c</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>12</sys_mod_count>
         <sys_name>DevOps+ Generate Scratchpad</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -67,7 +69,7 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_d0cae139975b2110d70ef207f053af6c</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-11-25 00:05:08</sys_updated_on>
+        <sys_updated_on>2024-02-01 20:07:49</sys_updated_on>
         <template/>
         <when>before_display</when>
     </sys_script>

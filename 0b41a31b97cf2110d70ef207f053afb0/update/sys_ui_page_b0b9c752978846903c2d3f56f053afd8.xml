@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[addLoadEvent(function () {
+	var gm = GlideModal.get();
+	gel('input').value = gm.getPreference('value');
+});
+
+function onOK() {
+	var gdw = GlideModal.get();
+	var onComplete = gdw.getPreference('onPromptComplete');
+    if (typeof onComplete == 'function') {
+		try {
+			var ret = onComplete.call(gdw, gel('input').value);
+			if (ret === true) {
+				gdw.destroy();
+			} else if (ret) {
+				gel('error_message').innerHTML = ret;
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}
+	
+	return false;
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_input_dialog.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		const text = RP.getWindowProperties().text;
+		const label = RP.getWindowProperties().label;
+		const value = RP.getWindowProperties().value;
+	</g:evaluate>
+	<style>
+		textarea {
+			width: 100%;
+			resize: none;
+			overflow: hidden;
+			overflow-wrap: break-word;
+		}
+	</style>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-xs-12">${text}</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12 form-group">
+				<label class=" col-xs-12 col-md-1_5 col-lg-2 control-label" for="input">${label}</label>
+				<textarea id="input" class="col-xs-10 col-md-9 col-lg-8 form-field input_controls form-control" />
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12 form-group">       
+				<span id="error_message" style="color:red;background-color:#dddddd;" />
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12">
+				<g:dialog_buttons_ok_cancel ok="return onOK();" />
+			</div>
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>input_dialog</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-01 18:55:42</sys_created_on>
+        <sys_id>b0b9c752978846903c2d3f56f053afd8</sys_id>
+        <sys_mod_count>8</sys_mod_count>
+        <sys_name>input_dialog</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_b0b9c752978846903c2d3f56f053afd8</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-01 19:28:05</sys_updated_on>
+    </sys_ui_page>
+</record_update>

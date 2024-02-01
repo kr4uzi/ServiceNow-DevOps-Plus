@@ -21,7 +21,8 @@
         <runtime_access_tracking>permissive</runtime_access_tracking>
         <scope>x_424426_devops</scope>
         <scoped_administration>true</scoped_administration>
-        <short_description/>
+        <short_description>Adds a Context Menu on Forms and Lists to access common utility functions more easily and improves productivity by adding a Code Search option via CTRL+SHIFT+F (MacOS: CMD+SHIFT+F) on all forms/lists.&#13;
+Additionally enables to option to decrypt most protected application files.</short_description>
         <source>x_424426_devops</source>
         <store_correlation_id/>
         <store_url/>
@@ -31,9 +32,9 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-01 09:58:19</sys_created_on>
         <sys_id>0b41a31b97cf2110d70ef207f053afb0</sys_id>
-        <sys_mod_count>26</sys_mod_count>
+        <sys_mod_count>27</sys_mod_count>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-11-25 00:20:11</sys_updated_on>
+        <sys_updated_on>2024-02-01 20:22:10</sys_updated_on>
         <template/>
         <trackable>true</trackable>
         <uninstall_blocked>false</uninstall_blocked>

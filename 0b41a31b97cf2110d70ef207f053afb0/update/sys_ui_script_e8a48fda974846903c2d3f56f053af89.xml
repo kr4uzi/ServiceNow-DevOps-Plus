@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.description</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.description = (function() {
+	"use strict";
+	
+	/* eslint no-undef: "error" */
+	x_424426_devops.loader.get('window', function ($window) {
+		$window.addLoadEvent(function () {
+			const g_form = $window.g_form;
+			if (!g_form) {
+				return;
+			}
+			
+			for (let field in $window.g_scratchpad.devops_plus.fields) {
+				const info = $window.g_scratchpad.devops_plus.fields[field];
+				if (info.valid) {
+					const ge = g_form.getElement(field);
+					if (!ge || !g_form.isFieldVisible(field)) {
+						infoMessage(field, info);
+					}
+				}
+			}
+			
+			$window.devops_plus_setField = function (fieldName) {
+				const info = $window.g_scratchpad.devops_plus.fields[fieldName];
+				var gm = new $window.GlideModal('x_424426_devops_input_dialog');
+				gm.setTitle('Set ' + info.label);
+				gm.setPreference('label', info.label);
+				gm.setPreference('value', info.display_value);
+				gm.setPreference('onPromptComplete', function (value) {
+					info.display_value = value;
+					
+					const ge = g_form.getElement(fieldName);
+					if (!ge) {
+						// field is not on form
+						var xhr = new $window.XMLHttpRequest();
+						xhr.open('PUT', 'api/now/table/' + g_form.getTableName() + '/' + g_form.getUniqueValue(), true);
+						xhr.setRequestHeader('X-UserToken', $window.g_ck);
+						xhr.setRequestHeader('Accept', 'application/json');
+						xhr.setRequestHeader('Content-Type', 'application/json');
+						xhr.onload = function() {
+							infoMessage(fieldName, info);
+							gm.destroy();
+						};
+						const data = {};
+						data[fieldName] = value;
+						xhr.send(JSON.stringify(data));
+					} else {
+						// field is not visible
+						g_form.setValue(fieldName, value);
+						infoMessage(fieldName, info);
+						gm.destroy();
+					}
+				});
+				gm.render();
+			};
+			
+			function infoMessage(fieldName, fieldInfo) {
+				const msgID = 'devops_plus_msg_' + fieldName;
+				const node = $window.document.getElementById(msgID);
+				if (node) {
+					node.remove();
+				}
+				
+				let msg = ' (empty)';
+				if (fieldInfo.display_value) {
+					msg = '<pre>' + fieldInfo.display_value + '</pre>';
+				}
+
+				if (fieldInfo.write) {
+					g_form.addInfoMessage('<a href="javascript: devops_plus_setField(\'' + fieldName + '\');">[' + fieldInfo.label + ']</a>: ' + msg, msgID);
+				} else {
+					g_form.addInfoMessage('[' + fieldInfo.label + ']: ' + msg, msgID);
+				}
+			}
+		});
+	});
+	
+
+	return {
+		type: 'description'
+	};
+})();
+]]></script>
+        <script_name>description</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-01 18:41:06</sys_created_on>
+        <sys_id>e8a48fda974846903c2d3f56f053af89</sys_id>
+        <sys_mod_count>20</sys_mod_count>
+        <sys_name>x_424426_devops.description</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_e8a48fda974846903c2d3f56f053af89</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-01 20:18:14</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>
