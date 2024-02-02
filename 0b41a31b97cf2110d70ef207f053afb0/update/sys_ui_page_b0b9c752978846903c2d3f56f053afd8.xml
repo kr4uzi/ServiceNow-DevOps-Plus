@@ -37,6 +37,7 @@ function onOK() {
 	<style>
 		textarea {
 			width: 100%;
+			height: 100%;
 			resize: none;
 			overflow: hidden;
 			overflow-wrap: break-word;
@@ -70,13 +71,13 @@ function onOK() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:55:42</sys_created_on>
         <sys_id>b0b9c752978846903c2d3f56f053afd8</sys_id>
-        <sys_mod_count>8</sys_mod_count>
+        <sys_mod_count>9</sys_mod_count>
         <sys_name>input_dialog</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_b0b9c752978846903c2d3f56f053afd8</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-01 19:28:05</sys_updated_on>
+        <sys_updated_on>2024-02-02 20:24:40</sys_updated_on>
     </sys_ui_page>
 </record_update>

@@ -26,7 +26,7 @@ x_424426_devops.app_metadata = (function() {
 			return;
 		}
 		
-		var element = $window.document.createElement('link');
+		const element = $window.document.createElement('link');
 		element.rel = 'stylesheet';
 		element.href = '877dbaa697c886903c2d3f56f053afd8.cssdbx?v=1';
 		$window.document.head.appendChild(element);
@@ -49,7 +49,7 @@ x_424426_devops.app_metadata = (function() {
 			return;
 		}
 		
-		msgNode.appendChild('DevOps+ Hidden Metadata:');
+		msgNode.append('Hidden Metadata');
 		const table = $window.document.createElement('table');
 		msgNode.appendChild(table);
 		
@@ -58,17 +58,18 @@ x_424426_devops.app_metadata = (function() {
 		['Field', 'Value', ''].forEach(content => {
 			const th = $window.document.createElement('th');
 			header.appendChild(th);
-			th.appendChild(content);
+			th.append(content);
 		});
 		fields.forEach(f => {
 			const tr = $window.document.createElement('tr');
 			table.appendChild(tr);
 			const labelTd = $window.document.createElement('td');
 			tr.appendChild(labelTd);
-			labelTd.appendChild(f.label);
+			labelTd.append(f.label);
 			const valueTd = $window.document.createElement('td');
 			tr.appendChild(valueTd);
-			valueTd.appendChild(f.display_value);
+			const valueNode = $window.document.createTextNode(f.display_value);
+			valueTd.appendChild(valueNode);
 			const actionTd = $window.document.createElement('td');
 			tr.appendChild(actionTd);
 			const button = $window.document.createElement('button');
@@ -76,40 +77,44 @@ x_424426_devops.app_metadata = (function() {
 			
 			button.classList.add('btn', 'btn-default', 'btn-ref', 'icon', 'icon-edit');
 			if (f.edit) {				
-				button.addEventListener('click', function () {
-					var gm = new $window.GlideModal('x_424426_devops_input_dialog');
-					gm.setTitle('Set ' + f.label);
-					gm.setPreference('label', f.label);
-					gm.setPreference('value', f.display_value);
-					gm.setPreference('onPromptComplete', function (value) {
-						f.display_value = value;
-						const ge = g_form.getElement(f.name);
-						if (!ge) {
-							// field is not on form
-							var xhr = new $window.XMLHttpRequest();
-							xhr.open('PUT', 'api/now/table/' + g_form.getTableName() + '/' + g_form.getUniqueValue(), true);
-							xhr.setRequestHeader('X-UserToken', $window.g_ck);
-							xhr.setRequestHeader('Accept', 'application/json');
-							xhr.setRequestHeader('Content-Type', 'application/json');
-							xhr.onload = function() {
-								gm.destroy();
-							};
-							const data = {};
-							data[f.name] = value;
-							xhr.send(JSON.stringify(data));
-						} else {
-							// field is not visible
-							g_form.setValue(f.name, value);
-							gm.destroy();
-						}
-					});
-					gm.render();
-				});
-				actionTd.appendChild(f.display_value);
+				button.onclick = fieldEdit.bind($window, f, valueNode);
 			} else {
 				button.setAttribute('disabled', '');
 			}
 		});
+	}
+	
+	function fieldEdit(field, fieldNode) {
+		const $window = this;
+		var gm = new $window.GlideModal('x_424426_devops_input_dialog');
+		gm.setTitle('Set ' + field.label);
+		gm.setPreference('label', field.label);
+		gm.setPreference('value', field.display_value);
+		gm.setPreference('onPromptComplete', function (value) {
+			field.display_value = value;
+			fieldNode.nodeValue = value;
+			const ge = $window.g_form.getElement(field.name);
+			if (!ge) {
+				// field is not on form
+				var xhr = new $window.XMLHttpRequest();
+				xhr.open('PUT', 'api/now/table/' + $window.g_form.getTableName() + '/' + $window.g_form.getUniqueValue(), true);
+				xhr.setRequestHeader('X-UserToken', $window.g_ck);
+				xhr.setRequestHeader('Accept', 'application/json');
+				xhr.setRequestHeader('Content-Type', 'application/json');
+				xhr.onload = function() {
+					gm.destroy();
+				};
+				const data = {};
+				data[field.name] = value;
+				xhr.send(JSON.stringify(data));
+			} else {
+				// field is not visible
+				$window.g_form.setValue(field.name, value);
+				gm.destroy();
+			}
+		});
+		gm.render();
+		return false;
 	}
 
 	return {
@@ -122,14 +127,14 @@ x_424426_devops.app_metadata = (function() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:41:06</sys_created_on>
         <sys_id>e8a48fda974846903c2d3f56f053af89</sys_id>
-        <sys_mod_count>28</sys_mod_count>
+        <sys_mod_count>32</sys_mod_count>
         <sys_name>x_424426_devops.app_metadata</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_e8a48fda974846903c2d3f56f053af89</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-02 19:05:59</sys_updated_on>
+        <sys_updated_on>2024-02-02 20:28:20</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
