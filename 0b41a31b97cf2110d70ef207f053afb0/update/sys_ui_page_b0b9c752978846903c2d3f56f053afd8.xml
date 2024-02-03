@@ -18,7 +18,7 @@ function onOK() {
 				gel('error_message').innerHTML = ret;
 			}
 		} catch (e) {
-			console.error(e);
+			window.console.error(e);
 		}
 	}
 	
@@ -49,8 +49,10 @@ function onOK() {
 		</div>
 		<div class="row">
 			<div class="col-xs-12 form-group">
-				<label class=" col-xs-12 col-md-1_5 col-lg-2 control-label" for="input">${label}</label>
-				<textarea id="input" class="col-xs-10 col-md-9 col-lg-8 form-field input_controls form-control" />
+				<j:if test="${label}">
+					<label class="control-label" for="input">${label}</label>
+				</j:if>
+				<textarea id="input" class="form-field input_controls form-control" onkeyup="$j(this).height(48);$j(this).height($j(this).prop('scrollHeight'))" />
 			</div>
 		</div>
 		<div class="row">
@@ -71,13 +73,13 @@ function onOK() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:55:42</sys_created_on>
         <sys_id>b0b9c752978846903c2d3f56f053afd8</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>15</sys_mod_count>
         <sys_name>input_dialog</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_b0b9c752978846903c2d3f56f053afd8</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-02 20:24:40</sys_updated_on>
+        <sys_updated_on>2024-02-03 11:53:54</sys_updated_on>
     </sys_ui_page>
 </record_update>

@@ -26,15 +26,16 @@ x_424426_devops.app_metadata = (function() {
 			return;
 		}
 		
+		const METADATA_TABLE_SYLE_SHEET_SYS_ID = '877dbaa697c886903c2d3f56f053afd8';
+		const canWrite = $window.g_scratchpad.devops_plus.can_write;
 		const element = $window.document.createElement('link');
 		element.rel = 'stylesheet';
-		element.href = '877dbaa697c886903c2d3f56f053afd8.cssdbx?v=1';
+		element.href = METADATA_TABLE_SYLE_SHEET_SYS_ID + '.cssdbx?v=1';
 		$window.document.head.appendChild(element);
 		
 		// we only need to show fields which aren't visible on the form
 		const fields = $window.g_scratchpad.devops_plus.fields.filter(f => {
-			const ge = g_form.getElement(f.name);
-			return !ge || !g_form.isFieldVisible(f.name);
+			return !g_form.isFieldVisible(f.name);
 		});
 		
 		if (fields.length == 0) {
@@ -72,15 +73,28 @@ x_424426_devops.app_metadata = (function() {
 			valueTd.appendChild(valueNode);
 			const actionTd = $window.document.createElement('td');
 			tr.appendChild(actionTd);
-			const button = $window.document.createElement('button');
-			actionTd.appendChild(button);
 			
-			button.classList.add('btn', 'btn-default', 'btn-ref', 'icon', 'icon-edit');
-			if (f.edit) {				
-				button.onclick = fieldEdit.bind($window, f, valueNode);
+			const button = $window.document.createElement('button');			
+			button.classList.add('btn', 'btn-default', 'btn-ref', 'icon');
+			if (f.type == 'reference') {
+				button.classList.add('icon-info');
+				button.dataset.type = 'reference_popup';
+				button.dataset.table = g_form.getTableName();
+				button.dataset.form = f.table_name + '.do';
+				button.dataset.ref = g_form.getTableName() + '.' + f.name;
+				button.dataset.refKey = 'null';
+			} else if (['url', 'string', 'script'].includes(f.type)) {	
+				button.classList.add('icon-edit');
+				if (canWrite) {
+					button.onclick = fieldEdit.bind($window, f, valueNode);
+				} else {
+					button.setAttribute('disabled', '');
+				}
 			} else {
-				button.setAttribute('disabled', '');
+				return;
 			}
+			
+			actionTd.appendChild(button);
 		});
 	}
 	
@@ -88,30 +102,23 @@ x_424426_devops.app_metadata = (function() {
 		const $window = this;
 		var gm = new $window.GlideModal('x_424426_devops_input_dialog');
 		gm.setTitle('Set ' + field.label);
-		gm.setPreference('label', field.label);
+		//gm.setPreference('label', field.label);
 		gm.setPreference('value', field.display_value);
 		gm.setPreference('onPromptComplete', function (value) {
 			field.display_value = value;
 			fieldNode.nodeValue = value;
-			const ge = $window.g_form.getElement(field.name);
-			if (!ge) {
-				// field is not on form
-				var xhr = new $window.XMLHttpRequest();
-				xhr.open('PUT', 'api/now/table/' + $window.g_form.getTableName() + '/' + $window.g_form.getUniqueValue(), true);
-				xhr.setRequestHeader('X-UserToken', $window.g_ck);
-				xhr.setRequestHeader('Accept', 'application/json');
-				xhr.setRequestHeader('Content-Type', 'application/json');
-				xhr.onload = function() {
-					gm.destroy();
-				};
-				const data = {};
-				data[field.name] = value;
-				xhr.send(JSON.stringify(data));
-			} else {
-				// field is not visible
-				$window.g_form.setValue(field.name, value);
+			
+			var xhr = new $window.XMLHttpRequest();
+			xhr.open('PUT', 'api/now/table/' + $window.g_form.getTableName() + '/' + $window.g_form.getUniqueValue(), true);
+			xhr.setRequestHeader('X-UserToken', $window.g_ck);
+			xhr.setRequestHeader('Accept', 'application/json');
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			xhr.onload = function() {
 				gm.destroy();
-			}
+			};
+			const data = {};
+			data[field.name] = value;
+			xhr.send(JSON.stringify(data));
 		});
 		gm.render();
 		return false;
@@ -127,14 +134,14 @@ x_424426_devops.app_metadata = (function() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:41:06</sys_created_on>
         <sys_id>e8a48fda974846903c2d3f56f053af89</sys_id>
-        <sys_mod_count>32</sys_mod_count>
+        <sys_mod_count>40</sys_mod_count>
         <sys_name>x_424426_devops.app_metadata</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_e8a48fda974846903c2d3f56f053af89</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-02 20:28:20</sys_updated_on>
+        <sys_updated_on>2024-02-03 11:45:49</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
