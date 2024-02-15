@@ -20,16 +20,24 @@ x_424426_devops.config = (function() {
 	
 	function loadConfig($window) {
 		if ($window) {
-			var ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
-			ga.addParam('sysparm_name', 'getConfig');
-			ga.getXMLAnswer(function (result) {
-				result = JSON.parse(result);
-				if (result && result.status == 'success') {
-					delete result.status;
-					delete result.message;
-					x_424426_devops.loader.set('config', result);
-				}
-			});
+			if ($window.g_scratchpad && $window.g_scratchpad.devops_plus) {
+				setConfig($window.g_scratchpad.devops_plus.config);
+			} else {
+				var ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
+				ga.addParam('sysparm_name', 'getConfig');
+				ga.getXMLAnswer(function (result) {
+					setConfig(result);
+				});
+			}
+		}
+	}
+	
+	function setConfig(strConfig) {
+		strConfig = JSON.parse(strConfig);
+		if (strConfig && strConfig.status == 'success') {
+			delete strConfig.status;
+			delete strConfig.message;
+			x_424426_devops.loader.set('config', strConfig);
 		}
 	}
 
@@ -43,14 +51,14 @@ x_424426_devops.config = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:32:50</sys_created_on>
         <sys_id>03e6834997d32110d70ef207f053af59</sys_id>
-        <sys_mod_count>11</sys_mod_count>
+        <sys_mod_count>12</sys_mod_count>
         <sys_name>x_424426_devops.config</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_03e6834997d32110d70ef207f053af59</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-08-18 18:21:32</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-14 13:02:50</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>

@@ -10,14 +10,29 @@ x_424426_devops.app_metadata = (function() {
 	"use strict";
 	
 	/* eslint no-undef: "error" */
-	x_424426_devops.loader.get('window', function ($window) {
-		$window.addLoadEvent(function () {
-			try {
+	let $window = null;
+	let $config = null;
+	x_424426_devops.loader.get('window', function (_window) {
+		if (_window.g_form) {
+			$window = _window;
+			if ($config) {
 				infuse($window);
-			} catch (e) {
-				$window.console.error('[DevOps+] failed to infuse metadata:', e);
 			}
-		});
+		} else {
+			_window.addRenderEvent(function () {
+				$window = _window;
+				if ($config) {
+					infuse($window);
+				}
+			});
+		}
+	});
+	
+	x_424426_devops.loader.get('config', function (_config) {
+		$config = _config;
+		if ($window) {
+			infuse($window);
+		}
 	});
 	
 	function infuse($window) {
@@ -139,14 +154,14 @@ x_424426_devops.app_metadata = (function() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:41:06</sys_created_on>
         <sys_id>e8a48fda974846903c2d3f56f053af89</sys_id>
-        <sys_mod_count>42</sys_mod_count>
+        <sys_mod_count>45</sys_mod_count>
         <sys_name>x_424426_devops.app_metadata</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_e8a48fda974846903c2d3f56f053af89</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-06 22:33:02</sys_updated_on>
+        <sys_updated_on>2024-02-15 15:13:22</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
