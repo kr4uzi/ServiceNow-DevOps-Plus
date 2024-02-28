@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[/* global pageConfig, document, addLoadEvent, FormData, XMLHttpRequest, gel, window */
+/* eslint no-undef: "error" */
+pageConfig = JSON.parse(pageConfig.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+
+addLoadEvent(function () {
+	pageConfig.cancelled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		pageConfig.cancelled = true;
+	});
+	
+	var progressBar = gel('bcs-progress-bar');
+	progressBar.setAttribute('aria-valuenow', '0');
+	progressBar.style.width = '0%';
+			
+	gel('progress-container').style.display = '';
+	gel('progress-header').style.display = '';
+	
+	var tables = pageConfig.tables;
+	if (tables.length) {
+		var i = 0;
+		searchTable(tables[i], pageConfig.record, function processTableResults(result) {
+			var percentageComplete = Math.floor(++i / tables.length * 100);
+			gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+			progressBar.setAttribute('aria-valuenow', percentageComplete);
+			progressBar.style.width = percentageComplete + '%';
+						
+			if (result.hits && result.hits.length) {							
+				addTable(result.tableLabel, result.hits);
+			}
+			
+			if (i < tables.length && !pageConfig.cancelled) {
+				searchTable(tables[i], pageConfig.record, processTableResults);
+			}
+		});
+	}
+});
+
+function addTable(tableName, hits) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	tableLi.classList.add('collapsed');
+	tableLi.setAttribute('aria-expanded', false);
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '<span class="title"> ' + tableName + ' <span class="count">(' + hits.length + ')</span></span><i class="toggle-trigger icon icon-vcr-right"></i>';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i > 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function searchTable(tableConfig, sysID, callback) {
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchReference');
+	ga.addParam('table', tableConfig.table);
+	ga.addParam('fields', tableConfig.fields);
+	ga.addParam('sys_id', sysID);
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			if (result.search_result) {
+				callback(result.search_result);
+			} else {
+				console.log("no search results: ", tableConfig, sysID);
+			}
+			
+		} else if (result.message) {
+			console.log('error searchTable: ', result.message, tableConfig);
+		}
+	});
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_references.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		const pageConfig = {};
+		const recordTable = RP.getParameterValue('record_table') || RP.getWindowProperties().record_table;
+		const recordSysID = RP.getParameterValue('record_sys_id') || RP.getWindowProperties().record_sys_id;
+		if (recordTable &amp;&amp; recordSysID) {
+			pageConfig.record = recordSysID;
+			const refQueries = {};
+			new GlideTableHierarchy(recordTable).getTables().forEach(tableName => {
+				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+				dictionaryGr.addQuery('internal_type', 'reference');
+				dictionaryGr.addQuery('reference', tableName);
+				dictionaryGr.addQuery('sys_class_name', 'sys_dictionary');
+				dictionaryGr.query();
+				while (dictionaryGr.next()) {
+					const columnTable = dictionaryGr.getValue('name');
+					const columnName = dictionaryGr.getValue('element');
+		
+					if (columnTable in refQueries) {
+						refQueries[columnTable].push(columnName);
+					} else {
+						refQueries[columnTable] = [columnName];
+					}
+				}
+			});
+		
+			pageConfig.tables = [];
+			for (let tableName in refQueries) {
+				pageConfig.tables.push({ table: tableName, fields: refQueries[tableName] });
+			}
+		} else {
+			pageConfig.errorMessage = 'Parameter "record_table" and "record_sys_id" are manatory!';
+		}
+	</g:evaluate>
+	<script>var pageConfig = '${JSON.stringify(pageConfig)}';</script>
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.0" />
+	<div class="search-pane">
+		<div id="progress-header" style="display: none;">
+			<div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline">
+			</div>
+			<div id="progress-container">
+				<div>In progress<span id="progressPercentage"></span></div>
+				<div id="progress-bar-container">
+					<div class="progress">
+						<div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						</div>
+					</div>
+				</div>
+				<div>
+					<a class="icon icon-error-circle"></a>
+				</div>
+			</div>
+		</div>
+		<div id="no-results" style="display: none;">
+			No Results Found
+		</div>
+		<ul id="search-results" role="tree" tree-navigator="true">
+		</ul>
+	</div>
+</j:jelly>]]></html>
+        <name>references</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-28 12:48:52</sys_created_on>
+        <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
+        <sys_mod_count>41</sys_mod_count>
+        <sys_name>references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-28 17:10:21</sys_updated_on>
+    </sys_ui_page>
+</record_update>

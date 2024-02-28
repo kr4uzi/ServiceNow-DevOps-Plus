@@ -16,6 +16,79 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
 	},
 	
+	searchReference: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const table = this.getParameter('table');
+		const fields = this.getParameter('fields');
+		const sysID = this.getParameter('sys_id');
+		const limit = this.getParameter('limit') || 500;
+		
+		if (table && fields && sysID) {			
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('name', table);
+			dbObjectGr.setLimit(1);
+			dbObjectGr.query();
+			if (dbObjectGr.next()) {
+				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+				scriptGr.setLimit(1);
+				scriptGr.query();
+				if (scriptGr.next()) {
+					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
+					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
+					scriptGr.script = 
+						'(function () {\n' +
+							'var anyGr = new GlideRecordSecure(table);\n' +
+							'var fieldQuery = fields\n' +
+								'.split(",")\n' +
+								'.filter(function (f) { return anyGr.isValidField(f); })\n' +
+								'.map(function (f) { return f + "=" + sys_id; })\n' +
+								'.join("^OR");\n' +
+							'anyGr.addEncodedQuery(fieldQuery);\n' +
+							'anyGr.query();\n' +
+							'\n' +
+							'var result = {\n' +
+								'recordType: table,\n' +
+								'tableLabel: anyGr.getLabel(),\n' +
+								'hits: []\n' +
+							'};\n' +
+							'\n' +
+							'while (anyGr.next()) {\n' +
+								'result.hits.push({\n' +
+									'name: anyGr.getDisplayValue(),\n' +
+									'className: anyGr.getRecordClassName(),\n' +
+									'tableLabel: anyGr.getTableName(),\n' +
+									'sysId: anyGr.getUniqueValue()\n' +
+								'});\n' +
+							'}\n' +
+							'\n' +
+							'return result;\n' +
+						'})();';
+						
+					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+						table: table,
+						fields: fields,
+						sys_id: sysID
+					});
+					
+					result.status = 'success';
+				} else {
+					result.message = 'Unable to run script';
+				}
+			} else {
+				result.message = 'Unable to find table';
+			}
+		} else {
+			result.message = 'Invalid parameters!';
+		}
+		
+		return JSON.stringify(result);
+	},
+	
 	// the OOTB code search only allows for sys_metadata tables to be searched - even though you can configure the sn_codesearch_table otherwise,
 	// this is "by design" and won't be fixed (this is the response for a HI ticket I've created...)
 	// therefore the following function is mostly a replica of the OOTB search functionality:
@@ -293,13 +366,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>61</sys_mod_count>
+        <sys_mod_count>62</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-12-29 20:34:43</sys_updated_on>
+        <sys_updated_on>2024-02-28 14:15:05</sys_updated_on>
     </sys_script_include>
 </record_update>

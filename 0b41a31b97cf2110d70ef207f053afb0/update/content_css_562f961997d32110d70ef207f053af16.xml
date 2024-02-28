@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="content_css">
     <content_css action="INSERT_OR_UPDATE">
         <name>code_search</name>
-        <style>&#13;
+        <style>/* OOTB min-width: 30px */&#13;
+.progress-bar[aria-valuenow="1"], .progress-bar[aria-valuenow="2"] {&#13;
+    min-width: 0px;&#13;
+}&#13;
+&#13;
 #progress-header #progress-text strong {&#13;
     color: #000000;&#13;
 }&#13;
@@ -334,14 +338,14 @@ progress-header #progress-text {&#13;
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:17:23</sys_created_on>
         <sys_id>562f961997d32110d70ef207f053af16</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>content_css_562f961997d32110d70ef207f053af16</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-06-07 10:17:23</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-28 17:05:46</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>
