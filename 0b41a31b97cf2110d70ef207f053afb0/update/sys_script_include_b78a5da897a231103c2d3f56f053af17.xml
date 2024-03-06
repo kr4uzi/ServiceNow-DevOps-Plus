@@ -8,12 +8,42 @@
         <description/>
         <name>ContextMenuUtilClient</name>
         <script><![CDATA[/* global global, gs */
-/* global Class, GlideRecordSecure, GlideScopedEvaluator */
+/* global Class, GlideRecordSecure, GlideTableHierarchy, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var ContextMenuUtilClient = Class.create();
 ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	getReferencingTables: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const table = this.getParameter('table');
+		if (table && gs.tableExists(table)) {
+			const queries = {};
+			const tables = new GlideTableHierarchy(table).getTables();
+			tables.forEach(tableName => {
+				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+				dictionaryGr.addQuery('internal_type', 'reference');
+				dictionaryGr.addQuery('reference', tableName);
+				dictionaryGr.query();
+				while (dictionaryGr.next()) {
+					const columnTable = dictionaryGr.getValue('name');
+					const queryParts = queries[columnTable] || (queries[columnTable] = []);
+					queryParts.push(dictionaryGr.getValue('element'));
+				}
+			});
+			
+			result.referencing = queries;
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
 	},
 	
 	getChoiceValues: function () {
@@ -103,13 +133,13 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-11-13 10:56:29</sys_created_on>
         <sys_id>b78a5da897a231103c2d3f56f053af17</sys_id>
-        <sys_mod_count>7</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>ContextMenuUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b78a5da897a231103c2d3f56f053af17</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-01 16:55:29</sys_updated_on>
+        <sys_updated_on>2024-02-28 12:38:37</sys_updated_on>
     </sys_script_include>
 </record_update>

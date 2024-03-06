@@ -33,7 +33,7 @@
         <script><![CDATA[/* global g_scratchpad, GlideModalForm, g_form, devStudioAPI */
 /* eslint no-undef: "error" */
 function devops_openRecordVersions() {
-	var updateName = g_scratchpad.devops.update_name || (g_form.getTableName() + '_' + g_form.getUniqueValue());
+	var updateName = g_scratchpad.devops_plus.update_name || (g_form.getTableName() + '_' + g_form.getUniqueValue());
 	var gmf = new GlideModalForm('Versions', 'sys_update_version_list', function () {
 		// on render callback
 	}, false);
@@ -57,7 +57,7 @@ function devops_openRecordVersions() {
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>7527c93197d72110d70ef207f053af07</sys_id>
-        <sys_mod_count>14</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>Show versions</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -65,19 +65,9 @@ function devops_openRecordVersions() {
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_action_7527c93197d72110d70ef207f053af07</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-11-25 00:00:28</sys_updated_on>
+        <sys_updated_on>2024-03-06 15:31:07</sys_updated_on>
         <table>sys_metadata</table>
         <ui11_compatible>false</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
-        <x_376096_pxp_client_script><![CDATA[/* eslint no-undef: "error" */
-function onClick(g_form) {
-
-    // Activate the "Template Bar" (... - Button on the top right)
-    // for some example scripts
-
-}]]></x_376096_pxp_client_script>
-        <x_376096_pxp_enabled>false</x_376096_pxp_enabled>
-        <x_376096_pxp_list_disabled_condition/>
-        <x_376096_pxp_list_label/>
     </sys_ui_action>
 </record_update>
