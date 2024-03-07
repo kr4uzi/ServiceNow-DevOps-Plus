@@ -47,7 +47,7 @@
 		getNormalizedVariableName(tableName, function (variableName) {
 			const objName = groupBy.length ? (variableName + 'Ga') : (variableName + 'Gr');
 			const objClass = groupBy.length ? 'GlideAggregate' : 'GlideRecord';
-			let script = 'var ' + objName + ' = new ' + objClass + '("' + tableName + '");';
+			let script = 'var ' + objName + ' = new ' + objClass + '(\'' + tableName + '\');';
 			// Need to count the numbers of '^NQ's those OR queries cannot be built in "one go"...
 			// For each NQ-part, the query has to be built up and then temporarily stored in a variable.
 			// After all NQ queries have been built, the can be joined into one query.
@@ -61,7 +61,7 @@
 				if (item.getAttribute('endquery') == 'false') {
 					if (item.getAttribute('newquery') == 'true') {
 						script += '\nvar nq' + (++nqs) + ' = recordGr.getEncodedQuery();'
-							+ '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");';
+							+ '\n\nvar ' + objName + ' = new ' + objClass + '(\'' + tableName + '\');';
 					}
 
 					const operator = item.getAttribute('operator');
@@ -77,15 +77,15 @@
 						script += '\n  .addOrCondition';
 					}
 
-					script += '("' + item.getAttribute('field') + '"';
+					script += '(\'' + item.getAttribute('field') + '\'';
 					if (operator == 'ISEMPTY' || operator == 'ISNOTEMPTY') {
 						script += ')';
 					} else {
 						if (item.getAttribute('operator') != '=') {
-							script += ', "' + item.getAttribute('operator') + '"';
+							script += ', \'' + item.getAttribute('operator') + '\'';
 						}
 
-						script += ', ' + JSON.stringify(item.getAttribute('value')) + ')';
+						script += ', \'' + JSON.stringify(item.getAttribute('value')).slice(1, -1).replace(/'/g, '\\\'') + '\')';
 					}
 
 					if ((i + 1) >= items.length || items[i + 1].getAttribute('or') == 'false') {
@@ -99,24 +99,24 @@
 				script += '\nvar nq' + (++nqs) + ' = ' + objName + '.getEncodedQuery();';
 
 				// now build the final query (gr.addEncodedQuery(nq1); gr.addEncodedQuery(nq2); ...)
-				script += '\n\nvar ' + objName + ' = new ' + objClass + '("' + tableName + '");'
+				script += '\n\nvar ' + objName + ' = new ' + objClass + '(\'' + tableName + '\');'
 					+ '\n' + objName + '.addEncodedQuery(nq1);';
 
 				for (var nq = 2; nq <= nqs; nq++) {
-					script += '\n' + objName + '.addEncodedQuery("^NQ" + nq' + nq + ');';
+					script += '\n' + objName + '.addEncodedQuery(\'^NQ\' + nq' + nq + ');';
 				}
 			}
 
 			orderBy.forEach(function (order) {
 				if (order.dir == 'DESC') {
-					script += '\n' + objName + '.orderByDesc("' + order.field + '");';
+					script += '\n' + objName + '.orderByDesc(\'' + order.field + '\');';
 				} else if (order.dir == 'ASC') {
-					script += '\n' + objName + '.orderBy("' + order.field + '");';
+					script += '\n' + objName + '.orderBy(\'' + order.field + '\');';
 				}
 			});
 
 			groupBy.forEach(function (group) {
-				script += '\n' + objName + '.groupBy("' + group + '");';
+				script += '\n' + objName + '.groupBy(\'' + group + '\');';
 			});
 
 			if (groupBy.length == 0) {
@@ -128,7 +128,7 @@
 				+ '\nwhile (' + objName + '.next()) {';
 
 			groupBy.forEach(function (group) {
-				script += '\n  var ' + group + ' = ' + objName + '.getValue("' + group + '");';
+				script += '\n  var ' + group + ' = ' + objName + '.getValue(\'' + group + '\');';
 			});
 
 			if (groupBy.length == 0) {
@@ -182,14 +182,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-09 07:04:08</sys_created_on>
         <sys_id>59f580c697132110d70ef207f053afc5</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>31</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_59f580c697132110d70ef207f053afc5</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-14 12:31:23</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-03-07 20:29:24</sys_updated_on>
         <type>breadcrumb</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

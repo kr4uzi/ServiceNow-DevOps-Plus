@@ -9,15 +9,29 @@
 x_424426_devops.context_menu = (function() {
 	"use strict";
 	
-	/* global MutationObserver */
+	/* global GwtContextMenu, console, g_form */
 	/* eslint no-undef: "error" */
 	if (x_424426_devops.context_menu) {
 		return x_424426_devops.context_menu;
 	}
 	
-	var $window, $config;	
+	let bcm = null; // breadcrumb context menu
+	let $window, $config;	
 	x_424426_devops.loader.get('window', function (_window) {
 		inject($window = _window, $config);
+		
+		const ootbContextMenu = $window.GwtContextMenu;
+		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, {
+			initialize: function (id) {
+				if (id == 'context_breadcrumb_menu') {
+					bcm = this;
+				}
+
+				ootbContextMenu.prototype.initialize.apply(this, arguments);
+			},
+
+			type: 'DevopsContextMenu'
+		});
 	});
 	
 	x_424426_devops.loader.get('config', function (_config) {
@@ -29,22 +43,23 @@ x_424426_devops.context_menu = (function() {
 	};
 	
 	function inject($window, $config) {
-		if ($window && $config) {
+		if ($window && $config) {			
 			injectHeaderMenu($window, $config);
 			injectFieldContextMenu($window, $config);
+			injectBreadCrumbsMenu($window, $config);
 		}
 	}
 	
 	function injectFieldContextMenu($window, $config) {
 		//$window.document.on('contextmenu', 'div[data-type="label"], div[type*="script"], div[id^="label"]', function (evt, element) {
 		$window.document.on('contextmenu', 'div[id^="label"]', function (evt, element) {
-			var id = element.id;
-			var fieldName = id;
+			const id = element.id;
+			let fieldName = id;
 			if ($window.g_form) {
-				var tableName = $window.g_form.getTableName();
+				const tableName = $window.g_form.getTableName();
 				if (tableName == 'ni') {
 					// Service Catalog
-					var variableSysID = fieldName.split(':')[1];
+					const variableSysID = fieldName.split(':')[1];
 					fieldName = $window.g_form.resolvePrettyNameMap('IO:' + variableSysID);
 				} else {
 					fieldName = id.substring(id.indexOf(tableName) + tableName.length + 1);
@@ -57,60 +72,19 @@ x_424426_devops.context_menu = (function() {
 			// is executed *after* the ootb handler (which initializes the gcm variable)
 			$window.setTimeout(function () {
 				if ($window.gcm && $window.document.getElementById($window.gcm.getID())) {
-					var itemsAdded = 0;
-					var devopsMenu = new $window.GwtContextMenu('devops_field_menu');
-					devopsMenu.clear();
-					
 					var $context = {
-						FIELD: fieldName
+						FIELD: fieldName,
+						$window: $window,
+						g_form: g_form
 					};
 					
-					$config.fieldItems.forEach(function (item) {						
-						var conditionScript = item.condition_script;
-						if (conditionScript) {
-							if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
-								return;
-							}
-						}
-						
-						if (item.item_type == '' || item.item_type == 'link') {
-							devopsMenu.addFunc(item.label, function () {
-								new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
-							});	
-						} else if (item.item_type == 'menu') {
-							devopsMenu.addMenu(
-								item.label,
-								new $window.Function('script', '$context', 'return eval(script)')( conditionScript, $context)
-							);
-						} else {
-							return;
-						}
-						
-						itemsAdded++;
-					});
-
-					if (itemsAdded) {
-						$window.gcm.addLine();
-						$window.gcm.addMenu('DevOps+', devopsMenu);
-					}
+					buildMenu($window.gcm, 'devops_field_menu', $config.fieldItems, $context);
 				}
 			});
 		});
+	}
 		
-		var bcm = null;
-		var ootbContextMenu = $window.GwtContextMenu;
-		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, {
-			initialize: function (id) {
-				if (id == 'context_breadcrumb_menu') {
-					bcm = this;
-				}
-				
-				ootbContextMenu.prototype.initialize.apply(this, arguments);
-			},
-			
-			type: 'DevopsContextMenu'
-		});
-		
+	function injectBreadCrumbsMenu($window, $config) {
 		// breadcrumbs created after this scripts will be injected by the MutationObserver
 		var observer = new $window.MutationObserver(function (mutations) {
 			for (var i = 0; i < mutations.length; i++) {
@@ -142,39 +116,14 @@ x_424426_devops.context_menu = (function() {
 				var filter = getFilter(element);
 				$window.setTimeout(function () {
 					if (bcm && $window.document.getElementById(bcm.getID())) {
-						var itemsAdded = 0;
-						var devopsMenu = new $window.GwtContextMenu('devops_breadcrumbs_menu');
-						devopsMenu.clear();
-
 						var $context = {
+							$window: $window,
+							g_form: g_form,
 							LISTID: listID,
 							FILTER: filter
 						};
-						$config.breadcrumbItems.forEach(function (item) {
-							var conditionScript = item.condition_script;
-							if (conditionScript) {
-								if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
-									return;
-								}
-							}
-							
-							if (item.item_type == '' || item.item_type == 'link') {
-								devopsMenu.addFunc(item.label, function () {
-									new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
-								});
-							} else if (item.item_type == 'menu') {
-								devopsMenu.addMenu(item.label, new $window.Function('script', '$context', 'return eval(script)')(item.script, $context));
-							} else {
-								return;
-							}
-							
-							itemsAdded++;
-						});
-
-						if (itemsAdded) {
-							bcm.addLine();
-							bcm.addMenu('DevOps+', devopsMenu);
-						}
+						
+						buildMenu(bcm, 'devops_breadcrumbs_menu', $config.breadcrumbItems, $context);
 					}
 				});
 			});
@@ -231,35 +180,55 @@ x_424426_devops.context_menu = (function() {
 				return;
 			}
 			
-			var itemsAdded = 0;
-			var devopsMenu = new $window.GwtContextMenu('devops_header_menu');
-			$config.headerItems.forEach(function (item) {
-				var $context = {};
-				var conditionScript = item.condition_script;
-				if (conditionScript) {
-					if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, $context) != true) {
+			const $context = {
+				$window: $window,
+				g_form: g_form
+			};
+			
+			buildMenu($window.gcm, 'devops_header_menu', $config.headerItems, $context);
+		}
+	}
+	
+	function buildMenu(parentMenu, menuName, items, context) {
+		let itemsAdded = 0;
+		
+		const devopsMenu = new GwtContextMenu(menuName);
+		devopsMenu.clear();
+		items.forEach(function (item) {						
+			const conditionScript = item.condition_script;
+			if (conditionScript) {
+				try {
+					if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, context) != true) {
 						return;
 					}
+				} catch (e) {
+					console.error('[DevOps+] Failed to add item for (' + menuName + ')', e, items, context);
 				}
-
-				
-				if (item.item_type == '' || item.item_type == 'link') {
-					devopsMenu.addFunc(item.label, function () {
-						new $window.Function('script', '$context', 'return eval(script)')(item.script, $context);
-					});
-				} else if (item.item_type == 'menu') {
-					devopsMenu.addMenu(item.label, new $window.Function('script', '$context', 'return eval(script)')(item.script, $context));
-				} else {
-					return;
-				}
-				
-				itemsAdded++;
-			});
-
-			if (itemsAdded) {
-				headerMenu.addLine();
-				headerMenu.addMenu('DevOps+', devopsMenu);
 			}
+
+			if (item.item_type == '' || item.item_type == 'link') {
+				devopsMenu.addFunc(item.label, function () {
+					new Function('script', '$context', 'return eval(script)')(item.script, context);
+				});	
+			} else if (item.item_type == 'menu') {
+				try {
+					devopsMenu.addMenu(
+						item.label,
+						new Function('script', '$context', 'return eval(script)')(item.script, context)
+					);
+				} catch (e) {
+					console.error('[DevOps+] Failed to add menu for (' + menuName + ')', e, items, context);
+				}
+			} else {
+				return;
+			}
+
+			itemsAdded++;
+		});
+
+		if (itemsAdded) {
+			parentMenu.addLine();
+			parentMenu.addMenu('DevOps+', devopsMenu);
 		}
 	}
 })();
@@ -269,14 +238,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>77</sys_mod_count>
+        <sys_mod_count>81</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-08 06:42:20</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-03-07 20:17:17</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
