@@ -7,7 +7,7 @@
         <client_callable>true</client_callable>
         <description/>
         <name>CodeSearchUtilClient</name>
-        <script><![CDATA[/* global global, gs */
+        <script><![CDATA[/* global global, gs, sn_scoped_cache */
 /* global Class, GlideRecordSecure, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
@@ -40,35 +40,36 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				if (scriptGr.next()) {
 					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
 					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
-					scriptGr.script = 
-						'(function () {\n' +
-							'var anyGr = new GlideRecordSecure(table);\n' +
-							'var fieldQuery = fields\n' +
-								'.split(",")\n' +
-								'.filter(function (f) { return anyGr.isValidField(f); })\n' +
-								'.map(function (f) { return f + "=" + sys_id; })\n' +
-								'.join("^OR");\n' +
-							'anyGr.addEncodedQuery(fieldQuery);\n' +
-							'anyGr.query();\n' +
-							'\n' +
-							'var result = {\n' +
-								'recordType: table,\n' +
-								'tableLabel: anyGr.getLabel(),\n' +
-								'hits: []\n' +
-							'};\n' +
-							'\n' +
-							'while (anyGr.next()) {\n' +
-								'result.hits.push({\n' +
-									'name: anyGr.getDisplayValue(),\n' +
-									'className: anyGr.getRecordClassName(),\n' +
-									'tableLabel: anyGr.getTableName(),\n' +
-									'sysId: anyGr.getUniqueValue()\n' +
-								'});\n' +
-							'}\n' +
-							'\n' +
-							'return result;\n' +
-						'})();';
-						
+					scriptGr.script = `
+						(function (table, fields, sys_id) {
+							var anyGr = new GlideRecordSecure(table);
+							var fieldQuery = fields
+								.split(",")
+								.filter(function (f) { return anyGr.isValidField(f); })
+								.map(function (f) { return f + "=" + sys_id; })
+								.join("^OR");
+							anyGr.addEncodedQuery(fieldQuery);
+							anyGr.query();
+							
+							var result = {
+								recordType: table,
+								tableLabel: anyGr.getLabel(),
+								hits: []
+							};
+							
+							while (anyGr.next()) {
+								result.hits.push({
+									name: anyGr.getDisplayValue(),
+									className: anyGr.getRecordClassName(),
+									tableLabel: anyGr.getTableName(),
+									sysId: anyGr.getUniqueValue()
+								});
+							}
+							
+							return result;
+						})(table, fields, sys_id);
+					`;
+					
 					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
 						table: table,
 						fields: fields,
@@ -98,7 +99,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			status: 'error',
 			message: ''
 		};
-		
+
 		const table = this.getParameter('table');
 		const term = this.getParameter('term');
 		const scope = this.getParameter('scope');
@@ -106,18 +107,47 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		
 		const limit = this.getParameter('limit');
 		
-		// column + record => decrypt, searchGroup => generic code search
-		const column = this.getParameter('column');
-		const record = this.getParameter('record');
-		const searchGroup = this.getParameter('searchGroup');
-		
-		if (table && (searchGroup || (record && column)) && term, gs.tableExists(table)) {
+		// column + record => decrypt
+		// searchGroup => generic code search
+		// searchType
+		let config = this.getParameter('config');		
+		if (table && config && term && gs.tableExists(table)) {
+			try {
+				config = JSON.parse(config);
+			} catch (e) {
+				result.message = 'Invalid config!';
+				return JSON.stringify(result);
+			}
+			
 			let additionalFilter = '';
 			let fields = [];
 			
-			if (searchGroup) {
+			if (config.record && config.column) {
+				// small adjustment to make this script be usable by the application file decrypter
+				additionalFilter = 'sys_id=' + config.record;
+				fields.push(config.column);
+			} else if (config.all_columns) {
+				let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
+				if (cachedFields) {
+					fields = JSON.parse(cachedFields);
+				} else {
+					const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+					dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+					dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+					dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
+					dictionaryGr.query();
+					while (dictionaryGr.next()) {
+						const fieldName = dictionaryGr.element.toString();
+						if (!fields.includes(fieldName)) {
+							fields.push(fieldName);
+						}
+					}
+					
+					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
+				}
+			} else if (config.group) {
 				const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
-				searchGroupGr.addQuery('name', searchGroup);
+				searchGroupGr.addQuery('name', config.group);
 				searchGroupGr.setLimit(1);
 				searchGroupGr.query();
 				if (searchGroupGr.next()) {
@@ -152,10 +182,28 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						}
 					}
 				}
-			} else {
-				// called by application file decrypter
-				additionalFilter = 'sys_id=' + record;
-				fields.push(column);
+			} else if (config.script) {
+				const prefGr = new GlideRecordSecure('sys_user_preference');
+				prefGr.addQuery('sys_id', config.script);
+				prefGr.setLimit(1);
+				prefGr.query();
+				if (prefGr.next()) {				
+					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+					scriptGr.setLimit(1);
+					scriptGr.query();
+					if (scriptGr.next()) {
+						scriptGr.sys_scope = 'global';
+						scriptGr.script = prefGr.value.toString();
+						fields = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+							table: table
+						});
+					} else {
+						result.message = 'Failed to execute script';
+					}
+				} else {
+					result.message = 'Failed to retrieve script';
+				}
 			}
 			
 			const dbObjectGr = new GlideRecordSecure('sys_db_object');
@@ -168,132 +216,135 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				scriptGr.setLimit(1);
 				scriptGr.query();
 				if (scriptGr.next()) {
-					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
+					// Strange Bug with GlideRecordSecure: .toString() and .getValue('sys_scope')
+					// don't seem to work in some situations (maybe because of KMF tables?)
+					scriptGr.sys_scope = dbObjectGr.sys_scope + '';
 					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
-					scriptGr.script = 
-						'(function () {try {\n' +
-							'var anyGr = new GlideRecord(table);\n' +
-							'var tableFields = fields.split(",").filter(function (f) {\n' +
-								'return anyGr.isValidField(f);\n' +
-							'});\n' +
-							'var fieldQuery = tableFields.map(function (f) {\n' +
-								'return f + "LIKE" + term;\n' +
-							'}).join("^OR");\n' +
-							'\n' +
-							'var query = (additionalFilter ? additionalFilter + "^" : "") + "sys_id=" + term;\n' +
-							'anyGr.addEncodedQuery(query + (fieldQuery ? "^OR" : "") + fieldQuery);\n' +
-							'\n' +
-							'if (!allScopes && anyGr.isValidField("sys_scope") && scope) {\n' +
-								'anyGr.addQuery("sys_scope", scope).addOrCondition("sys_scope.scope", scope);\n' +
-							'}\n' +
-							'\n' +
-							'if (anyGr.isValidField("sys_class_name")) {\n' +
-								'anyGr.orderBy("sys_class_name");\n' +
-							'}\n' +
-							'\n' +
-							'if (anyGr.isValidField("sys_name")) {\n' +
-								'anyGr.orderBy("sys_name");\n' +
-							'}\n' +
-							'\n' +
-							'anyGr.query();\n' +
-							'\n' +
-							'var result = {\n' +
-								'recordType: table,\n' +
-								'tableLabel: anyGr.getLabel(),\n' +
-								'hits: []\n' +
-							'};\n' +
-							'\n' +
-							'while (anyGr.next()) {\n' +
-								'var matches = getMatches(anyGr, tableFields, term);\n' +
-								'if (matches.length) {\n' +
-									'var gdt = new GlideDateTime();\n' +
-									'gdt.setValue(anyGr.getValue("sys_updated_on"));\n' +
-									'result.hits.push({\n' +
-										'name: anyGr.getDisplayValue(),\n' +
-										'className: anyGr.getRecordClassName(),\n' +
-										'tableLabel: anyGr.getTableName(),\n' +
-										'matches: matches,\n' +
-										'sysId: anyGr.getUniqueValue(),\n' +
-										'modified: gdt.getNumericValue()\n' +
-									'});\n' +
-								'}\n' +
-							'}\n' +
-							'\n' +
-							'return result;}catch(e){gs.info("MKR error: " + e.message); gs.info("MKR stack: " + (e.stack ? e.stack : "no stack"));}\n' +
-							'\n' +
-							'function getMatches(anyGr, fields, term) {\n' +
-								'var matches = [];\n' +
-								'fields.forEach(function (field) {\n' +
-									'try {\n' +
-										'var match = {\n' +
-											'field: field,\n' +
-											'fieldLabel: anyGr.getElement(field).getLabel(),\n' +
-											'lineMatches: [],\n' +
-											'count : 0\n' +
-										'};\n' +
-										'\n' +
-										'var text = anyGr.getValue(field);\n' +
-										'if (text && hasTerm(text, term)) {\n' +
-											'match.count = countTerm(text, term);\n' +
-											'match.lineMatches = getMatchingLines(text, term);\n' +
-										'}\n' +
-										'\n' +
-										'if (match.lineMatches.length > 0) {\n' +
-											'matches.push(match);\n' +
-										'}\n' +
-									'} catch (e) {\n' +
-										'// Unable to read field. This is usually an ACL error and not a real problem\n' +
-									'}\n' +
-								'});\n' +
-								'\n' +
-								'return matches;\n' +
-							'}\n' +
-							'\n' +
-							'function countTerm(text, term) {\n' +
-								'if (!term) {\n' +
-									'return 0;\n' +
-								'}\n' +
-								'\n' +
-								'term = escapeSpecial(term);\n' +
-								'return text.match(new RegExp(term, "gi")).length;\n' +
-							'}\n' +
-							'\n' +
-							'function escapeSpecial(text) {\n' +
-								'return text.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, "\\\\$&");\n' +
-							'}\n' +
-							'\n' +
-							'function getMatchingLines(text, term) {\n' +
-								'var lineMatches = [];\n' +
-								'var scanProgress = 0;\n' +
-								'var lines = text.split(/\\r\\n|\\r|\\n/g);\n' +
-								'for (var j = 0; j < lines.length; j++) {\n' +
-									'var line = lines[j];\n' +
-									'if (hasTerm(line, term)) {\n' +
-										'if (j > 0 && j > scanProgress + 1) {\n' +
-											'lineMatches.push({line: (j), context: lines[j - 1], escaped: encodeURIComponent(lines[j - 1])});\n' +
-										'}\n' +
-										'\n' +
-										'lineMatches.push({line: (j + 1), context: line, escaped: encodeURIComponent(line)});\n' +
-										'\n' +
-										'if (j < lines.length - 1) {\n' +
-											'lineMatches.push({line: (j + 2), context: lines[j + 1], escaped: encodeURIComponent(lines[++j])});\n' +
-										'}\n' +
-										'\n' +
-										'scanProgress = j;\n' +
-									'}\n' +
-								'}\n' +
-								'\n' +
-								'return lineMatches;\n' +
-							'}\n' +
-							'\n' +
-							'function hasTerm(text, term) {\n' +
-								'if (!text || !term)\n' +
-									'return false;\n' +
-								'\n' +
-								'return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);\n' +
-							'}\n' +
-						'})();';
-						
+					scriptGr.script = `
+						(function () {
+							var anyGr = new GlideRecord(table);
+							var tableFields = fields.split(",").filter(function (f) {
+								return anyGr.isValidField(f);
+							});
+							var fieldQuery = tableFields.map(function (f) {
+								return f + "LIKE" + term;
+							}).join("^OR");
+
+							var query = (additionalFilter ? additionalFilter + "^" : "") + "sys_id=" + term;
+							anyGr.addEncodedQuery(query + (fieldQuery ? "^OR" : "") + fieldQuery);
+
+							if (!allScopes && anyGr.isValidField("sys_scope") && scope) {
+								anyGr.addQuery("sys_scope", scope).addOrCondition("sys_scope.scope", scope);
+							}
+
+							if (anyGr.isValidField("sys_class_name")) {
+								anyGr.orderBy("sys_class_name");
+							}
+
+							if (anyGr.isValidField("sys_name")) {
+								anyGr.orderBy("sys_name");
+							}
+
+							anyGr.query();
+
+							var result = {
+								recordType: table,
+								tableLabel: anyGr.getLabel(),
+								hits: []
+							};
+
+							while (anyGr.next()) {
+								var matches = getMatches(anyGr, tableFields, term);
+								if (matches.length) {
+									var gdt = new GlideDateTime();
+									gdt.setValue(anyGr.getValue("sys_updated_on"));
+									result.hits.push({
+										name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
+										className: anyGr.getRecordClassName(),
+										tableLabel: anyGr.getTableName(),
+										matches: matches,
+										sysId: anyGr.getUniqueValue(),
+										modified: gdt.getNumericValue()
+									});
+								}
+							}
+
+							return result;
+
+							function getMatches(anyGr, fields, term) {
+								var matches = [];
+								fields.forEach(function (field) {
+									try {
+										var match = {
+											field: field,
+											fieldLabel: anyGr.getElement(field).getLabel(),
+											lineMatches: [],
+											count : 0
+										};
+
+										var text = anyGr.getValue(field);
+										if (text && hasTerm(text, term)) {
+											match.count = countTerm(text, term);
+											match.lineMatches = getMatchingLines(text, term);
+										}
+
+										if (match.lineMatches.length > 0) {
+											matches.push(match);
+										}
+									} catch (e) {
+										// Unable to read field. This is usually an ACL error and not a real problem
+									}
+								});
+
+								return matches;
+							}
+
+							function countTerm(text, term) {
+								if (!term) {
+									return 0;
+								}
+
+								term = escapeSpecial(term);
+								return text.match(new RegExp(term, "gi")).length;
+							}
+
+							function escapeSpecial(text) {
+								return text.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, "\\\\$&");
+							}
+
+							function getMatchingLines(text, term) {
+								var lineMatches = [];
+								var scanProgress = 0;
+								var lines = text.split(/\\r\\n|\\r|\\n/g);
+								for (var j = 0; j < lines.length; j++) {
+									var line = lines[j];
+									if (hasTerm(line, term)) {
+										if (j > 0 && j > scanProgress + 1) {
+											lineMatches.push({line: (j), context: lines[j - 1], escaped: encodeURIComponent(lines[j - 1])});
+										}
+
+										lineMatches.push({line: (j + 1), context: line, escaped: encodeURIComponent(line)});
+
+										if (j < lines.length - 1) {
+											lineMatches.push({line: (j + 2), context: lines[j + 1], escaped: encodeURIComponent(lines[++j])});
+										}
+
+										scanProgress = j;
+									}
+								}
+
+								return lineMatches;
+							}
+
+							function hasTerm(text, term) {
+								if (!text || !term)
+									return false;
+
+								return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);
+							}
+						})();
+					`;
+					
 					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
 						table: table,
 						additionalFilter: additionalFilter,
@@ -319,28 +370,125 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 	
 	// A query to /api/sn_codesearch/code_search/tables will crash when there is a table
 	// in the search group which doesn't exist on the instance.
-	// Because DevOps+ is shipped with many tables, we need this function for the Code Search
+	// Because DevOps+ is shipped with many tables which might not exist on the current instance,
+	// this function replicates the ootb function.
+	// In addition, the ServiceNow Dev Team for Code Search marked the "cannot add non-application-file table to code search"
+	// as "won't fix"
 	getTables: function () {
 		const result = {
 			status: 'error',
 			message: ''
 		};
 		
-		const searchGroup = this.getParameter('search_group');
-		if (searchGroup) {
-			const tables = [];
-			const searchTableGr = new GlideRecordSecure('sn_codesearch_table');
-			searchTableGr.addQuery('search_group.name', searchGroup);
-			searchTableGr.query();
-			while (searchTableGr.next()) {
-				tables.push({
-					name: searchTableGr.table.toString(),
-					label: ''
-				});
+		let config = this.getParameter('config');
+		if (config) {
+			try {
+				config = JSON.parse(config);
+			} catch (e) {
+				result.message = 'Invalid config!';
+				return JSON.stringify(result);
 			}
 			
+			let tables = [];			
+			if (config.group) {
+				const searchTableGr = new GlideRecordSecure('sn_codesearch_table');
+				searchTableGr.addQuery('search_group.name', config.group);
+				searchTableGr.query();
+				while (searchTableGr.next()) {
+					tables.push({
+						name: searchTableGr.table.toString(),
+						label: tableGr.getDisplayValue()
+					});
+				}
+			} else if (config.all_application_files) {
+				let cachedTables = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_tables', 'applicationFiles');
+				if (cachedTables) {
+					tables = JSON.parse(cachedTables);
+				} else {
+					// might not fit in a 'IN'-query, therefore iterate over each table individually
+					new GlideTableHierarchy('sys_metadata').getTableExtensions().forEach(table => {
+						const tableGr = new GlideRecordSecure('sys_db_object');
+						tableGr.addQuery('name', table);
+						tableGr.setLimit(1);
+						tableGr.query();
+						while (tableGr.next()) {
+							tables.push({
+								name: table,
+								label: tableGr.getDisplayValue()
+							});
+						}
+					});					
+					
+					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_tables', 'applicationFiles', JSON.stringify(tables));
+				}
+			} else if (config.all_tables) {
+				let cachedTables = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_tables', 'tables');
+				if (cachedTables) {
+					tables = JSON.parse(cachedTables);
+				} else {				
+					// add all non-extendable tables
+					let tableGr = new GlideRecordSecure('sys_db_object');
+					tableGr.addQuery('is_extendable', false);
+					tableGr.query();
+					while (tableGr.next()) {
+						tables.push({
+							name: tableGr.getValue('name'),
+							label: tableGr.getDisplayValue()
+						});
+					}
+
+					// add all base tables
+					tableGr = new GlideRecordSecure('sys_db_object');
+					tableGr.addQuery('is_extendable', true);
+					tableGr.addNullQuery('super_class');
+					tableGr.query();
+					while (tableGr.next()) {
+						const tableName = tableGr.getValue('name');
+						tables.push(tableName);
+
+						const t = new GlideTableHierarchy(tableName).getTableExtensions();
+						for (let i = 0; i < t.length; i++) {
+							tables.push({
+								name: t[i],
+								label: ''
+							});
+						}
+					}
+					
+					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_tables', 'tables', JSON.stringify(tables));
+				}
+			} else if (config.script) {
+				const prefGr = new GlideRecordSecure('sys_user_preference');
+				prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+				prefGr.addQuery('sys_id', config.script);
+				prefGr.setLimit(1);
+				prefGr.query();
+				if (prefGr.next()) {
+					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+					scriptGr.setLimit(1);
+					scriptGr.query();
+					if (scriptGr.next()) {
+						scriptGr.sys_scope = 'global';
+						scriptGr.script = prefGr.value.toString();
+						const scriptTables = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+							table: null
+						});
+						
+						scriptTables.forEach(t => tables.push({
+							name: t,
+							label: ''
+						}));
+					} else {
+						result.message = 'Failed to execute script';
+					}
+				} else {
+					result.message = 'Failed to retrieve script';
+				}
+			}
+				
 			const tableGr = new GlideRecordSecure('sys_db_object');
-			tableGr.addQuery('name', 'IN', tables.map(t => t.name));
+			tableGr.addQuery('name', 'IN', tables.filter(t => !t.label).map(t => t.name));
 			tableGr.query();
 			while (tableGr.next()) {
 				const tableName = tableGr.name.toString();
@@ -366,13 +514,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>62</sys_mod_count>
+        <sys_mod_count>96</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-28 14:15:05</sys_updated_on>
+        <sys_updated_on>2024-05-23 17:22:43</sys_updated_on>
     </sys_script_include>
 </record_update>

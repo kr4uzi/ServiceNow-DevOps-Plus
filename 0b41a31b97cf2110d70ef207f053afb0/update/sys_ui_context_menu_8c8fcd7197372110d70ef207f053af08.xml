@@ -12,12 +12,13 @@
  */
 (function () {
 
-	if (NOW.isPolarisEnabled == 'true') {
+	// much requested to have this in Next Experience as well (some users do not want to activate the top navigation)
+	/*if (NOW.isPolarisEnabled == 'true') {
 		var gm = new GlideModal('glide_warn', false);
 		gm.setTitle("Please use the Polaris built-in feature");
 		gm.setPreference("title", "The Polaris UI has a built-in feature which opens all new windows with the navigation header.<br /><br/>Please click on your Profile > Preferences > Display > 'Always show top navigation'");
 		gm.render();
-	} else if (!getNavWindow()) {
+	} else */if (!getNavWindow()) {
 		var $location = window.location;
 		$location.href = 'nav_to.do?uri=' + encodeURIComponent($location.href.substring($location.origin.length + 1));
 	}
@@ -81,7 +82,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>8c8fcd7197372110d70ef207f053af08</sys_id>
-        <sys_mod_count>19</sys_mod_count>
+        <sys_mod_count>20</sys_mod_count>
         <sys_name>/nav_to</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -89,8 +90,8 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_context_menu_8c8fcd7197372110d70ef207f053af08</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-12-28 20:18:29</sys_updated_on>
-        <table>global</table>
+        <sys_updated_on>2024-04-28 22:30:44</sys_updated_on>
+        <table>sys_history_line</table>
         <track_selected>false</track_selected>
         <type>action</type>
     </sys_ui_context_menu>

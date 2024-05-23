@@ -47,6 +47,7 @@ addLoadEvent(function () {
 		var term = fd.get('term');
 		var scope = fd.get('scope');
 		var allScopes = fd.get('global');
+		var config = fd.get('config');
 		if (term && (allScopes == 'on' || scope)) {
 			gel('search-results').innerHTML = '';
 			gel('progressPercentage').innerHTML = ' (0)';
@@ -61,11 +62,22 @@ addLoadEvent(function () {
 			gel('progress-container').style.display = '';
 			gel('progress-header').style.display = '';
 			
-			var searchGroup = 'x_424426_devops.Search Group';
-			getTables(searchGroup, function (tables) {
+			var searchConfig = {};
+			if (config == 'application') {
+				searchConfig.all_application_files = true;
+				searchConfig.all_columns = true;
+			} else if (config == 'everything') {
+				searchConfig.all_tables = true;
+				searchConfig.all_columns = true;
+			} else if (config == 'group') {
+				searchConfig.group = 'x_424426_devops.Search Group';
+			} else {
+				searchConfig.script = config;
+			}
+			getTables(searchConfig, function (tables) {
 				if (tables.length) {
 					var i = 0;
-					searchTable(tables[i++].name, term, scope, allScopes == 'on', searchGroup, function processTableResults(result) {
+					searchTable(tables[i++].name, term, scope, allScopes == 'on', searchConfig, function processTableResults(result) {
 						var percentageComplete = Math.floor(i / tables.length * 100);
 						gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
 						progressBar.setAttribute('aria-valuenow', percentageComplete);
@@ -79,7 +91,7 @@ addLoadEvent(function () {
 						}
 
 						if (i < tables.length && !canceled) {
-							searchTable(tables[i++].name, term, scope, allScopes == 'on', searchGroup, processTableResults);
+							searchTable(tables[i++].name, term, scope, allScopes == 'on', searchConfig, processTableResults);
 						} else {
 							gel('progress-container').style.display = 'none';
 						}
@@ -202,13 +214,13 @@ function addTable(tableName, hits, open, searchTerm) {
 	document.getElementById('search-results').append(tableLi);
 }
 
-function getTables(searchGroup, callback) {
+function getTables(config, callback) {
 	// We do not use the OOTB api here because this app is shipped with tables that might not be present in this instance
 	// -> in this case the OOTB api will break
 	
 	var ga = new window.GlideAjax('x_424426_devops.CodeSearchUtilClient').setScope('x_424426_devops');
 	ga.addParam('sysparm_name', 'getTables');
-	ga.addParam('search_group', searchGroup);
+	ga.addParam('config', JSON.stringify(config));
 	ga.getXMLAnswer(function (result) {
 		result = JSON.parse(result);
 		if (result.status == 'success') {
@@ -234,21 +246,21 @@ function getTables(searchGroup, callback) {
 // 	client.send();
 }
 
-function searchTable(table, term, scope, allScopes, searchGroup, callback) {
+function searchTable(table, term, scope, allScopes, config, callback) {
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchTerm');
 	ga.addParam('table', table);
 	ga.addParam('term', term);
 	ga.addParam('scope', scope);
 	ga.addParam('allScopes', allScopes);
-	ga.addParam('searchGroup', searchGroup);
+	ga.addParam('config', JSON.stringify(config));
 	ga.getXMLAnswer(function (result) {
 		result = JSON.parse(result);
 		if (result.status == 'success') {
 			if (result.search_result) {
 				callback(result.search_result);
 			} else {
-				console.log("no search results: ", table, term, scope, allScopes, searchGroup);
+				console.log("no search results: ", table, term, scope, allScopes, config);
 			}
 			
 		} else if (result.message) {
@@ -302,9 +314,23 @@ function searchTable_old(table, term, scope, allScopes, searchGroup, callback) {
 				display_value: scopeGr.getDisplayValue()
 			});
 		}
+		
+		const searchScripts = [];
+		const prefGr = new GlideRecord('sys_user_preference');
+		prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+		prefGr.addQuery('system', true).addOrCondition('user', gs.getUserID());
+		prefGr.addNotNullQuery('description');
+		prefGr.orderBy('name');
+		prefGr.query();
+		while (prefGr.next()) {
+			searchScripts.push({
+				label: prefGr.description.toString(),
+				value: prefGr.getUniqueValue()
+			});
+		}
 	</g:evaluate>
 	<g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" />
-	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.1" />
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.2" />
 	<form id="search-form">
 		<fieldset>
 			<div>
@@ -322,6 +348,17 @@ function searchTable_old(table, term, scope, allScopes, searchGroup, callback) {
 						<select id="search-scope" class="form-control mousetrap" name="scope" title="Select a scope to search">
 							<j:forEach var="jvar_scope" items="${scopes}">
 								<option value="${jvar_scope.sys_id}">${jvar_scope.display_value}</option>
+							</j:forEach>
+						</select>
+					</div>
+					<div class="row">
+						<label id="search-config-label" for="search-config" class="checkbox-label mousetrap">Config</label>
+						<select id="search-config" class="form-control mousetrap" name="config" title="Select a search configuration">
+							<option value="search_group">Search Group</option>
+							<option value="application">Application Files</option>
+							<option value="everything">Every Table and Column</option>
+							<j:forEach var="jvar_script" items="${searchScripts}">
+								<option value="${jvar_script.value}">${jvar_script.label}</option>
 							</j:forEach>
 						</select>
 					</div>
@@ -372,13 +409,13 @@ function searchTable_old(table, term, scope, allScopes, searchGroup, callback) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>24</sys_mod_count>
+        <sys_mod_count>43</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-28 16:55:56</sys_updated_on>
+        <sys_updated_on>2024-05-23 16:50:01</sys_updated_on>
     </sys_ui_page>
 </record_update>
