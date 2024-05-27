@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.RevertUtil</api_name>
+        <caller_access/>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>RevertUtil</name>
+        <script><![CDATA[/* global Class, global, gs, GlideRecordSecure, GlideScopedEvaluator */
+/* eslint no-undef: "error" */
+var RevertUtil = Class.create();
+RevertUtil.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	initialize: function () {
+		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+	},
+	
+	getHistorySetFromLine: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const sysID = this.getParameter('sys_id');
+		if (sysID) {
+			const historyLineGr = new GlideRecordSecure('sys_history_line');
+			historyLineGr.addQuery('sys_id', sysID);
+			historyLineGr.setLimit(1);
+			historyLineGr.query();
+			if (historyLineGr.next()) {
+				const historySetGr = historyLineGr.set.getRefRecord();
+				if (historyLineGr.isValidRecord() && historyLineGr.canRead()) {
+					result.checkpoint = historyLineGr.getValue('update');
+					result.record_table = historySetGr.getValue('table');
+					result.record_sys_id = historySetGr.getValue('id');
+					result.status = 'success';
+				} else {
+					result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+				}
+			} else {
+				result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
+	revertPreview: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const table = this.getParameter('table');
+		const sysID = this.getParameter('sys_id');
+		const checkpoint = this.getParameter('checkpoint');
+		if (table && sysID && checkpoint && gs.tableExists(table)) {
+			result.status = 'success';
+			result.values = this._getRevertValues(table, sysID, checkpoint);
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
+	revert: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+		
+		const table = this.getParameter('table');
+		const sysID = this.getParameter('sys_id');
+		const checkpoint = this.getParameter('checkpoint');
+		const businessRules = this.getParameter('business_rules') == 'true';
+		if (table && sysID && checkpoint && gs.tableExists(table)) {
+			const oldValues = this._getRevertValues(table, sysID, checkpoint);			
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('name', table);
+			dbObjectGr.setLimit(1);
+			dbObjectGr.query();
+			if (dbObjectGr.next()) {
+				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+				scriptGr.setLimit(1);
+				scriptGr.query();
+				if (scriptGr.next()) {
+					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
+					scriptGr.script = `
+						(function (table, sys_id, values, runBusinessRules) {
+
+							var recordGr = new GlideRecordSecure(table);
+							recordGr.addQuery('sys_id', sys_id);
+							recordGr.setLimit(1);
+							recordGr.query();
+							if (recordGr.next()) {
+								for (var key in values) {
+									recordGr.setValue(key, values[key]);
+								}
+
+								if (!runBusinessRules) {
+									recordGr.setWorkflow(false);
+								}
+
+								return recordGr.update();
+							}
+
+						})(table, sys_id, JSON.parse(values), runBusinessRules);
+					`;
+
+					const updateResult = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+						table: table,
+						sys_id: sysID,
+						values: JSON.stringify(oldValues),
+						runBusinessRules: businessRules
+					});
+
+					result.status = updateResult ? 'success' : 'error';
+					if (result.status == 'error') {
+						result.message = 'Failed to update record';
+					}
+				} else {
+					result.message = gs.getMessage('Cannot update record');
+				}
+			} else {
+				result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+		return JSON.stringify(result);
+	},
+	
+	_getRevertValues: function (recordTable, recordSysID, checkpoint) {
+		const auditGr = new GlideRecordSecure('sys_audit');
+		auditGr.addQuery('tablename', recordTable);
+		auditGr.addQuery('documentkey', recordSysID);
+		auditGr.addQuery('record_checkpoint', '>', checkpoint);
+		auditGr.orderBy('record_checkpoint');
+		auditGr.query();
+
+		const oldValues = {};
+		while (auditGr.next()) {
+			const fieldName = auditGr.fieldname.toString();
+			if (!(fieldName in oldValues)) {
+				oldValues[fieldName] = auditGr.getValue('oldvalue');
+			}
+		}
+		
+		return oldValues;
+	},
+
+    type: 'RevertUtil'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-05-24 13:10:56</sys_created_on>
+        <sys_id>68fd6b6e939642101f07f5f08bba1056</sys_id>
+        <sys_mod_count>25</sys_mod_count>
+        <sys_name>RevertUtil</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_68fd6b6e939642101f07f5f08bba1056</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-05-24 22:52:29</sys_updated_on>
+    </sys_script_include>
+</record_update>

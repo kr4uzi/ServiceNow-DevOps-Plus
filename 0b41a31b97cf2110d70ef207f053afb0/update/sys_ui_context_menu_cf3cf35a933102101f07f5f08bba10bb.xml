@@ -14,7 +14,7 @@
 ]]></action_script>
         <active>true</active>
         <comments/>
-        <condition>gs.hasRole('x_424426_devops.devops_user')</condition>
+        <condition>gs.hasRole('x_424426_devops.devops_user') &amp;&amp; RP.getReferringURL().indexOf("_list.do") == -1</condition>
         <do_not_cache>false</do_not_cache>
         <dynamic_actions_script><![CDATA[/** 
  * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
@@ -29,8 +29,8 @@
  *    g_contextMenu.addAction(item_id, label, script_string, order); 
  */ 
 ]]></dynamic_actions_script>
-        <menu>list_title</menu>
-        <name>(separator)</name>
+        <menu>list_row</menu>
+        <name>DevOps+</name>
         <on_show_script><![CDATA[/**
  * This client-side script is used to dynamically change the context menu before it is displayed.
  * It is called before showing the context menu if the Run onShow script flag is checked.
@@ -43,28 +43,34 @@
  *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
  *    'g_sysId' the sys_id of the row or form that the script is running against
  */
- 
-]]></on_show_script>
-        <order>100000</order>
+(function () {
+	var visible = g_fieldName == 'update';
+	if (visible) {
+		g_menu.setVisible(g_item);
+	} else {
+		g_menu.setHidden(g_item);
+	}
+})();]]></on_show_script>
+        <order>100001</order>
         <parent/>
-        <run_on_show_script>false</run_on_show_script>
+        <run_on_show_script>true</run_on_show_script>
         <sys_class_name>sys_ui_context_menu</sys_class_name>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-07-03 14:16:10</sys_created_on>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-04-28 22:25:55</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
-        <sys_id>0dfec17197372110d70ef207f053afb6</sys_id>
-        <sys_mod_count>6</sys_mod_count>
-        <sys_name>(separator)</sys_name>
+        <sys_id>cf3cf35a933102101f07f5f08bba10bb</sys_id>
+        <sys_mod_count>14</sys_mod_count>
+        <sys_name>DevOps+</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name>sys_ui_context_menu_0dfec17197372110d70ef207f053afb6</sys_update_name>
+        <sys_update_name>sys_ui_context_menu_cf3cf35a933102101f07f5f08bba10bb</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-24 13:37:51</sys_updated_on>
-        <table>global</table>
+        <sys_updated_on>2024-05-24 13:36:01</sys_updated_on>
+        <table>sys_history_line</table>
         <track_selected>false</track_selected>
-        <type>line</type>
+        <type>menu</type>
     </sys_ui_context_menu>
 </record_update>

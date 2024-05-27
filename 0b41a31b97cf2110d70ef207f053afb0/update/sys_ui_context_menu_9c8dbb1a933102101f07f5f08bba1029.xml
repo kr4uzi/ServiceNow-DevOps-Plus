@@ -10,20 +10,65 @@
  *    'g_sysId' the sys_id of the row or form that the script is running against
  *    'rowSysId' is also set to the sys_id of the row to support legacy actions, but g_sysId is preferred
  */
-(function () {
+/* global g_sysId, GlideModal, GlideAjax, g_navigation, g_form */
+/* eslint no-undef: "error" */
+(function (rowSysID) {
 
-	// much requested to have this in Next Experience as well (some users do not want to activate the top navigation)
-	/*if (NOW.isPolarisEnabled == 'true') {
-		var gm = new GlideModal('glide_warn', false);
-		gm.setTitle("Please use the Polaris built-in feature");
-		gm.setPreference("title", "The Polaris UI has a built-in feature which opens all new windows with the navigation header.<br /><br/>Please click on your Profile > Preferences > Display > 'Always show top navigation'");
-		gm.render();
-	} else */if (!getNavWindow()) {
-		var $location = window.location;
-		$location.href = 'nav_to.do?uri=' + encodeURIComponent($location.href.substring($location.origin.length + 1));
+	confirmRevert(rowSysID, function (dialog, recordTable, recordSysID, recordCheckpoint) {
+		var ga = new GlideAjax('x_424426_devops.RevertUtil').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'revert');
+		ga.addParam('table', recordTable);
+		ga.addParam('sys_id', recordSysID);
+		ga.addParam('checkpoint', recordCheckpoint);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				g_form.addInfoMessage('Successfully reverted');
+			} else if (result.message) {
+				g_form.addErrorMessage(result.message);
+			}
+			
+			dialog.destroy();
+		});
+	});	
+	
+	function confirmRevert(historyLineSysID, callback) {
+		var ga = new GlideAjax('x_424426_devops.RevertUtil').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getHistorySetFromLine');
+		ga.addParam('sys_id', historyLineSysID);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				var recordTable = result.record_table;
+				var recordSysID = result.record_sys_id;
+				var recordCheckpoint = result.checkpoint;
+				ga = new GlideAjax('x_424426_devops.RevertUtil').setScope('x_424426_devops');
+				ga.addParam('sysparm_name', 'revertPreview');
+				ga.addParam('table', recordTable);
+				ga.addParam('sys_id', recordSysID);
+				ga.addParam('checkpoint', recordCheckpoint);
+				ga.getXMLAnswer(function (result) {
+					result = JSON.parse(result);
+					if (result.status == 'success') {
+						var confirm = new GlideModal('glide_confirm_standard');
+						confirm.setTitle('Revert to this checkpoint?');
+						confirm.setPreference('title', 'You are about to revert all updates that happened after this update:' + JSON.stringify(result.values, null, 2));
+						confirm.setPreference('warning', true);
+						confirm.setPreference('onPromptComplete', function () {
+							callback(confirm, recordTable, recordSysID, recordCheckpoint);
+						});
+						confirm.render();
+					} else {
+						g_form.addErrorMessage(result.message);
+					}
+				});
+			} else {
+				g_form.addErrorMessage(result.message);
+			}
+		});
 	}
 
-})();]]></action_script>
+})(g_sysId);]]></action_script>
         <active>true</active>
         <comments/>
         <condition/>
@@ -40,8 +85,8 @@
  * Add items to the context menu by calling: 
  *    g_contextMenu.addAction(item_id, label, script_string, order); 
  */]]></dynamic_actions_script>
-        <menu>list_title</menu>
-        <name>/nav_to</name>
+        <menu>list_row</menu>
+        <name>revert</name>
         <on_show_script><![CDATA[/**
  * This client-side script is used to dynamically change the context menu before it is displayed.
  * It is called before showing the context menu if the Run onShow script flag is checked.
@@ -55,16 +100,7 @@
  *    'g_sysId' the sys_id of the row or form that the script is running against
  */
 (function () {
-	var visible = true;
-	if (NOW.isPolarisEnabled == 'true') {
-		// with polaris enabled, this property will load every page with "nav_to"
-		if (getPreference('glide.ui.polaris.ui16_tabs_inside_polaris') == 'true') {
-			visible = false;
-		}
-	} else if (getNavWindow()) {
-		visible = false;
-	}
-	
+	var visible = true;	
 	if (visible) {
 		g_menu.setVisible(g_item);
 	} else {
@@ -74,24 +110,24 @@
  
 ]]></on_show_script>
         <order>1000</order>
-        <parent display_value="DevOps+">384fcd3197372110d70ef207f053afd6</parent>
-        <run_on_show_script>true</run_on_show_script>
+        <parent display_value="DevOps+">cf3cf35a933102101f07f5f08bba10bb</parent>
+        <run_on_show_script>false</run_on_show_script>
         <sys_class_name>sys_ui_context_menu</sys_class_name>
-        <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2023-07-03 14:17:52</sys_created_on>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-04-28 22:31:28</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
-        <sys_id>8c8fcd7197372110d70ef207f053af08</sys_id>
-        <sys_mod_count>21</sys_mod_count>
-        <sys_name>/nav_to</sys_name>
+        <sys_id>9c8dbb1a933102101f07f5f08bba1029</sys_id>
+        <sys_mod_count>18</sys_mod_count>
+        <sys_name>revert</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name>sys_ui_context_menu_8c8fcd7197372110d70ef207f053af08</sys_update_name>
+        <sys_update_name>sys_ui_context_menu_9c8dbb1a933102101f07f5f08bba1029</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-24 13:24:11</sys_updated_on>
-        <table>global</table>
+        <sys_updated_on>2024-05-24 22:53:13</sys_updated_on>
+        <table>sys_history_line</table>
         <track_selected>false</track_selected>
         <type>action</type>
     </sys_ui_context_menu>
