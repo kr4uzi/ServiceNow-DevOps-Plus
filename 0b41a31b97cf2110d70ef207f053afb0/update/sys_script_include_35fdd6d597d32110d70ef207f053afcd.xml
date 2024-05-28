@@ -105,7 +105,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		const scope = this.getParameter('scope');
 		const allScopes = this.getParameter('allScopes');
 		
-		const limit = this.getParameter('limit');
+		const limit = this.getParameter('limit') || 50;
 		
 		// column + record => decrypt
 		// searchGroup => generic code search
@@ -216,12 +216,9 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				scriptGr.setLimit(1);
 				scriptGr.query();
 				if (scriptGr.next()) {
-					// Strange Bug with GlideRecordSecure: .toString() and .getValue('sys_scope')
-					// don't seem to work in some situations (maybe because of KMF tables?)
-					scriptGr.sys_scope = dbObjectGr.sys_scope + '';
-					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
+					scriptGr.sys_scope = dbObjectGr.getValue('sys_scope');
 					scriptGr.script = `
-						(function (table, additionalFilter, fields, term, allScopes, scope, matchClass) {
+						(function (table, additionalFilter, fields, term, allScopes, scope, matchClass, limit) {
 							var anyGr = new GlideRecord(table);
 							fields = fields.filter(function (f) {
 								return anyGr.isValidField(f);
@@ -252,11 +249,16 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 								anyGr.orderBy("sys_name");
 							}
 
+							if (limit) {
+								anyGr.setLimit(limit);
+							}
+
 							anyGr.query();
 
 							var result = {
 								recordType: table,
 								tableLabel: anyGr.getLabel(),
+								query: anyGr.getEncodedQuery(),
 								hits: []
 							};
 
@@ -296,6 +298,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 										}
 
 										if (match.lineMatches.length > 0) {
+											match.lineMatches.forEach(function (lineMatch) {
+												["context", "escaped"].forEach(function (key) {
+													if (lineMatch[key].length > 500) {
+														lineMatch[key] = lineMatch[key].substring(0, 500) + '...';
+													}
+												});							
+											});
 											matches.push(match);
 										}
 									} catch (e) {
@@ -349,7 +358,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 
 								return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);
 							}
-						})(table, additionalFilter, fields.split(','), term, allScopes, scope, matchClass);
+						})(table, additionalFilter, fields.split(','), term, allScopes, scope, matchClass, limit);
 					`;
 					
 					const searchStart = new GlideDateTime();
@@ -360,7 +369,8 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						term: term,
 						allScopes: allScopes,
 						scope: scope,
-						matchClass: config.matchClass == true
+						matchClass: config.matchClass == true,
+						limit
 					});
 					const searchEnd = new GlideDateTime();
 
@@ -386,8 +396,16 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		} else {
 			result.message = 'Invalid parameters!';
 		}
-		
-		return JSON.stringify(result);
+
+		try {
+			return JSON.stringify(result);
+		} catch (e) {
+			// might occurr when the result object is too large
+			return JSON.stringify({
+				status: 'error',
+				message: 'Failed to JSON.stringify(result): ' + e
+			});
+		}
 	},
 	
 	// A query to /api/sn_codesearch/code_search/tables will crash when there is a table
@@ -539,13 +557,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>97</sys_mod_count>
+        <sys_mod_count>98</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-28 17:07:18</sys_updated_on>
+        <sys_updated_on>2024-05-28 17:31:47</sys_updated_on>
     </sys_script_include>
 </record_update>

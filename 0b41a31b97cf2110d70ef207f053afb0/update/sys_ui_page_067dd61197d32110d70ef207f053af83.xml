@@ -94,7 +94,7 @@ addLoadEvent(function () {
 						}
 
 						if (i < tables.length && !canceled) {
-							searchTable(tables[i++].name, term, scope, allScopes == 'on', searchConfig, processTableResults);
+							searchTable(tables[i++].name, term, scope, allScopes == 'on', searchConfig, processTableResults, onError);
 						} else {
 							gel('progress-container').style.display = 'none';
 						}
@@ -284,7 +284,7 @@ function searchTable(table, term, scope, allScopes, config, onSuccess, onError) 
 		}
 		
 		const searchScripts = [];
-		const prefGr = new GlideRecord('sys_user_preference');
+		const prefGr = new GlideRecordSecure('sys_user_preference');
 		prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
 		prefGr.addQuery('system', true).addOrCondition('user', gs.getUserID());
 		prefGr.addNotNullQuery('description');
@@ -377,13 +377,13 @@ function searchTable(table, term, scope, allScopes, config, onSuccess, onError) 
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>45</sys_mod_count>
+        <sys_mod_count>46</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-28 17:06:52</sys_updated_on>
+        <sys_updated_on>2024-05-28 17:31:41</sys_updated_on>
     </sys_ui_page>
 </record_update>
