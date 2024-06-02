@@ -5,10 +5,10 @@
         <api_name>x_424426_devops.CodeSearchUtilClient</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
-        <description/>
+        <description>2024-06-03 MKR: Search Group Searching deprecated, will be deactivated in a future update</description>
         <name>CodeSearchUtilClient</name>
         <script><![CDATA[/* global global, gs, sn_scoped_cache */
-/* global Class, GlideRecordSecure, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideDateTime */
+/* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideDateTime */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
 CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
@@ -25,8 +25,6 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		const table = this.getParameter('table');
 		const fields = this.getParameter('fields');
 		const sysID = this.getParameter('sys_id');
-		const limit = this.getParameter('limit') || 500;
-		
 		if (table && fields && sysID) {			
 			const dbObjectGr = new GlideRecordSecure('sys_db_object');
 			dbObjectGr.addQuery('name', table);
@@ -100,41 +98,108 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			message: ''
 		};
 
-		const table = this.getParameter('table');
-		const term = this.getParameter('term');
-		const scope = this.getParameter('scope');
-		const allScopes = this.getParameter('allScopes');
-		
-		const limit = this.getParameter('limit') || 50;
-		
-		// column + record => decrypt
-		// searchGroup => generic code search
-		// searchType
-		let config = this.getParameter('config');		
-		if (table && config && term && gs.tableExists(table)) {
-			try {
-				config = JSON.parse(config);
-			} catch (e) {
-				result.message = 'Invalid config!';
+		let config = null;
+		try {
+			config = JSON.parse(this.getParameter('config'));
+			config.fields ??= [];
+		} catch (e) {
+			result.message = 'Invalid config!';
+			return JSON.stringify(result);
+		}
+
+		if (config.term && config.table && gs.tableExists(config.table)) {
+			if (config.group) {
+				const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+				searchGroupGr.addQuery('name', config.group);
+				searchGroupGr.setLimit(1);
+				searchGroupGr.query();
+				if (searchGroupGr.next()) {
+					const tableConfigGr = new GlideRecordSecure('sn_codesearch_table');
+					tableConfigGr.addQuery('search_group', searchGroupGr.sys_id);
+					tableConfigGr.addQuery('table', config.table);
+					tableConfigGr.setLimit(1);
+					tableConfigGr.query();
+					if (tableConfigGr.next()) {
+						if (tableConfigGr.additional_filter) {
+							config.additional_filter = tableConfigGr.additional_filter.toString();
+						}
+
+						if (tableConfigGr.search_fields) {
+							config.fields = tableConfigGr.search_fields.split(',').map(f => f.trim()).filter(f => !!f);
+						}
+					}
+
+					if (searchGroupGr.extended_matching) {
+						const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+						dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(config.table).getTables());
+						dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+						dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
+						dictionaryGr.addQuery('element', '!=', 'sys_update_name');
+						dictionaryGr.addQuery('max_length', '>=', 80);
+						dictionaryGr.query();
+						while (dictionaryGr.next()) {
+							const fieldName = dictionaryGr.element.toString();
+							if (!config.fields.includes(fieldName)) {
+								config.fields.push(fieldName);
+							}
+						}
+					}
+				} else {
+					result.message = 'Invalid Search Group';
+				}
+			} else if (config.script) {
+				const prefGr = new GlideRecordSecure('sys_user_preference');
+				prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+				prefGr.addQuery('sys_id', config.script);
+				prefGr.setLimit(1);
+				prefGr.query();
+				if (prefGr.next()) {			
+					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+					scriptGr.setLimit(1);
+					scriptGr.query();
+					if (scriptGr.next()) {
+						scriptGr.sys_scope = 'global';
+						scriptGr.script = prefGr.value.toString();
+						const gse = new GlideScopedEvaluator();
+						gse.putVariable('config', config);
+						const scriptResult = gse.evaluateScript(scriptGr, 'script');
+						try {
+							if (scriptResult.status == 'success') {
+								['additional_filter', 'fields', 'match_class', 'all_columns', 'limit'].forEach(key => {
+									if (key in scriptResult) {
+										config[key] = scriptResult[key];
+									}
+								});
+							} else {
+								result.message = scriptResult.message || 'Search-Script unsuccessful with an empty message';
+							}
+						} catch (e) {
+							result.message = 'Invalid object returned from script (' + e + ')';
+						}
+					} else {
+						result.message = 'Unable to execute script';
+					}
+				} else {
+					result.message = 'Unknown script';
+				}
+			}
+
+			if (result.message) {
 				return JSON.stringify(result);
 			}
-			
-			let additionalFilter = '';
-			let fields = [];
-			
-			if (config.record && config.column) {
-				// small adjustment to make this script be usable by the application file decrypter
-				additionalFilter = 'sys_id=' + config.record;
-				fields.push(config.column);
-			} else if (config.all_columns) {
-				let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
+
+			if (config.all_columns) {
+				let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', config.table);
 				if (cachedFields) {
-					fields = JSON.parse(cachedFields);
+					config.fields = JSON.parse(cachedFields);
 				} else {
+					const fields = [];
 					const dictionaryGr = new GlideRecordSecure('sys_dictionary');
-					dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+					dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(config.table).getTables());
 					dictionaryGr.addQuery('internal_type.scalar_type', 'string');
 					dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
+					dictionaryGr.addQuery('internal_type.name', '!=', 'glide_var');
 					dictionaryGr.query();
 					while (dictionaryGr.next()) {
 						const fieldName = dictionaryGr.element.toString();
@@ -143,71 +208,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						}
 					}
 					
-					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
-				}
-			} else if (config.group) {
-				const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
-				searchGroupGr.addQuery('name', config.group);
-				searchGroupGr.setLimit(1);
-				searchGroupGr.query();
-				if (searchGroupGr.next()) {
-					const tableConfigGr = new GlideRecordSecure('sn_codesearch_table');
-					tableConfigGr.addQuery('search_group', searchGroupGr.sys_id);
-					tableConfigGr.addQuery('table', table);
-					tableConfigGr.setLimit(1);
-					tableConfigGr.query();
-					if (tableConfigGr.next()) {
-						if (tableConfigGr.additional_filter) {
-							additionalFilter = tableConfigGr.additional_filter.toString();
-						}
-
-						if (tableConfigGr.search_fields) {
-							fields = tableConfigGr.search_fields.split(',').map(f => f.trim()).filter(f => !!f);
-						}
-					}
-
-					if (searchGroupGr.extended_matching) {
-						const dictionaryGr = new GlideRecordSecure('sys_dictionary');
-						dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
-						dictionaryGr.addQuery('internal_type.scalar_type', 'string');
-						dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
-						dictionaryGr.addQuery('element', '!=', 'sys_update_name');
-						dictionaryGr.addQuery('max_length', '>=', 80);
-						dictionaryGr.query();
-						while (dictionaryGr.next()) {
-							const fieldName = dictionaryGr.element.toString();
-							if (!fields.includes(fieldName)) {
-								fields.push(fieldName);
-							}
-						}
-					}
-				}
-			} else if (config.script) {
-				const prefGr = new GlideRecordSecure('sys_user_preference');
-				prefGr.addQuery('sys_id', config.script);
-				prefGr.setLimit(1);
-				prefGr.query();
-				if (prefGr.next()) {				
-					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-					scriptGr.setLimit(1);
-					scriptGr.query();
-					if (scriptGr.next()) {
-						scriptGr.sys_scope = 'global';
-						scriptGr.script = prefGr.value.toString();
-						fields = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-							table: table
-						});
-					} else {
-						result.message = 'Failed to execute script';
-					}
-				} else {
-					result.message = 'Failed to retrieve script';
+					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', config.table, JSON.stringify(fields));
+					config.fields = fields;
 				}
 			}
-			
+
 			const dbObjectGr = new GlideRecordSecure('sys_db_object');
-			dbObjectGr.addQuery('name', table);
+			dbObjectGr.addQuery('name', config.table);
 			dbObjectGr.setLimit(1);
 			dbObjectGr.query();
 			if (dbObjectGr.next()) {
@@ -218,28 +225,32 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				if (scriptGr.next()) {
 					scriptGr.sys_scope = dbObjectGr.getValue('sys_scope');
 					scriptGr.script = `
-						(function (table, additionalFilter, fields, term, allScopes, scope, matchClass, limit) {
-							var anyGr = new GlideRecord(table);
-							fields = fields.filter(function (f) {
-								return anyGr.isValidField(f);
+						(function (config) {
+							var anyGr = new GlideRecord(config.table);
+							var fields = ['sys_id'];
+							config.fields.forEach(function (f) {
+								if (anyGr.isValidField(f) && fields.indexOf(f) == -1) {
+									fields.push(f);
+								}
 							});
 							
-							if (additionalFilter) {
-								anyGr.addEncodedQuery(additionalFilter);
+							if (config.additional_filter) {
+								anyGr.addEncodedQuery(config.additional_filter);
 							}
 							
-							var qc = anyGr.addQuery("sys_id", term);
-							fields.forEach(function (f) {
-								qc.addOrCondition(f, "CONTAINS", term);
-							});
+							var term = GlideStringUtil.escapeQueryTermSeparator(config.term);
+							var query = ['sys_id=' + term].concat(fields.slice(1).map(function (f) {
+								return f + 'LIKE' + term;
+							})).join('^OR');
+							anyGr.addEncodedQuery(query);
 
-							if (!allScopes && anyGr.isValidField("sys_scope") && scope) {
-								anyGr.addQuery("sys_scope", scope).addOrCondition("sys_scope.scope", scope);
+							if (config.scope && anyGr.isValidField("sys_scope")) {
+								anyGr.addQuery("sys_scope", config.scope);
 							}
 
 							if (anyGr.isValidField("sys_class_name")) {
-								if (matchClass) {
-									anyGr.addQuery("sys_class_name", table);
+								if (config.match_class) {
+									anyGr.addQuery("sys_class_name", config.table);
 								}
 
 								anyGr.orderBy("sys_class_name");
@@ -249,21 +260,22 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 								anyGr.orderBy("sys_name");
 							}
 
-							if (limit) {
-								anyGr.setLimit(limit);
+							if (config.limit) {
+								anyGr.setLimit(config.limit);
 							}
 
+							gs.info(anyGr.getTableName() + ': ' + anyGr.getEncodedQuery());
 							anyGr.query();
-
+							
 							var result = {
-								recordType: table,
+								recordType: config.table,
 								tableLabel: anyGr.getLabel(),
 								query: anyGr.getEncodedQuery(),
 								hits: []
 							};
 
 							while (anyGr.next()) {
-								var matches = getMatches(anyGr, fields, term);
+								var matches = getMatches(anyGr, fields, config.term);
 								if (matches.length) {
 									var gdt = new GlideDateTime();
 									gdt.setValue(anyGr.getValue("sys_updated_on"));
@@ -358,27 +370,21 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 
 								return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);
 							}
-						})(table, additionalFilter, fields.split(','), term, allScopes, scope, matchClass, limit);
+						})(JSON.parse(config));
 					`;
 					
 					const searchStart = new GlideDateTime();
-					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-						table: table,
-						additionalFilter: additionalFilter,
-						fields: fields.join(','),
-						term: term,
-						allScopes: allScopes,
-						scope: scope,
-						matchClass: config.matchClass == true,
-						limit
-					});
+					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { config: JSON.stringify(config) });
 					const searchEnd = new GlideDateTime();
 
 					if (result.search_result) {					
 						result.status = 'success';
 					} else {
+						gs.info('Search Config:\n' + JSON.stringify(config));
 						const logGr = new GlideRecordSecure('syslog');
-						logGr.addQuery('source', 'Evaluator');
+						logGr.addQuery('source', 'Evaluator')
+							.addOrCondition('source', gs.getCurrentScopeName())
+							.addOrCondition('source', 'com.glide.ui.ServletErrorListener');
 						logGr.addQuery('sys_created_by', gs.getUserName());
 						logGr.addQuery('sys_created_on', '<=', searchEnd);
 						logGr.addQuery('sys_created_on', '>=', searchStart);
@@ -398,9 +404,9 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		}
 
 		try {
+			// exception will be thrown when the result object is too large!
 			return JSON.stringify(result);
 		} catch (e) {
-			// might occurr when the result object is too large
 			return JSON.stringify({
 				status: 'error',
 				message: 'Failed to JSON.stringify(result): ' + e
@@ -429,7 +435,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				return JSON.stringify(result);
 			}
 			
-			let tables = [];			
+			let tables = [];
 			if (config.group) {
 				const searchTableGr = new GlideRecordSecure('sn_codesearch_table');
 				searchTableGr.addQuery('search_group.name', config.group);
@@ -489,6 +495,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						const tableName = tableGr.getValue('name');
 						tables.push(tableName);
 
+						// all extensions of the base class
 						const t = new GlideTableHierarchy(tableName).getTableExtensions();
 						for (let i = 0; i < t.length; i++) {
 							tables.push({
@@ -514,19 +521,27 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 					if (scriptGr.next()) {
 						scriptGr.sys_scope = 'global';
 						scriptGr.script = prefGr.value.toString();
-						const scriptTables = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-							table: null
-						});
-						
-						scriptTables.forEach(t => tables.push({
-							name: t,
-							label: ''
-						}));
+
+						const gse = new GlideScopedEvaluator();
+						gse.putVariable('config', config);
+						const scriptResult = gse.evaluateScript(scriptGr, 'script');
+						try {
+							if (scriptResult.status == 'success') {
+								scriptResult.tables.forEach(t => tables.push({
+									name: t,
+									label: ''
+								}));
+							} else {
+								result.message = scriptResult.message || 'Script unsuccessful with an empty message';
+							}
+						} catch (e) {
+							result.message = 'Script returned invalid result (' + e + ')';
+						}
 					} else {
-						result.message = 'Failed to execute script';
+						result.message = 'Unable to execute script';
 					}
 				} else {
-					result.message = 'Failed to retrieve script';
+					result.message = 'Invalid script';
 				}
 			}
 				
@@ -541,8 +556,23 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				}
 			}
 			
-			// only return tables which have a label (no label = tabel doesn't exist)
+			// only return tables which have a label (no label = table doesn't exist)
 			result.tables = tables.filter(t => !!t.label);
+
+			if (config.scope) {
+				const metadataGr = new GlideAggregate('sys_metadata');
+				metadataGr.addQuery('sys_scope', config.scope);
+				metadataGr.groupBy('sys_class_name');
+				metadataGr.query();
+
+				const existingTables = [];
+				while (metadataGr.next()) {
+					existingTables.push(metadataGr.getValue('sys_class_name'));
+				}
+
+				result.tables = result.tables.filter(t => existingTables.includes(t.name));
+			}
+
 			result.status = 'success';
 		} else {
 			result.message = gs.getMessage('devops_invalid_parameters');
@@ -557,13 +587,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>98</sys_mod_count>
+        <sys_mod_count>119</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-28 17:31:47</sys_updated_on>
+        <sys_updated_on>2024-06-02 18:30:06</sys_updated_on>
     </sys_script_include>
 </record_update>

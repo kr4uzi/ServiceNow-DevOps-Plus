@@ -107,7 +107,7 @@ function devops_onOK() {
 }
 
 function decryptMetadata(recordScope, recordTable, recordSysId, columnName, displayValue) {
-	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', ': function', 'Packages', 'j:jelly'];
+	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', 'function', 'Packages', 'j:jelly'];
 	var maxIterations = 500;
 	
 	var context = {
@@ -163,7 +163,14 @@ function decryptMetadata(recordScope, recordTable, recordSysId, columnName, disp
 		if (context.done) {
 			context.onDone(context);
 		} else if (context.iteration++ < maxIterations) {
-			devops_search(context.metadata.table, context.metadata.sys_id, context.column, context.searchTerm, context.metadata.scope, false, function (searchResult) {
+			var searchConfig = {
+				table: context.metadata.table,
+				term: context.searchTerm,
+				additional_filter: 'sys_id=' + context.metadata.sys_id,
+				fields: [context.column],
+				scope: context.metadata.scope
+			};
+			devops_search(searchConfig, function (searchResult) {
 				context.searchedTerms.push(context.searchTerm);
 				context.done = true;
 				
@@ -232,16 +239,10 @@ function hideError() {
 	gel('devops_error_row').style.display = 'none';
 }
 
-function devops_search(table, recordSysId, column, term, scope, allScopes, onSuccess, onError) {
+function devops_search(config, onSuccess, onError) {
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchTerm');
-	ga.addParam('table', table);
-	ga.addParam('config', JSON.stringify({
-		record: recordSysId,
-		column: column
-	}));
-	ga.addParam('term', term);
-	ga.addParam('scope', scope);
+	ga.addParam('config', JSON.stringify(config));
 	ga.getXMLAnswer(function (result) {
 		result = JSON.parse(result);
 		if (result.status == 'success') {
@@ -250,32 +251,6 @@ function devops_search(table, recordSysId, column, term, scope, allScopes, onSuc
 			onError(result.message);
 		}
 	});
-}
-
-function devops_search_old(table, term, scopeSysID, allScopes, onSuccess, onError) {
-	var url = 'api/sn_codesearch/code_search/search';
-	url += '?search_all_scopes=' + String(!!allScopes);
-	
-	if (scopeSysID) {
-		url += '&current_app=' + scopeSysID;
-	}
-	
-	url += '&table=' + table;
-	url += '&term=' + encodeURIComponent(term.trim());
-
-	var client = new XMLHttpRequest();
-	client.open('GET', url);
-	client.setRequestHeader('X-UserToken', window.g_ck);
-	client.setRequestHeader('Accept','application/json');
-	client.setRequestHeader('Content-Type','application/json');
-	client.onreadystatechange = function() { 
-		if (this.readyState == this.DONE) {
-			var result = JSON.parse(this.response).result;
-			onSuccess(result);
-		}
-	};
-
-	client.send();
 }]]></client_script>
         <description/>
         <direct>false</direct>
@@ -381,13 +356,13 @@ function devops_search_old(table, term, scopeSysID, allScopes, onSuccess, onErro
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:11:42</sys_created_on>
         <sys_id>bbcdd6d597d32110d70ef207f053afe0</sys_id>
-        <sys_mod_count>60</sys_mod_count>
+        <sys_mod_count>62</sys_mod_count>
         <sys_name>decrypt</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_bbcdd6d597d32110d70ef207f053afe0</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-23 14:45:18</sys_updated_on>
+        <sys_updated_on>2024-06-02 16:42:17</sys_updated_on>
     </sys_ui_page>
 </record_update>

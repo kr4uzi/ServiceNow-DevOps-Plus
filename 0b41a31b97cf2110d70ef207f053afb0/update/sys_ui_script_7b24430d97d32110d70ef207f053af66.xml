@@ -21,17 +21,26 @@ x_424426_devops.context_menu = (function() {
 		inject($window = _window, $config);
 		
 		const ootbContextMenu = $window.GwtContextMenu;
-		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, {
+		const DevOpsContextMenuPrototype = {
 			initialize: function (id) {
 				if (id == 'context_breadcrumb_menu') {
 					bcm = this;
 				}
 
-				ootbContextMenu.prototype.initialize.apply(this, arguments);
+				return ootbContextMenu.prototype.initialize.apply(this, arguments);
 			},
 
 			type: 'DevopsContextMenu'
+		};
+
+		// we need to know the timestamp of the last added item so we can ensure that the DevOps Menu appears on the bottom
+		Object.keys(ootbContextMenu.prototype).filter(key => key.startsWith('add')).forEach(key => {
+			DevOpsContextMenuPrototype[key] = function () {
+				this.devops_lastAdded = new Date().getTime();
+				return ootbContextMenu.prototype[key].apply(this, arguments);
+			};
 		});
+		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, DevOpsContextMenuPrototype);
 	});
 	
 	x_424426_devops.loader.get('config', function (_config) {
@@ -190,6 +199,12 @@ x_424426_devops.context_menu = (function() {
 	}
 	
 	function buildMenu(parentMenu, menuName, items, context) {
+		// add the DevOps menu after the OOTB menu(s) have been fully built
+		if (new Date().getTime() - parentMenu.devops_lastAdded < 25) {
+			$window.setTimeout(buildMenu, 50, parentMenu, menuName, items, context);
+			return;
+		}
+
 		let itemsAdded = 0;
 		
 		const devopsMenu = new GwtContextMenu(menuName);
@@ -202,7 +217,8 @@ x_424426_devops.context_menu = (function() {
 						return;
 					}
 				} catch (e) {
-					console.error('[DevOps+] Failed to add item for (' + menuName + ')', e, items, context);
+					$window.console.error('[DevOps+] Failed to add item for (' + menuName + ')', e, items, context);
+					return;
 				}
 			}
 
@@ -217,7 +233,7 @@ x_424426_devops.context_menu = (function() {
 						new Function('script', '$context', 'return eval(script)')(item.script, context)
 					);
 				} catch (e) {
-					console.error('[DevOps+] Failed to add menu for (' + menuName + ')', e, items, context);
+					$window.console.error('[DevOps+] Failed to add menu for (' + menuName + ')', e, items, context);
 				}
 			} else {
 				return;
@@ -238,14 +254,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>81</sys_mod_count>
+        <sys_mod_count>87</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-03-07 20:17:17</sys_updated_on>
+        <sys_updated_on>2024-06-02 15:14:53</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
