@@ -261,9 +261,22 @@ function searchTable(searchConfig, onSuccess, onError) {
 	ga.addParam('sysparm_name', 'searchTerm');
 	ga.addParam('config', JSON.stringify(searchConfig));
 	ga.getXMLAnswer(function (result) {
+		if (!result) {
+			// a empty or null result indicates, that the script include function crashed with in an unexpected error case
+			// this needs to be investigates so we show an error to the user
+			if (!searchConfig.unexpectedSearchTableErrorOccurred) {
+				searchConfig.unexpectedSearchTableErrorOccurred = true;
+				GlideUI.get().addOutputMessage({ type: 'error', msg: 'searchTable returned null (check browser console log for affected tables)' });
+			}
+
+			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', searchConfig.table);
+			onSuccess([]);
+			return;
+		}
+
 		result = JSON.parse(result);
 		if (result.status == 'success') {
-			onSuccess(result.search_result);			
+			onSuccess(result.search_result);
 		} else if (result.message) {
 			onError(result.message);
 		} else {
@@ -384,13 +397,13 @@ function searchTable(searchConfig, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>55</sys_mod_count>
+        <sys_mod_count>58</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-02 18:30:26</sys_updated_on>
+        <sys_updated_on>2024-06-04 16:09:13</sys_updated_on>
     </sys_ui_page>
 </record_update>
