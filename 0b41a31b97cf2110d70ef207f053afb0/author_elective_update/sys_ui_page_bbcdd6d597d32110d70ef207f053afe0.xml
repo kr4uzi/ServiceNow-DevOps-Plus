@@ -1,0 +1,780 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="DELETE">
+        <category>general</category>
+        <client_script><![CDATA[/* global addLoadEvent, gel, getMessage, jslog, GlideAjax, XMLHttpRequest, window, setTimeout */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {
+	var record = gel('devops_metadata');
+	recordSelected(record);
+});
+
+function recordSelected(element) {
+	updateMandatoryness(element);
+	
+	var fields = gel('devops_fields');
+	fields.options.length = 0;
+	fields.setAttribute('disabled', '');
+	fields.dispatchEvent(new window.Event('change'));
+	
+	if (element.value) {
+		hideError();
+
+		var ga = new GlideAjax('x_424426_devops.DecryptUtilClient');
+		ga.addParam('sysparm_name', 'getMetadataInfo');
+		ga.addParam('metadata', element.value);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				gel('devops_table').value = result.table;
+				addOption(fields, '', '-- None --');
+				
+				result.decryptable_fields.forEach(function (field) {
+					addOption(fields, field.name, field.label);
+				});
+				
+				if (result.decryptable_fields.length == 1) {
+					fields.options[1].setAttribute('selected', '');
+					fields.dispatchEvent(new window.Event('change'));
+				}
+
+				fields.removeAttribute('disabled');
+			} else {
+				onError(result.message);
+			}
+		});
+	} else {
+		hideError();
+		addOption(fields, '', 'Select a record first');
+	}
+	
+	function addOption(selectElement, value, label) {
+		var option = window.document.createElement('OPTION');
+		option.value = value;
+		option.innerHTML = label;
+		selectElement.appendChild(option);
+	}
+}
+
+function fieldSelected(element) {
+	updateMandatoryness(element);
+	
+	var okButton = gel('devops_ok');
+	if (element.value) {
+		okButton.removeAttribute('disabled');
+	} else {
+		okButton.setAttribute('disabled', '');
+	}
+}
+
+function updateMandatoryness(ref) {
+	var row = ref.closest('div.row');
+	if (ref.value) {
+		row.classList.add('is-filled');
+	} else {
+		row.classList.remove('is-filled');
+	}
+}
+
+function devops_onOK() {
+	hideError();
+	
+	var recordTable = gel('devops_table').value;
+	var recordSysId = gel('devops_metadata').value;
+	var columnName = gel('devops_fields').value;
+	if (recordTable && recordSysId && columnName) {
+		gel('devops_error_row').style.display = 'none';
+		gel('devops_loading').style.display = '';
+		gel('devops_ok').setAttribute('disabled', '');
+		var progressBar = gel('devops-progress-bar');
+		progressBar.setAttribute('aria-valuenow', '0');
+		progressBar.style.width = '0%';
+		decryptMetadata(gel('devops_scope').value, recordTable, recordSysId, columnName, gel('sys_display.devops_metadata').value);
+	} else {
+		getMessage(['{0} is mandatory!', 'Application File', 'Column'], function (msgs) {
+			gel('devops_error_row').style.display = '';
+			var errorMessages = [];
+			if (!recordSysId) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Application File'] + '"']));
+			}
+			
+			if (!columnName) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Column'] + '"']));
+			}
+			
+			onError(errorMessages.join('<br />'));
+		});
+	}
+}
+
+function decryptMetadata(recordScope, recordTable, recordSysId, columnName, displayValue) {
+	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', 'function', 'Packages', 'j:jelly'];
+	var maxIterations = 500;
+	
+	var context = {
+		metadata: {
+			scope: recordScope,
+			table: recordTable,
+			sys_id: recordSysId
+		},
+		column: columnName,
+		iteration: 0,
+		done: false,
+		searchedTerms: [],
+		searchTerm: displayValue,
+		lines: [],
+		onDone: function () {
+			gel('devops_ok').removeAttribute('disabled');
+			gel('devops_loading').style.display = 'none';
+			gel('devops_code_row').style.display = '';
+			var codeNode = gel('devops_code');
+
+			if (context.lines.length) {
+				var code = '';
+				for (var i = 1; i < context.lines.length; i++) {
+					code += 'Line ' + i + ': ';
+
+					if (context.lines[i] === undefined) {
+						code += '/* Unable to decrypt */';
+					} else {
+						code += context.lines[i]
+							.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;')
+							.replace(/"/g, '&quot;')
+							.replace(/'/g, '&#039;');
+					}
+
+					code += '<br />';
+				}
+
+				codeNode.setAttribute('rows', context.lines.length);
+				codeNode.innerHTML = code;
+			} else {
+				codeNode.innerHTML = 'Unable to decrypt Application File ...';
+			}
+		}
+	};
+
+	decrypt(context);
+	
+	function decrypt(context) {
+		var progressBar = gel('devops-progress-bar');
+		
+		if (context.done) {
+			context.onDone(context);
+		} else if (context.iteration++ < maxIterations) {
+			var searchConfig = {
+				table: context.metadata.table,
+				term: context.searchTerm,
+				additional_filter: 'sys_id=' + context.metadata.sys_id,
+				fields: [context.column],
+				scope: context.metadata.scope
+			};
+			devops_search(searchConfig, function (searchResult) {
+				context.searchedTerms.push(context.searchTerm);
+				context.done = true;
+				
+				if (searchResult.hits && searchResult.hits.length > 0) {
+					// we are only interested in hits of your script include!
+					var metadataResults = searchResult.hits.find(function (x) { return x.sysId == context.metadata.sys_id; });
+					if (metadataResults) {
+						// we are only interested in hits in script-field!
+						var fieldResult = metadataResults.matches.find(function (x) { return x.field == context.column; });
+						if (fieldResult) {
+							// merge new matches with saved code
+							fieldResult.lineMatches.filter(function (l) { return !(l.line in context.lines); }).forEach(function (l) {
+								context.lines[l.line] = l.context;
+							});
+						}
+					}
+				}
+				
+				var hasEmptyLines = false;
+				var maxLines = context.lines.length;
+				if (maxLines) {
+					var filledLines = 0;
+					// using for... because .some doesnt work here (this will only check actuall existing elements, but we dont have a sparse-array!)
+					for (var lineNum = 1; lineNum < maxLines; lineNum++) {
+						if (context.lines[lineNum] === undefined) {
+							hasEmptyLines = true;
+						} else {
+							filledLines++;
+						}
+					}
+					
+					var percentComplete = Math.floor(filledLines / maxLines * 100);
+					progressBar.setAttribute('aria-valuenow', percentComplete);
+					progressBar.style.width = percentComplete + '%';
+				}
+
+				if (hasEmptyLines || maxLines == 0) {
+					var bestSearchTerm = context.lines.filter(function (l) { return l; }).sort(function (a, b) { return b.length - a.length; }).filter(function (t) { return context.searchedTerms.indexOf(t) === -1; });
+					if (bestSearchTerm.length == 0) {
+						bestSearchTerm = backupTerms.filter(function (t) { return context.searchedTerms.indexOf(t) === -1; });
+					}
+					
+					if (bestSearchTerm.length) {
+						context.searchTerm = bestSearchTerm[0];
+						context.done = false;
+					}
+				}
+				
+				setTimeout(decrypt.bind(null, context));
+			}, onError);
+		} else {
+			onError('Max iterations!');
+		}
+	}
+}
+
+function onError(errorMessage) {
+	gel('devops_ok').removeAttribute('disabled');
+	gel('devops_loading').style.display = 'none';
+	gel('devops_error_row').style.display = '';
+	gel('devops_error_message').innerHTML = errorMessage;
+	jslog(errorMessage, 'devops');
+}
+
+function hideError() {
+	gel('devops_error_row').style.display = 'none';
+}
+
+function devops_search(config, onSuccess, onError) {
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchTerm');
+	ga.addParam('config', JSON.stringify(config));
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result.search_result);
+		} else if (result.message) {
+			onError(result.message);
+		}
+	});
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_decrypt.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		let recordDisplayValue = '';
+		let recordTable = '';
+		let recordScope = '';
+		const metadataSysId = RP.getParameterValue('metadata');
+		const metadataGr = new GlideRecordSecure('sys_metadata');
+		if (metadataSysId) {
+			metadataGr.addQuery('sys_id', metadataSysId);
+			metadataGr.setLimit(1);
+			metadataGr.query();
+			if (metadataGr.next()) {
+				recordDisplayValue = metadataGr.getDisplayValue();
+				recordTable = metadataGr.getRecordClassName();
+				recordScope = metadataGr.getValue('sys_scope');
+			}
+		}
+	</g:evaluate>
+	<style>
+		.devops-decrypt-cancel {
+			display: none;
+		}
+		
+		.row {
+			margin-top: 5px;
+		}
+	</style>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<p>Welcome to DevOps+ Application File Decrypter</p>
+				<p>Using this tool, you will be able to decrypt almost every "protected" application file.</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="form-group is-required form-horizontal">
+				<div class="col-md-2">
+					<g:form_label>${metadataGr.getLabel()}</g:form_label>
+				</div>
+				<div class="col-md-6">
+					<g:ui_reference name="devops_metadata"
+						table="sys_metadata" query="sys_policy=protected^sys_class_nameIN${gs.getProperty('x_424426_devops.decryptable_tables')}"
+						completer="AJAXTableCompleter" 
+						columns="sys_class_name;sys_name"
+						order_by="sys_updated_on"
+						value="${metadataSysId}"
+						displayvalue="${recordDisplayValue}"
+						onchange="recordSelected(this)"
+					/>
+					<input type="hidden" id="devops_table" value="${recordTable}" />
+					<input type="hidden" id="devops_scope" value="${recordScope}" />
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="form-group is-required form-horizontal">
+				<div class="col-md-2">
+					<g:form_label>${gs.getMessage('Column')}</g:form_label>
+				</div>
+				<div class="col-md-6">
+					<select id="devops_fields" class="form-control" onchange="fieldSelected(this)" disabled="disabled">
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 1rem">
+			<div class="form-group form-horizontal">
+				<div class="col-md-8 text-right">
+					<g:dialog_buttons_ok_cancel
+						ok_type     = "button"
+						ok_id       = "devops_ok"
+						ok          = "return devops_onOK()"
+						ok_text     = "${gs.getMessage('devops_button_decrypt')}"
+						cancel_style_class = "devops-decrypt-cancel"
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="row" id="devops_loading" style="display: none; margin-top: 1rem;">
+			<div class="progress">
+				<div id="devops-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 1rem; display: none;" id="devops_error_row">
+			<p class="col-md-8" id="devops_error_message" style="color: red;"></p>
+		</div>
+		<div class="row" id="devops_code_row" style="margin-top: 1rem; display: none;">
+			<div class="col-md-12">
+				<pre id="devops_code" class="javascript hljs" cols="80" title="Decrypted"></pre>
+			</div>
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>decrypt</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-07 10:11:42</sys_created_on>
+        <sys_id>bbcdd6d597d32110d70ef207f053afe0</sys_id>
+        <sys_mod_count>63</sys_mod_count>
+        <sys_name>decrypt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_bbcdd6d597d32110d70ef207f053afe0</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-03 20:49:25</sys_updated_on>
+    </sys_ui_page>
+<sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>8e74c4eadba2f910caf99027c59619e3</instance_id>
+        <instance_name>dev217055</instance_name>
+        <name>sys_ui_page_bbcdd6d597d32110d70ef207f053afe0</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_page"&gt;
+    &lt;sys_ui_page action="INSERT_OR_UPDATE"&gt;
+        &lt;category&gt;general&lt;/category&gt;
+        &lt;client_script&gt;&lt;![CDATA[/* global addLoadEvent, gel, getMessage, jslog, GlideAjax, XMLHttpRequest, window, setTimeout */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {
+	var record = gel('devops_metadata');
+	recordSelected(record);
+});
+
+function recordSelected(element) {
+	updateMandatoryness(element);
+	
+	var fields = gel('devops_fields');
+	fields.options.length = 0;
+	fields.setAttribute('disabled', '');
+	fields.dispatchEvent(new window.Event('change'));
+	
+	if (element.value) {
+		hideError();
+
+		var ga = new GlideAjax('x_424426_devops.DecryptUtilClient');
+		ga.addParam('sysparm_name', 'getMetadataInfo');
+		ga.addParam('metadata', element.value);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				gel('devops_table').value = result.table;
+				addOption(fields, '', '-- None --');
+				
+				result.decryptable_fields.forEach(function (field) {
+					addOption(fields, field.name, field.label);
+				});
+				
+				if (result.decryptable_fields.length == 1) {
+					fields.options[1].setAttribute('selected', '');
+					fields.dispatchEvent(new window.Event('change'));
+				}
+
+				fields.removeAttribute('disabled');
+			} else {
+				onError(result.message);
+			}
+		});
+	} else {
+		hideError();
+		addOption(fields, '', 'Select a record first');
+	}
+	
+	function addOption(selectElement, value, label) {
+		var option = window.document.createElement('OPTION');
+		option.value = value;
+		option.innerHTML = label;
+		selectElement.appendChild(option);
+	}
+}
+
+function fieldSelected(element) {
+	updateMandatoryness(element);
+	
+	var okButton = gel('devops_ok');
+	if (element.value) {
+		okButton.removeAttribute('disabled');
+	} else {
+		okButton.setAttribute('disabled', '');
+	}
+}
+
+function updateMandatoryness(ref) {
+	var row = ref.closest('div.row');
+	if (ref.value) {
+		row.classList.add('is-filled');
+	} else {
+		row.classList.remove('is-filled');
+	}
+}
+
+function devops_onOK() {
+	hideError();
+	
+	var recordTable = gel('devops_table').value;
+	var recordSysId = gel('devops_metadata').value;
+	var columnName = gel('devops_fields').value;
+	if (recordTable &amp;&amp; recordSysId &amp;&amp; columnName) {
+		gel('devops_error_row').style.display = 'none';
+		gel('devops_loading').style.display = '';
+		gel('devops_ok').setAttribute('disabled', '');
+		var progressBar = gel('devops-progress-bar');
+		progressBar.setAttribute('aria-valuenow', '0');
+		progressBar.style.width = '0%';
+		decryptMetadata(gel('devops_scope').value, recordTable, recordSysId, columnName, gel('sys_display.devops_metadata').value);
+	} else {
+		getMessage(['{0} is mandatory!', 'Application File', 'Column'], function (msgs) {
+			gel('devops_error_row').style.display = '';
+			var errorMessages = [];
+			if (!recordSysId) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Application File'] + '"']));
+			}
+			
+			if (!columnName) {
+				errorMessages.push(msgs['{0} is mandatory!'].withValues(['"' + msgs['Column'] + '"']));
+			}
+			
+			onError(errorMessages.join('&lt;br /&gt;'));
+		});
+	}
+}
+
+function decryptMetadata(recordScope, recordTable, recordSysId, columnName, displayValue) {
+	var backupTerms = ['GlideRecord', 'GlideRecordSecure', 'gs.', 'JSON', 'for (', 'for(', 'while', '.next', 'if(', 'if (', '.query', '.next', '.addQuery', 'function', 'Packages', 'j:jelly'];
+	var maxIterations = 500;
+	
+	var context = {
+		metadata: {
+			scope: recordScope,
+			table: recordTable,
+			sys_id: recordSysId
+		},
+		column: columnName,
+		iteration: 0,
+		done: false,
+		searchedTerms: [],
+		searchTerm: displayValue,
+		lines: [],
+		onDone: function () {
+			gel('devops_ok').removeAttribute('disabled');
+			gel('devops_loading').style.display = 'none';
+			gel('devops_code_row').style.display = '';
+			var codeNode = gel('devops_code');
+
+			if (context.lines.length) {
+				var code = '';
+				for (var i = 1; i &lt; context.lines.length; i++) {
+					code += 'Line ' + i + ': ';
+
+					if (context.lines[i] === undefined) {
+						code += '/* Unable to decrypt */';
+					} else {
+						code += context.lines[i]
+							.replace(/&amp;/g, '&amp;amp;')
+							.replace(/&lt;/g, '&amp;lt;')
+							.replace(/&gt;/g, '&amp;gt;')
+							.replace(/"/g, '&amp;quot;')
+							.replace(/'/g, '&amp;#039;');
+					}
+
+					code += '&lt;br /&gt;';
+				}
+
+				codeNode.setAttribute('rows', context.lines.length);
+				codeNode.innerHTML = code;
+			} else {
+				codeNode.innerHTML = 'Unable to decrypt Application File ...';
+			}
+		}
+	};
+
+	decrypt(context);
+	
+	function decrypt(context) {
+		var progressBar = gel('devops-progress-bar');
+		
+		if (context.done) {
+			context.onDone(context);
+		} else if (context.iteration++ &lt; maxIterations) {
+			var searchConfig = {
+				table: context.metadata.table,
+				term: context.searchTerm,
+				additional_filter: 'sys_id=' + context.metadata.sys_id,
+				fields: [context.column],
+				scope: context.metadata.scope
+			};
+			devops_search(searchConfig, function (searchResult) {
+				context.searchedTerms.push(context.searchTerm);
+				context.done = true;
+				
+				if (searchResult.hits &amp;&amp; searchResult.hits.length &gt; 0) {
+					// we are only interested in hits of your script include!
+					var metadataResults = searchResult.hits.find(function (x) { return x.sysId == context.metadata.sys_id; });
+					if (metadataResults) {
+						// we are only interested in hits in script-field!
+						var fieldResult = metadataResults.matches.find(function (x) { return x.field == context.column; });
+						if (fieldResult) {
+							// merge new matches with saved code
+							fieldResult.lineMatches.filter(function (l) { return !(l.line in context.lines); }).forEach(function (l) {
+								context.lines[l.line] = l.context;
+							});
+						}
+					}
+				}
+				
+				var hasEmptyLines = false;
+				var maxLines = context.lines.length;
+				if (maxLines) {
+					var filledLines = 0;
+					// using for... because .some doesnt work here (this will only check actuall existing elements, but we dont have a sparse-array!)
+					for (var lineNum = 1; lineNum &lt; maxLines; lineNum++) {
+						if (context.lines[lineNum] === undefined) {
+							hasEmptyLines = true;
+						} else {
+							filledLines++;
+						}
+					}
+					
+					var percentComplete = Math.floor(filledLines / maxLines * 100);
+					progressBar.setAttribute('aria-valuenow', percentComplete);
+					progressBar.style.width = percentComplete + '%';
+				}
+
+				if (hasEmptyLines || maxLines == 0) {
+					var bestSearchTerm = context.lines.filter(function (l) { return l; }).sort(function (a, b) { return b.length - a.length; }).filter(function (t) { return context.searchedTerms.indexOf(t) === -1; });
+					if (bestSearchTerm.length == 0) {
+						bestSearchTerm = backupTerms.filter(function (t) { return context.searchedTerms.indexOf(t) === -1; });
+					}
+					
+					if (bestSearchTerm.length) {
+						context.searchTerm = bestSearchTerm[0];
+						context.done = false;
+					}
+				}
+				
+				setTimeout(decrypt.bind(null, context));
+			}, onError);
+		} else {
+			onError('Max iterations!');
+		}
+	}
+}
+
+function onError(errorMessage) {
+	gel('devops_ok').removeAttribute('disabled');
+	gel('devops_loading').style.display = 'none';
+	gel('devops_error_row').style.display = '';
+	gel('devops_error_message').innerHTML = errorMessage;
+	jslog(errorMessage, 'devops');
+}
+
+function hideError() {
+	gel('devops_error_row').style.display = 'none';
+}
+
+function devops_search(config, onSuccess, onError) {
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchTerm');
+	ga.addParam('config', JSON.stringify(config));
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result.search_result);
+		} else if (result.message) {
+			onError(result.message);
+		}
+	});
+}]]&gt;&lt;/client_script&gt;
+        &lt;description/&gt;
+        &lt;direct&gt;false&lt;/direct&gt;
+        &lt;endpoint&gt;x_424426_devops_decrypt.do&lt;/endpoint&gt;
+        &lt;html&gt;&lt;![CDATA[&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+	&lt;g:evaluate&gt;
+		let recordDisplayValue = '';
+		let recordTable = '';
+		let recordScope = '';
+		const metadataSysId = RP.getParameterValue('metadata');
+		const metadataGr = new GlideRecordSecure('sys_metadata');
+		if (metadataSysId) {
+			metadataGr.addQuery('sys_id', metadataSysId);
+			metadataGr.setLimit(1);
+			metadataGr.query();
+			if (metadataGr.next()) {
+				recordDisplayValue = metadataGr.getDisplayValue();
+				recordTable = metadataGr.getRecordClassName();
+				recordScope = metadataGr.getValue('sys_scope');
+			}
+		}
+	&lt;/g:evaluate&gt;
+	&lt;style&gt;
+		.devops-decrypt-cancel {
+			display: none;
+		}
+		
+		.row {
+			margin-top: 5px;
+		}
+	&lt;/style&gt;
+	&lt;div class="container"&gt;
+		&lt;div class="row"&gt;
+			&lt;div class="col-md-12"&gt;
+				&lt;p&gt;Welcome to DevOps+ Application File Decrypter&lt;/p&gt;
+				&lt;p&gt;Using this tool, you will be able to decrypt almost every "protected" application file.&lt;/p&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div class="row"&gt;
+			&lt;div class="form-group is-required form-horizontal"&gt;
+				&lt;div class="col-md-2"&gt;
+					&lt;g:form_label&gt;${metadataGr.getLabel()}&lt;/g:form_label&gt;
+				&lt;/div&gt;
+				&lt;div class="col-md-6"&gt;
+					&lt;g:ui_reference name="devops_metadata"
+						table="sys_metadata" query="sys_policy=protected^sys_class_nameIN${gs.getProperty('x_424426_devops.decryptable_tables')}"
+						completer="AJAXTableCompleter" 
+						columns="sys_class_name;sys_name"
+						order_by="sys_updated_on"
+						value="${metadataSysId}"
+						displayvalue="${recordDisplayValue}"
+						onchange="recordSelected(this)"
+					/&gt;
+					&lt;input type="hidden" id="devops_table" value="${recordTable}" /&gt;
+					&lt;input type="hidden" id="devops_scope" value="${recordScope}" /&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div class="row"&gt;
+			&lt;div class="form-group is-required form-horizontal"&gt;
+				&lt;div class="col-md-2"&gt;
+					&lt;g:form_label&gt;${gs.getMessage('Column')}&lt;/g:form_label&gt;
+				&lt;/div&gt;
+				&lt;div class="col-md-6"&gt;
+					&lt;select id="devops_fields" class="form-control" onchange="fieldSelected(this)" disabled="disabled"&gt;
+					&lt;/select&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div class="row" style="margin-top: 1rem"&gt;
+			&lt;div class="form-group form-horizontal"&gt;
+				&lt;div class="col-md-8 text-right"&gt;
+					&lt;g:dialog_buttons_ok_cancel
+						ok_type     = "button"
+						ok_id       = "devops_ok"
+						ok          = "return devops_onOK()"
+						ok_text     = "${gs.getMessage('devops_button_decrypt')}"
+						cancel_style_class = "devops-decrypt-cancel"
+					/&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div class="row" id="devops_loading" style="display: none; margin-top: 1rem;"&gt;
+			&lt;div class="progress"&gt;
+				&lt;div id="devops-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div class="row" style="margin-top: 1rem; display: none;" id="devops_error_row"&gt;
+			&lt;p class="col-md-8" id="devops_error_message" style="color: red;"&gt;&lt;/p&gt;
+		&lt;/div&gt;
+		&lt;div class="row" id="devops_code_row" style="margin-top: 1rem; display: none;"&gt;
+			&lt;div class="col-md-12"&gt;
+				&lt;pre id="devops_code" class="javascript hljs" cols="80" title="Decrypted"&gt;&lt;/pre&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+	&lt;/div&gt;
+&lt;/j:jelly&gt;]]&gt;&lt;/html&gt;
+        &lt;name&gt;decrypt&lt;/name&gt;
+        &lt;processing_script/&gt;
+        &lt;sys_class_name&gt;sys_ui_page&lt;/sys_class_name&gt;
+        &lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;
+        &lt;sys_created_on&gt;2023-06-07 10:11:42&lt;/sys_created_on&gt;
+        &lt;sys_id&gt;bbcdd6d597d32110d70ef207f053afe0&lt;/sys_id&gt;
+        &lt;sys_mod_count&gt;63&lt;/sys_mod_count&gt;
+        &lt;sys_name&gt;decrypt&lt;/sys_name&gt;
+        &lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;
+        &lt;sys_policy/&gt;
+        &lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;
+        &lt;sys_update_name&gt;sys_ui_page_bbcdd6d597d32110d70ef207f053afe0&lt;/sys_update_name&gt;
+        &lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;
+        &lt;sys_updated_on&gt;2024-06-03 20:49:25&lt;/sys_updated_on&gt;
+    &lt;/sys_ui_page&gt;
+&lt;/record_update&gt;</payload>
+        <payload_hash>-1138524644</payload_hash>
+        <record_name>decrypt</record_name>
+        <reverted_from/>
+        <source>f791c9d693a202101f07f5f08bba101d</source>
+        <source_table>sys_upgrade_history</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-04 15:37:44</sys_created_on>
+        <sys_id>a4a10dd693a202101f07f5f08bba1024</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>18fe3e630560000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-04 15:37:44</sys_updated_on>
+        <type>UI Page</type>
+        <update_guid>60a10dd6eca20210362403695105c024</update_guid>
+        <update_guid_history>60a10dd6eca20210362403695105c024:0,3e3db2e1d3a20210853736f2a84b700a:1365529991,cd4bfe25d2a20210b0688aaecf12d82b:979448538,93820f92bc92021023329bbbedc4e9ff:1933360197,8a13a07ad1000210002bcd9039f76329:117293447</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-07 15:59:50</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_page">sys_ui_page</sys_db_object>
+        <sys_id>99f0bf382a274575b1f49d45fea793c1</sys_id>
+        <sys_metadata>bbcdd6d597d32110d70ef207f053afe0</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>decrypt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_page_bbcdd6d597d32110d70ef207f053afe0</sys_update_name>
+        <sys_update_version display_value="sys_ui_page_bbcdd6d597d32110d70ef207f053afe0">a4a10dd693a202101f07f5f08bba1024</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-07 15:59:50</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
