@@ -7,7 +7,7 @@
         <client_callable>true</client_callable>
         <description/>
         <name>TranslateUtilClient</name>
-        <script><![CDATA[/* global global, gs, sn_fd, x_424426_devops */
+        <script><![CDATA[/* global global, gs, sn_fd, sn_cc, sn_ws, x_424426_devops */
 /* global Class, GlideRecordSecure */
 /* eslint no-undef: "error" */
 var TranslateUtilClient = Class.create();
@@ -72,40 +72,62 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 				return JSON.stringify(result);
 			}
 			
-			if (this.configUtil.hasDeeplSupport()) {
-				try {
-					const outputs = sn_fd.FlowAPI.getRunner()
-						.action('x_424426_devops.translate_deepl')
-						.inForeground()
-						.withInputs({ 
-							'language': language,
-							'message': message
-						})
-						.run()
-						.getOutputs();
-
-					if (outputs.text) {
-						result.status = 'success';
-						result.translated_message = outputs.text;
-					} else {
-						result.message = gs.getMessage('devops_translate_empty');
-					}
-				} catch (e) {
-					result.status = 'error';
-					result.message = e.toString();
-
-					if (gs.hasRole('admin') && e.stack) {
-						result.message += '\nStack: ' + e.stack;
-					}
-				}
+			const deeplResult = this._translateDeepl(language, message);
+			if (deeplResult.status == 'success') {
+				result.status = 'success';
+				result.translated_message = deeplResult.text;
 			} else {
-				result.message = gs.getMessage('devops_translation_no_deepl');
+				result.message = deeplResult.message;
 			}
 		} else {
 			result.message = gs.getMessage('devops_invalid_parameters');
 		}
 		
 		return JSON.stringify(result);
+	},
+
+	_translateDeepl: function (language, message, sourceLang, context) {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+
+		const credentials = new sn_cc.StandardCredentialsProvider().getCredentialByAliasID('c3096d73972f2110d70ef207f053af19');
+		if (credentials) {
+			const apiKey = credentials.getAttribute('api_key');
+			if (apiKey) {
+				const request = new sn_ws.RESTMessageV2();
+				request.setHttpMethod('post');
+				request.setEndpoint('https://api-free.deepl.com/v2/translate');
+				request.setRequestHeader('Content-Type', 'Application/json');
+				request.setRequestHeader('Accept', 'Application/json');
+				request.setRequestHeader('Authorization', 'DeepL-Auth-Key ' + apiKey);
+				request.setRequestBody(JSON.stringify({
+					'target_lang': language,
+					'text': message,
+					'source_lang': sourceLang,
+					'context': context
+				}));
+
+				const response = request.execute();
+				if (response.getStatusCode() == 200) {
+					try {
+						const translation = JSON.parse(response.getBody()).translations[0];
+						result.sourceLanguage = translation.detected_source_language;
+						result.text = translation.text;
+						result.status = 'success';
+					} catch (e) {
+						result.message = 'Failed to parse deepl result: ' + e;
+					}
+				}
+			} else {
+				result.message = gs.getMessage('devops_translation_no_deepl');
+			}
+		} else {
+			result.message = gs.getMessage('devops_translation_no_deepl');
+		}
+			
+        return result;
 	},
 	
 	getTranslatedTextMessage: function () {
@@ -267,13 +289,13 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 10:54:43</sys_created_on>
         <sys_id>39672dbf97eb2110d70ef207f053af5f</sys_id>
-        <sys_mod_count>23</sys_mod_count>
+        <sys_mod_count>25</sys_mod_count>
         <sys_name>TranslateUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_39672dbf97eb2110d70ef207f053af5f</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 16:45:39</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-07 17:35:52</sys_updated_on>
     </sys_script_include>
 </record_update>

@@ -5,15 +5,26 @@
         <api_name>x_424426_devops.CodeSearchUtilClient</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
-        <description>2024-06-03 MKR: Search Group Searching deprecated, will be deactivated in a future update</description>
+        <description/>
         <name>CodeSearchUtilClient</name>
-        <script><![CDATA[/* global global, gs, sn_scoped_cache */
-/* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideDateTime */
+        <script><![CDATA[/* global global, gs, sn_scoped_cache, x_424426_devops */
+/* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
 CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
+		this.startTime = new GlideDateTime();
+	},
+
+	_getLogLink: function () {
+		const logGr = new GlideRecordSecure('syslog');
+		logGr.addQuery('source', 'Evaluator')
+			.addOrCondition('source', gs.getCurrentScopeName())
+			.addOrCondition('source', 'com.glide.ui.ServletErrorListener');
+		logGr.addQuery('sys_created_by', gs.getUserName());
+		logGr.addEncodedQuery('sys_created_onBETWEEN' + this.startTime + '@' + new GlideDateTime());
+		return `<a href="/nav_to.do?uri=%2Fsyslog_list.do%3Fsysparm_query%3DencodeURIComponent(${logGr.getEncodedQuery()})" target="_blank">Logs</a>`;
 	},
 	
 	searchReference: function () {
@@ -25,7 +36,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		const table = this.getParameter('table');
 		const fields = this.getParameter('fields');
 		const sysID = this.getParameter('sys_id');
-		if (table && fields && sysID) {			
+		if (table && fields && sysID) {
 			const dbObjectGr = new GlideRecordSecure('sys_db_object');
 			dbObjectGr.addQuery('name', table);
 			dbObjectGr.setLimit(1);
@@ -89,6 +100,93 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		
 		return JSON.stringify(result);
 	},
+
+	getConfig: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+
+		let params = null;
+		try {
+			params = JSON.parse(this.getParameter('params'));
+		} catch (e) {
+			result.message = 'Invalid params!';
+			return JSON.stringify(result);
+		}
+
+		if (params.script) {
+			const prefGr = new GlideRecordSecure('sys_user_preference');
+			prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+			prefGr.addQuery('sys_id', params.script);
+			prefGr.setLimit(1);
+			prefGr.query();
+			if (prefGr.next()) {
+				const gse = new GlideScopedEvaluator();
+				gse.putVariable('action', 'config');
+				gse.putVariable('params', params);
+				gse.putVariable('table', null);
+				gse.putVariable('context', null);
+				try {
+					const scriptResult = JSON.parse(JSON.stringify(gse.evaluateScript(prefGr, 'value')));
+					if (scriptResult.tables instanceof Array) {
+						result.tables = scriptResult.tables;
+						result.context = scriptResult.context;
+						result.status = 'success';
+					} else
+						result.message = 'Invalid result type returned by getConfig';
+				} catch (e) {
+					result.message = 'Failed to execute getConfig with Search Script: ' + e;
+				}
+			} else
+				result.message = 'Invalid Search Script';
+		} else if (params.table && gs.tableExists(params.table)) {
+			result.tables = [];
+			result.context = {
+				term: params.term,
+				match_table: true,
+				all_fields: true,
+				scope: params.scope,
+				limit: 500
+			};
+
+			if (params.table == 'sys_metadata') {
+				result.context.search_related = true;
+			}
+
+			// getTableExtensions doesn't return a ES2021 Array by default
+			const tables = [...new GlideTableHierarchy(params.table).getTableExtensions()];
+			if (tables.length) {
+				// reorder the list of tables so that the last changed application files get searched first
+				const anyGa = new GlideAggregate(params.table);
+				if (params.scope && params.table == 'sys_metadata')
+					anyGa.addQuery('sys_scope', params.scope);
+				
+				anyGa.addAggregate('MAX', 'sys_updated_on');
+				anyGa.orderByAggregate('MAX', 'sys_updated_on');
+				anyGa.groupBy('sys_class_name');
+				anyGa.query();
+
+				result.tables = [];
+				while (anyGa.next()) {
+					const klass = anyGa.getValue('sys_class_name');
+					const pos = tables.indexOf(klass);
+					if (pos != -1) {
+						result.tables.push(tables[pos]);
+						tables.slice(pos, 1);
+					}
+				}
+				
+			} else
+				result.tables = [params.table];
+
+			result.status = 'success';
+		} else {
+			result.message = 'Invalid parameters';
+		}
+
+		return JSON.stringify(result);
+	},
 	
 	// the OOTB code search only allows for sys_metadata tables to be searched - even though you can configure the sn_codesearch_table otherwise,
 	// this is "by design" and won't be fixed (this is the response for a HI ticket I've created...)
@@ -100,274 +198,90 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			message: ''
 		};
 
-		let config = null;
+		const table = this.getParameter('table');
+		const script = this.getParameter('script');
+		let context = null;
 		try {
-			config = JSON.parse(this.getParameter('config'));
-			config.fields ??= [];
+			context = JSON.parse(this.getParameter('context'));
+			if (!context) throw new Error(); // empty context cannot yield a reasonable result
 		} catch (e) {
-			result.message = 'Invalid config!';
+			result.message = 'Invalid context!';
 			return JSON.stringify(result);
 		}
 
-		if (config.term && config.table && gs.tableExists(config.table)) {
-			if (config.script) {
+		if (table && gs.tableExists(table)) {
+			if (script) {
 				const prefGr = new GlideRecordSecure('sys_user_preference');
 				prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
-				prefGr.addQuery('sys_id', config.script);
+				prefGr.addQuery('sys_id', script);
 				prefGr.setLimit(1);
 				prefGr.query();
-				if (prefGr.next()) {			
-					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-					scriptGr.setLimit(1);
-					scriptGr.query();
-					if (scriptGr.next()) {
-						scriptGr.sys_scope = 'global';
-						scriptGr.script = prefGr.value.toString();
-						const gse = new GlideScopedEvaluator();
-						gse.putVariable('config', config);
-						const scriptResult = gse.evaluateScript(scriptGr, 'script');
-						try {
-							if (scriptResult.status == 'success') {
-								['additional_filter', 'fields', 'match_class', 'all_columns', 'limit'].forEach(key => {
-									if (key in scriptResult) {
-										config[key] = scriptResult[key];
-									}
+				if (prefGr.next()) {
+					const gse = new GlideScopedEvaluator();
+					gse.putVariable('action', 'search');
+					gse.putVariable('params', null);
+					gse.putVariable('table', table);
+					gse.putVariable('context', context);
+					const scriptResult = gse.evaluateScript(prefGr, 'value');
+					if (scriptResult) {
+						if (scriptResult.tableLabel && scriptResult.hits) {
+							if (scriptResult.hits.every(hit => {
+								return hit.name && hit.className && hit.sysId && hit.matches.every(match => {
+									return match.fieldLabel && match.lineMatches.every(lineMatch => {
+										return lineMatch.line && lineMatch.context;
+									});
 								});
-							} else {
-								result.message = scriptResult.message || 'Search-Script unsuccessful with an empty message';
+							})) {
+								result.search_result = scriptResult;
+								result.status = 'success';
+							} else
+								result.message = 'Invalid Result Type from Search Script';
+						} else
+							result.message = 'Invalid Result Type from Search Script';
+					} else
+						result.message = 'Search Script failed: ' + this._getLogLink();
+				} else
+					result.message = 'Unknown script';
+			}
+			else {
+				const dbObjectGr = new GlideRecordSecure('sys_db_object');
+				dbObjectGr.addQuery('name', table);
+				dbObjectGr.addNotNullQuery('sys_scope.scope');
+				dbObjectGr.setLimit(1);
+				dbObjectGr.query();
+				if (dbObjectGr.next()) {
+					const scopeName = dbObjectGr.sys_scope.scope.toString();
+					const searchHandlers = new GlideScriptedExtensionPoint().getExtensions('CodeSearchHandler');
+
+					result.message = `No Search Handler found to handle ${scopeName}::${table}`;
+					for (let i = 0; i < searchHandlers.length; i++) {
+						try {
+							searchHandlers[i].initialize();
+							if (searchHandlers[i].handlesScope(scopeName) && searchHandlers[i].handlesTable(table)) {
+								result.search_result = searchHandlers[i].search(table, context);
+								if (result.search_result) {
+									result.message = '';
+									result.status = 'success';
+								} else
+									result.message = 'Search Handler failed to search: ' + this._getLogLink();
+
+								break;
 							}
 						} catch (e) {
-							result.message = 'Invalid object returned from script (' + e + ')';
-						}
-					} else {
-						result.message = 'Unable to execute script';
-					}
-				} else {
-					result.message = 'Unknown script';
-				}
-			}
-
-			if (result.message) {
-				return JSON.stringify(result);
-			}
-
-			if (config.all_columns) {
-				let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', config.table);
-				if (cachedFields) {
-					config.fields = JSON.parse(cachedFields);
-				} else {
-					const fields = [];
-					const dictionaryGr = new GlideRecordSecure('sys_dictionary');
-					dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(config.table).getTables());
-					dictionaryGr.addQuery('internal_type.scalar_type', 'string');
-					dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
-					dictionaryGr.addQuery('internal_type.name', '!=', 'glide_var');
-					dictionaryGr.query();
-					while (dictionaryGr.next()) {
-						const fieldName = dictionaryGr.element.toString();
-						if (!fields.includes(fieldName)) {
-							fields.push(fieldName);
+							result.message = `SearchHandler ${i} failed (${e}): ${this._getLogLink()}\n${e.stack}`;
 						}
 					}
-					
-					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', config.table, JSON.stringify(fields));
-					config.fields = fields;
-				}
-			}
-
-			const dbObjectGr = new GlideRecordSecure('sys_db_object');
-			dbObjectGr.addQuery('name', config.table);
-			dbObjectGr.setLimit(1);
-			dbObjectGr.query();
-			if (dbObjectGr.next()) {
-				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-				scriptGr.setLimit(1);
-				scriptGr.query();
-				if (scriptGr.next()) {
-					// Note: Never set sys_scope to null in scoped apps (this will cause a NullPointerException)
-					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
-
-					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
-					scriptGr.script = `
-						(function (config) {
-							var anyGr = new GlideRecord(config.table);
-							var fields = ['sys_id'];
-							config.fields.forEach(function (f) {
-								if (anyGr.isValidField(f) && fields.indexOf(f) == -1) {
-									fields.push(f);
-								}
-							});
-							
-							if (config.additional_filter) {
-								anyGr.addEncodedQuery(config.additional_filter);
-							}
-							
-							var term = GlideStringUtil.escapeQueryTermSeparator(config.term);
-							var query = ['sys_id=' + term].concat(fields.slice(1).map(function (f) {
-								return f + 'LIKE' + term;
-							})).join('^OR');
-							anyGr.addEncodedQuery(query);
-
-							if (config.scope && anyGr.isValidField("sys_scope")) {
-								anyGr.addQuery("sys_scope", config.scope);
-							}
-
-							if (anyGr.isValidField("sys_class_name")) {
-								if (config.match_class) {
-									anyGr.addQuery("sys_class_name", config.table);
-								}
-
-								anyGr.orderBy("sys_class_name");
-							}
-
-							if (anyGr.isValidField("sys_name")) {
-								anyGr.orderBy("sys_name");
-							}
-
-							if (config.limit) {
-								anyGr.setLimit(config.limit);
-							}
-
-							gs.info(anyGr.getTableName() + ': ' + anyGr.getEncodedQuery());
-							anyGr.query();
-							
-							var result = {
-								recordType: config.table,
-								tableLabel: anyGr.getLabel(),
-								query: anyGr.getEncodedQuery(),
-								hits: []
-							};
-
-							while (anyGr.next()) {
-								var matches = getMatches(anyGr, fields, config.term);
-								if (matches.length) {
-									var gdt = new GlideDateTime();
-									gdt.setValue(anyGr.getValue("sys_updated_on"));
-									result.hits.push({
-										name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
-										className: anyGr.getRecordClassName(),
-										tableLabel: anyGr.getTableName(),
-										matches: matches,
-										sysId: anyGr.getUniqueValue(),
-										modified: gdt.getNumericValue()
-									});
-								}
-							}
-
-							return result;
-
-							function getMatches(anyGr, fields, term) {
-								var matches = [];
-								fields.forEach(function (field) {
-									try {
-										var match = {
-											field: field,
-											fieldLabel: anyGr.getElement(field).getLabel(),
-											lineMatches: [],
-											count : 0
-										};
-
-										var text = anyGr.getValue(field);
-										if (text && hasTerm(text, term)) {
-											match.count = countTerm(text, term);
-											match.lineMatches = getMatchingLines(text, term);
-										}
-
-										if (match.lineMatches.length > 0) {
-											match.lineMatches.forEach(function (lineMatch) {
-												["context", "escaped"].forEach(function (key) {
-													if (lineMatch[key].length > 500) {
-														lineMatch[key] = lineMatch[key].substring(0, 500) + '...';
-													}
-												});							
-											});
-											matches.push(match);
-										}
-									} catch (e) {
-										// Unable to read field. This is usually an ACL error and not a real problem
-									}
-								});
-
-								return matches;
-							}
-
-							function countTerm(text, term) {
-								if (!term) {
-									return 0;
-								}
-
-								term = escapeSpecial(term);
-								return text.match(new RegExp(term, "gi")).length;
-							}
-
-							function escapeSpecial(text) {
-								return text.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, "\\\\$&");
-							}
-
-							function getMatchingLines(text, term) {
-								var lineMatches = [];
-								var scanProgress = 0;
-								var lines = text.split(/\\r\\n|\\r|\\n/g);
-								for (var j = 0; j < lines.length; j++) {
-									var line = lines[j];
-									if (hasTerm(line, term)) {
-										if (j > 0 && j > scanProgress + 1) {
-											lineMatches.push({line: (j), context: lines[j - 1], escaped: encodeURIComponent(lines[j - 1])});
-										}
-
-										lineMatches.push({line: (j + 1), context: line, escaped: encodeURIComponent(line)});
-
-										if (j < lines.length - 1) {
-											lineMatches.push({line: (j + 2), context: lines[j + 1], escaped: encodeURIComponent(lines[++j])});
-										}
-
-										scanProgress = j;
-									}
-								}
-
-								return lineMatches;
-							}
-
-							function hasTerm(text, term) {
-								if (!text || !term)
-									return false;
-
-								return (text.toLowerCase().indexOf(term.toLowerCase()) > -1);
-							}
-						})(JSON.parse(config));
-					`;
-					
-					const searchStart = new GlideDateTime();
-					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { config: JSON.stringify(config) });
-					const searchEnd = new GlideDateTime();
-
-					if (result.search_result) {					
-						result.status = 'success';
-					} else {
-						gs.info('Search Config:\n' + JSON.stringify(config));
-						const logGr = new GlideRecordSecure('syslog');
-						logGr.addQuery('source', 'Evaluator')
-							.addOrCondition('source', gs.getCurrentScopeName())
-							.addOrCondition('source', 'com.glide.ui.ServletErrorListener');
-						logGr.addQuery('sys_created_by', gs.getUserName());
-						logGr.addQuery('sys_created_on', '<=', searchEnd);
-						logGr.addQuery('sys_created_on', '>=', searchStart);
-						result.message = 'Failed to execute the search script: ' 
-							+ '<a href="/nav_to.do?uri=%2Fsyslog_list.do%3Fsysparm_query%3D'
-							+ encodeURIComponent(logGr.getEncodedQuery())
-							+ '" target="_blank">Logs</a>';
-					}
 				} else {
-					result.message = 'Unable to run script';
+					// user does not have access to this table (e.g. scoped administration)
+					result.status = 'success';
+					result.search_result = {
+						tableLabel: table,
+						hits: []
+					};
 				}
-			} else {
-				result.message = 'Unable to find table';
 			}
-		} else {
+		} else
 			result.message = 'Invalid parameters!';
-		}
 
 		try {
 			// exception will be thrown when the result object is too large!
@@ -379,160 +293,6 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			});
 		}
 	},
-	
-	// A query to /api/sn_codesearch/code_search/tables will crash when there is a table
-	// in the search group which doesn't exist on the instance.
-	// Because DevOps+ is shipped with many tables which might not exist on the current instance,
-	// this function replicates the ootb function.
-	// In addition, the ServiceNow Dev Team for Code Search marked the "cannot add non-application-file table to code search"
-	// as "won't fix"
-	getTables: function () {
-		const result = {
-			status: 'error',
-			message: ''
-		};
-		
-		let config = this.getParameter('config');
-		if (config) {
-			try {
-				config = JSON.parse(config);
-			} catch (e) {
-				result.message = 'Invalid config!';
-				return JSON.stringify(result);
-			}
-			
-			let tables = [];
-			if (config.all_application_files) {
-				let cachedTables = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_tables', 'applicationFiles');
-				if (cachedTables) {
-					tables = JSON.parse(cachedTables);
-				} else {
-					// might not fit in a 'IN'-query, therefore iterate over each table individually
-					new GlideTableHierarchy('sys_metadata').getTableExtensions().forEach(table => {
-						const tableGr = new GlideRecordSecure('sys_db_object');
-						tableGr.addQuery('name', table);
-						tableGr.setLimit(1);
-						tableGr.query();
-						while (tableGr.next()) {
-							tables.push({
-								name: table,
-								label: tableGr.getDisplayValue()
-							});
-						}
-					});					
-					
-					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_tables', 'applicationFiles', JSON.stringify(tables));
-				}
-			} else if (config.all_tables) {
-				let cachedTables = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_tables', 'tables');
-				if (cachedTables) {
-					tables = JSON.parse(cachedTables);
-				} else {				
-					// add all non-extendable tables
-					let tableGr = new GlideRecordSecure('sys_db_object');
-					tableGr.addQuery('is_extendable', false);
-					tableGr.query();
-					while (tableGr.next()) {
-						tables.push({
-							name: tableGr.getValue('name'),
-							label: tableGr.getDisplayValue()
-						});
-					}
-
-					// add all base tables
-					tableGr = new GlideRecordSecure('sys_db_object');
-					tableGr.addQuery('is_extendable', true);
-					tableGr.addNullQuery('super_class');
-					tableGr.query();
-					while (tableGr.next()) {
-						const tableName = tableGr.getValue('name');
-						tables.push(tableName);
-
-						// all extensions of the base class
-						const t = new GlideTableHierarchy(tableName).getTableExtensions();
-						for (let i = 0; i < t.length; i++) {
-							tables.push({
-								name: t[i],
-								label: ''
-							});
-						}
-					}
-					
-					sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_tables', 'tables', JSON.stringify(tables));
-				}
-			} else if (config.script) {
-				const prefGr = new GlideRecordSecure('sys_user_preference');
-				prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
-				prefGr.addQuery('sys_id', config.script);
-				prefGr.setLimit(1);
-				prefGr.query();
-				if (prefGr.next()) {
-					const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-					scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-					scriptGr.setLimit(1);
-					scriptGr.query();
-					if (scriptGr.next()) {
-						scriptGr.sys_scope = 'global';
-						scriptGr.script = prefGr.value.toString();
-
-						const gse = new GlideScopedEvaluator();
-						gse.putVariable('config', config);
-						const scriptResult = gse.evaluateScript(scriptGr, 'script');
-						try {
-							if (scriptResult.status == 'success') {
-								scriptResult.tables.forEach(t => tables.push({
-									name: t,
-									label: ''
-								}));
-							} else {
-								result.message = scriptResult.message || 'Script unsuccessful with an empty message';
-							}
-						} catch (e) {
-							result.message = 'Script returned invalid result (' + e + ')';
-						}
-					} else {
-						result.message = 'Unable to execute script';
-					}
-				} else {
-					result.message = 'Invalid script';
-				}
-			}
-				
-			const tableGr = new GlideRecordSecure('sys_db_object');
-			tableGr.addQuery('name', 'IN', tables.filter(t => !t.label).map(t => t.name));
-			tableGr.query();
-			while (tableGr.next()) {
-				const tableName = tableGr.name.toString();
-				const table = tables.find(t => t.name == tableName);
-				if (table) {
-					table.label = tableGr.getDisplayValue();
-				}
-			}
-			
-			// only return tables which have a label (no label = table doesn't exist)
-			result.tables = tables.filter(t => !!t.label);
-
-			if (config.scope) {
-				const metadataGr = new GlideAggregate('sys_metadata');
-				metadataGr.addQuery('sys_scope', config.scope);
-				metadataGr.groupBy('sys_class_name');
-				metadataGr.query();
-
-				const existingTables = [];
-				while (metadataGr.next()) {
-					existingTables.push(metadataGr.getValue('sys_class_name'));
-				}
-
-				result.tables = result.tables.filter(t => existingTables.includes(t.name));
-			}
-
-			result.status = 'success';
-		} else {
-			result.message = gs.getMessage('devops_invalid_parameters');
-		}
-		
-		return JSON.stringify(result);
-	},
 
     type: 'CodeSearchUtilClient'
 });]]></script>
@@ -540,13 +300,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>124</sys_mod_count>
+        <sys_mod_count>144</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-07 16:01:43</sys_updated_on>
+        <sys_updated_on>2024-06-13 16:36:19</sys_updated_on>
     </sys_script_include>
 </record_update>

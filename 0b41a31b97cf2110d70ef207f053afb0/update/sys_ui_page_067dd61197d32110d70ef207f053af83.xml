@@ -62,34 +62,23 @@ addLoadEvent(function () {
 			gel('progress-container').style.display = '';
 			gel('progress-header').style.display = '';
 			
-			var tableConfig = {
-				scope: allScopes != 'on' && scope,
+			var configParams = {
+				term: term
 			};
 
-			if (config == 'application') {
-				tableConfig.all_application_files = true;
-			} else if (config == 'everything') {
-				tableConfig.all_tables = true;
-			} else if (config == 'group') {
-				tableConfig.group = 'x_424426_devops.Search Group';
-			} else {
-				tableConfig.script = config;
-			}
+			if (allScopes != 'on' && scope)
+				configParams.scope = scope;
 
-			getTables(tableConfig, function (tables) {
-				if (tables.length) {
+			if (config == 'sys_metadata' || config == 'task')
+				configParams.table = config;
+			else
+				configParams.script = config;
+
+			getSearchConfig(configParams, function (config) {
+				if (config.tables.length) {
 					var i = 0;
-					var searchConfig = {
-						table: tables[i++].name,
-						term: term,
-						scope: allScopes != 'on' && scope,
-						match_class: config == 'application' || config == 'everything',
-						all_columns: config == 'application' || config == 'everything',
-						group: tableConfig.group
-					};
-
-					searchTable(searchConfig, function processTableResults(result) {
-						var percentageComplete = Math.floor(i / tables.length * 100);
+					searchTable(config.tables[i++], config.context, function processTableResults(result) {
+						var percentageComplete = Math.floor(i / config.tables.length * 100);
 						gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
 						progressBar.setAttribute('aria-valuenow', percentageComplete);
 						progressBar.style.width = percentageComplete + '%';
@@ -101,9 +90,8 @@ addLoadEvent(function () {
 							addTable(result.tableLabel, result.hits, true, term);
 						}
 
-						if (i < tables.length && !canceled) {
-							searchConfig.table = tables[i++].name;
-							searchTable(searchConfig, processTableResults, onError);
+						if (i < config.tables.length && !canceled) {
+							searchTable(config.tables[i++], config.context, processTableResults, onError);
 						} else {
 							gel('progress-container').style.display = 'none';
 						}
@@ -237,17 +225,17 @@ function addTable(tableName, hits, open, searchTerm) {
 	document.getElementById('search-results').append(tableLi);
 }
 
-function getTables(config, onSuccess, onError) {
+function getSearchConfig(params, onSuccess, onError) {
 	// We do not use the OOTB api here because this app is shipped with tables that might not be present in this instance
 	// -> in this case the OOTB api will break
 	
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
-	ga.addParam('sysparm_name', 'getTables');
-	ga.addParam('config', JSON.stringify(config));
+	ga.addParam('sysparm_name', 'getConfig');
+	ga.addParam('params', JSON.stringify(params));
 	ga.getXMLAnswer(function (result) {
 		result = JSON.parse(result);
 		if (result.status == 'success') {
-			onSuccess(result.tables);
+			onSuccess(result);
 		} else if (result.message) {
 			onError(result.message);
 		} else {
@@ -256,20 +244,21 @@ function getTables(config, onSuccess, onError) {
 	});
 }
 
-function searchTable(searchConfig, onSuccess, onError) {
+function searchTable(table, context, onSuccess, onError) {
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchTerm');
-	ga.addParam('config', JSON.stringify(searchConfig));
+	ga.addParam('table', table);
+	ga.addParam('context', JSON.stringify(context));
 	ga.getXMLAnswer(function (result) {
 		if (!result) {
 			// a empty or null result indicates, that the script include function crashed with in an unexpected error case
 			// this needs to be investigates so we show an error to the user
-			if (!searchConfig.unexpectedSearchTableErrorOccurred) {
-				searchConfig.unexpectedSearchTableErrorOccurred = true;
+			if (!context.unexpectedSearchTableErrorOccurred) {
+				context.unexpectedSearchTableErrorOccurred = true;
 				GlideUI.get().addOutputMessage({ type: 'error', msg: 'searchTable returned null (check browser console log for affected tables)' });
 			}
 
-			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', searchConfig.table);
+			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', table);
 			onSuccess([]);
 			return;
 		}
@@ -317,7 +306,7 @@ function searchTable(searchConfig, onSuccess, onError) {
 		}
 	</g:evaluate>
 	<g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" />
-	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.2" />
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.2.0" />
 	<form id="search-form">
 		<fieldset>
 			<div>
@@ -329,7 +318,7 @@ function searchTable(searchConfig, onSuccess, onError) {
 						<input id="adv-search-term" class="form-control mousetrap" type="text" name="term" placeholder="Search Term..." autocomplete="off" title="Search your application code here" value="${jvar_search_term}" />
 					</div>
 					<div class="row">
-						<div id="global-search-group" class="input-group-checkbox">
+						<div class="input-group-checkbox" id="global-search-group">
 							<input id="search-global" class="checkbox mousetrap" type="checkbox" name="global" /> 
 							<label for="search-global" class="checkbox-label mousetrap">Search in all applications</label>
 						</div>
@@ -342,9 +331,8 @@ function searchTable(searchConfig, onSuccess, onError) {
 					<div class="row">
 						<label id="search-config-label" for="search-config" class="checkbox-label mousetrap">Config</label>
 						<select id="search-config" class="form-control mousetrap" name="config" title="Select a search configuration">
-							<!--<option value="group">Search Group</option>-->
-							<option value="application">Application Files</option>
-							<option value="everything">Every Table and Column</option>
+							<option value="sys_metadata">Application Files</option>
+							<option value="task">Tasks</option>
 							<j:forEach var="jvar_script" items="${searchScripts}">
 								<option value="${jvar_script.value}">${jvar_script.label}</option>
 							</j:forEach>
@@ -397,13 +385,13 @@ function searchTable(searchConfig, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>58</sys_mod_count>
+        <sys_mod_count>66</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-04 16:09:13</sys_updated_on>
+        <sys_updated_on>2024-06-13 16:53:23</sys_updated_on>
     </sys_ui_page>
 </record_update>

@@ -45,7 +45,7 @@
 		if (type == 'translated_html' || type == 'translated_text') {
 			// need to get the base table of the field
 			table = 'sys_translated_text';
-			query = 'tablename=' + fieldTable +
+			query = 'tablename=' + g_form.getTableName() +
 				'^fieldname=' + $context.FIELD +
 				'^documentkey=' +  g_form.getUniqueValue();
 		} else if (type == 'translated_field') {
@@ -108,14 +108,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-12 20:41:35</sys_created_on>
         <sys_id>63b91e47975b2510d70ef207f053af22</sys_id>
-        <sys_mod_count>43</sys_mod_count>
+        <sys_mod_count>44</sys_mod_count>
         <sys_name>translations</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_63b91e47975b2510d70ef207f053af22</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-14 12:09:05</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-13 09:41:28</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

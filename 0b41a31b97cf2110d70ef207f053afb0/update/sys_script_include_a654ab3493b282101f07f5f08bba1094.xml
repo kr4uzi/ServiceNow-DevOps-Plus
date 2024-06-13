@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.CodeSearchHandlerForm</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <name>CodeSearchHandlerForm</name>
+        <script><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecordSecure, GlideStringUtil */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerForm = Class.create();
+CodeSearchHandlerForm.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+    },
+
+    handlesScope: function (scopeName) {
+		return scopeName == 'global';
+	},
+
+	handlesTable: function (tableName) {
+		return tableName == 'sys_ui_section';
+	},
+
+	// context.{table|fields|term|additional_filter|scope|match_class|limit}
+	// => result.{tableLabel|hits}
+	// => result.hits{name|className|matches[]|sysId}
+	// => result.hits.matches[].{line|context}
+	search: function(table, context) {
+		const fields = context.all_fields ? this.getFields(table) : context.fields;
+        const term = GlideStringUtil.escapeQueryTermSeparator(context.term);
+		let query = [];
+		if (context.additional_filter)
+			query.push(context.additional_filter);
+
+		if (context.scope)
+			query.push('sys_scope=' + context.scope);
+
+		if (context.match_table)
+			query.push('sys_class_name=' + table);
+
+		const uiSectionGr = new GlideRecordSecure('sys_ui_section');
+		if (query.length)
+			uiSectionGr.addEncodedQuery(query.join('^'));
+
+		if (fields.length)
+			uiSectionGr.addEncodedQuery(fields.map(f => f + 'LIKE' + term).join('^OR'));
+		
+		// related search must not contain the field conditions the term might be present in the fields but in the related records
+		if (context.search_related && query.length)
+			uiSectionGr.addEncodedQuery('^NQ' + query.join('^'));
+
+		uiSectionGr.orderBy('sys_class_name');
+		uiSectionGr.orderBy('sys_name');
+
+		if (context.limit) {
+			uiSectionGr.setLimit(context.limit);
+		}
+
+		uiSectionGr.query();
+
+		const result = {
+			tableLabel: uiSectionGr.getLabel(),
+			hits: []
+		};
+
+		while (uiSectionGr.next()) {
+			const hit = {
+				name: uiSectionGr.getDisplayValue() || uiSectionGr.getUniqueValue(),
+				className: uiSectionGr.getRecordClassName(),
+				matches: this.getMatches(uiSectionGr, fields, context.term),
+				sysId: uiSectionGr.getUniqueValue()
+			};
+
+			if (context.search_related) {
+				const uiElementGr = new GlideRecordSecure('sys_ui_element');
+				uiElementGr.addQuery('sys_ui_section', uiSectionGr.sys_id);
+				uiElementGr.orderBy('position');
+				uiElementGr.query();
+				while (uiElementGr.next()) {
+					if (uiElementGr.type == 'annotation') {
+						const annotationGr = new GlideRecordSecure('sys_ui_annotation');
+						annotationGr.addQuery('sys_id', uiElementGr.element);
+						annotationGr.addQuery('text', 'CONTAINS', context.term);
+						annotationGr.setLimit(1);
+						annotationGr.query();
+						if (annotationGr.next()) {
+							hit.matches = hit.matches.concat(
+								this.getMatches(annotationGr, ['text'], context.term).map(m => {
+									m.fieldLabel = 'Annotation: ' + m.fieldLabel;
+									return m;
+								})
+							);
+						}
+					}
+
+					hit.matches = hit.matches.concat(
+						this.getMatches(uiElementGr, ['element'], context.term)
+					);
+				}
+			}
+
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandlerForm'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 21:53:28</sys_created_on>
+        <sys_id>a654ab3493b282101f07f5f08bba1094</sys_id>
+        <sys_mod_count>17</sys_mod_count>
+        <sys_name>CodeSearchHandlerForm</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_a654ab3493b282101f07f5f08bba1094</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-13 16:18:45</sys_updated_on>
+    </sys_script_include>
+</record_update>

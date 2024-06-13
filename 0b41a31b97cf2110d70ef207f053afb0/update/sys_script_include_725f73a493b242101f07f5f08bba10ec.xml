@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_424426_devops.CodeSearchHandlerBase</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>CodeSearchHandlerBase</name>
+        <script><![CDATA[var CodeSearchHandlerBase = Class.create();
+CodeSearchHandlerBase.prototype = {
+	initialize: function() {
+		this.max_context_length = 500;
+	},
+
+	getFields: function (table) {
+		let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
+		if (cachedFields) {
+			return JSON.parse(cachedFields);
+		}
+		
+		const fields = [];
+		const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+		dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+		dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+		dictionaryGr.addQuery('internal_type.name', '!=', 'collection');
+		dictionaryGr.addQuery('internal_type.name', '!=', 'glide_var');
+		dictionaryGr.query();
+		while (dictionaryGr.next()) {
+			const fieldName = dictionaryGr.element.toString();
+			if (!fields.includes(fieldName)) {
+				fields.push(fieldName);
+			}
+		}
+		
+		sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
+		return fields;
+	},
+
+	getMatches: function (anyGr, fields, term) {
+		const matches = [];
+		fields.forEach(field => {
+			const element = anyGr.getElement(field);
+			if (element) {
+				const match = {
+					fieldLabel: element.getLabel(),
+					lineMatches: this.getMatchingLines(element.toString(), term)
+				};
+
+				match.lineMatches.forEach(lineMatch => {
+					if (lineMatch.context.length > this.max_context_length) {
+						lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+					}
+				});
+
+				if (match.lineMatches.length) {
+					matches.push(match);
+				}
+			}
+		});
+
+		return matches;
+	},
+
+	getMatchingLines: function (text, term) {
+		const lineMatches = [];
+		let scanProgress = 0;
+		const lines = text.split(/\r\n|\r|\n/g);
+		for (let j = 0; j < lines.length; j++) {
+			var line = lines[j];
+			if (line.toLowerCase().includes(term.toLowerCase())) {
+				if (j > 0 && j > scanProgress + 1) {
+					lineMatches.push({line: (j), context: lines[j - 1]});
+				}
+
+				lineMatches.push({line: (j + 1), context: line});
+
+				if (j < lines.length - 1) {
+					lineMatches.push({line: (j + 2), context: lines[j + 1]});
+				}
+
+				scanProgress = j;
+			}
+		}
+
+		return lineMatches;
+	},
+
+    type: 'CodeSearchHandlerBase'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 05:14:02</sys_created_on>
+        <sys_id>725f73a493b242101f07f5f08bba10ec</sys_id>
+        <sys_mod_count>18</sys_mod_count>
+        <sys_name>CodeSearchHandlerBase</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_725f73a493b242101f07f5f08bba10ec</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-13 16:07:20</sys_updated_on>
+    </sys_script_include>
+</record_update>

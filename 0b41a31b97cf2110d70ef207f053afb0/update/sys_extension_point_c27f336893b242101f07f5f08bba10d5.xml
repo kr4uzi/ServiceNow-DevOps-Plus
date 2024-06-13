@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_point">
+    <sys_extension_point action="INSERT_OR_UPDATE">
+        <api_name>x_424426_devops.CodeSearchHandler</api_name>
+        <description/>
+        <example><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecordSecure, GlideStringUtil */
+/* eslint no-undef: "error" */
+var CodeSearchHandler = Class.create();
+CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+    },
+
+    handlesScope: function (scopeName) {
+		var extScopeName = gs.getCurrentScopeName();
+		if (['rhino.global', 'global'].includes(extScopeName)) {
+			return scopeName == 'global';
+		}
+
+		return scopeName == extScopeName;
+	},
+
+	handlesTable: function (tableName) {
+		var extScopeName = gs.getCurrentScopeName();
+		if (['rhino.global', 'global'].includes(extScopeName)) {
+			extScopeName = 'global';
+		}
+
+		var dbObjectGr = new GlideRecordSecure('sys_db_object');
+		dbObjectGr.addQuery('name', tableName);
+		dbObjectGr.addQuery('sys_scope.scope', extScopeName);
+		dbObjectGr.setLimit(1);
+		dbObjectGr.query();
+		return dbObjectGr.hasNext();
+	},
+
+	// context.{table|fields|term|additional_filter|scope|match_class|limit}
+	// => result.{tableLabel|hits}
+	// => result.hits{name|className|matches[]|sysId}
+	// => result.hits.matches[].{line|context}
+	search: function(table, context) {
+        var term = GlideStringUtil.escapeQueryTermSeparator(context.term);
+		var query = 'sys_id=' + term;
+		var fields = context.all_fields ? this.getFields(table) : context.fields;
+		fields.forEach(function (f) {
+			query += '^OR' + f + 'LIKE' + term;
+		});
+
+		var anyGr = new GlideRecordSecure(table);
+		if (context.additional_filter) {
+			anyGr.addEncodedQuery(context.additional_filter);
+		}
+		
+		anyGr.addEncodedQuery(query);
+
+		if (context.scope && anyGr.isValidField('sys_scope')) {
+			anyGr.addQuery('sys_scope', context.scope);
+		}
+
+		if (anyGr.isValidField('sys_class_name')) {
+			if (context.match_table) {
+				anyGr.addQuery('sys_class_name', table);
+			}
+
+			anyGr.orderBy('sys_class_name');
+		}
+
+		if (anyGr.isValidField('sys_name')) {
+			anyGr.orderBy('sys_name');
+		}
+
+		if (context.limit) {
+			anyGr.setLimit(context.limit);
+		}
+
+		anyGr.query();
+
+		var result = {
+			tableLabel: anyGr.getLabel(),
+			hits: []
+		};
+
+		while (anyGr.next()) {
+			var matches = this.getMatches(anyGr, fields, context.term);
+			if (matches.length) {
+				result.hits.push({
+					name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
+					className: anyGr.getRecordClassName(),
+					matches: matches,
+					sysId: anyGr.getUniqueValue()
+				});
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandler'
+});]]></example>
+        <name>CodeSearchHandler</name>
+        <restrict_scope>false</restrict_scope>
+        <sys_class_name>sys_extension_point</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 05:14:50</sys_created_on>
+        <sys_id>c27f336893b242101f07f5f08bba10d5</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>CodeSearchHandler</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_extension_point_c27f336893b242101f07f5f08bba10d5</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-12 19:21:04</sys_updated_on>
+    </sys_extension_point>
+</record_update>

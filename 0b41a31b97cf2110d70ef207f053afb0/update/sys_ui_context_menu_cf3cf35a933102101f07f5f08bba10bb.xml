@@ -14,7 +14,7 @@
 ]]></action_script>
         <active>true</active>
         <comments/>
-        <condition>gs.hasRole('x_424426_devops.devops_user') &amp;&amp; RP.getReferringURL().indexOf("_list.do") == -1</condition>
+        <condition>new x_424426_devops.ConfigUtil().showContextMenu() &amp;&amp; RP.getReferringURL().indexOf("_list.do") == -1</condition>
         <do_not_cache>false</do_not_cache>
         <dynamic_actions_script><![CDATA[/** 
  * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
@@ -60,7 +60,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>cf3cf35a933102101f07f5f08bba10bb</sys_id>
-        <sys_mod_count>14</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>DevOps+</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -68,7 +68,7 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_context_menu_cf3cf35a933102101f07f5f08bba10bb</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-24 13:36:01</sys_updated_on>
+        <sys_updated_on>2024-06-11 15:31:53</sys_updated_on>
         <table>sys_history_line</table>
         <track_selected>false</track_selected>
         <type>menu</type>

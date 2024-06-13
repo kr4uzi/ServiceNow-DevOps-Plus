@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_preferences.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style type="text/css">
+    div.row {
+		margin-bottom: 15px;
+	}
+	</style>
+	<g:ui_form>
+		<div class="row">
+			<div class="col-md-12">
+				<p>The "Show hidden Metadata" functionality will show critical fields not shown on the form via g_form.addInfoMessage.</p>
+				<p>For example several application files do not show the Scope/Application in some views, this can cause for unintentional
+				updates ending up in your Update Set / Appication.</p>
+			</div>
+      		<div class="col-md-12">
+        		<span class="input-group-checkbox">
+					<j:if test="${gs.getUser().getPreference('devops_show_hidden_metadata') == 'true'}">
+						<input id="show-hidden-metadata" class="checkbox" type="checkbox" name="show-hidden-metadata" checked="checked"/>
+					</j:if>
+					<j:if test="${gs.getUser().getPreference('devops_show_hidden_metadata') != 'true'}">
+						<input id="show-hidden-metadata" class="checkbox" type="checkbox" name="show-hidden-metadata"/>
+					</j:if>
+            		<label for="show-hidden-metadata" class="checkbox-label">Show hidden Metadata</label>
+        		</span>
+      		</div>
+    	</div>
+		<div class="row">
+			<div class="col-md-12">
+				<p>The "Context Menu" functionality will enable an additional context menu entry on list header as well as form and fields.</p>
+			</div>
+      		<div class="col-md-12">
+        		<span class="input-group-checkbox">
+					<j:if test="${gs.getUser().getPreference('devops_show_context_menu') == 'true'}">
+						<input id="show-context-menu" class="checkbox" type="checkbox" name="show-context-menu" checked="checked"/>
+					</j:if>
+					<j:if test="${gs.getUser().getPreference('devops_show_context_menu') != 'true'}">
+						<input id="show-context-menu" class="checkbox" type="checkbox" name="show-context-menu"/>
+					</j:if>
+					<label for="show-context-menu" class="checkbox-label">Show Context Menu</label>
+        		</span>
+      		</div>
+    	</div>
+		<div class="row">
+			<div class="col-md-12">
+				<p>Enable Hotkeys: CTRL + SHIFT + F = Code Search</p>
+				<p>Note: The last selected text will put into the search field.</p>
+			</div>
+      		<div class="col-md-12">
+        		<span class="input-group-checkbox">
+					<j:if test="${gs.getUser().getPreference('devops_hotkeys_enabled') == 'true'}">
+						<input id="hotkeys-enabled" class="checkbox" type="checkbox" name="hotkeys-enabled" checked="checked"/>
+					</j:if>
+					<j:if test="${gs.getUser().getPreference('devops_hotkeys_enabled') != 'true'}">
+						<input id="hotkeys-enabled" class="checkbox" type="checkbox" name="hotkeys-enabled"/>
+					</j:if>
+					<label for="hotkeys-enabled" class="checkbox-label">Enable Hotkeys</label>
+        		</span>
+      		</div>
+    	</div>
+		<div class="row">
+			<div class="col-md-12">
+				<button type="submit">${gs.getMessage('Save')}</button>
+			</div>
+		</div>
+	</g:ui_form>
+</j:jelly>]]></html>
+        <name>preferences</name>
+        <processing_script><![CDATA[/* global gs */
+/* global request, response */
+/* eslint no-undef: "error" */
+(function (request, response) {
+	// request [GlideServletRequest]
+	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletRequestScopedAPI
+	
+	// response [GlideServletResponse]
+	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletResponseScopedAPI
+	
+	// this
+	// [represents the values from the <g:ui_form>]
+	const user = gs.getUser(); 
+	user.savePreference('devops_show_hidden_metadata', this['show-hidden-metadata'] == 'on');
+	user.savePreference('devops_show_context_menu', this['show-context-menu'] == 'on');
+	user.savePreference('devops_hotkeys_enabled', this['hotkeys-enabled'] == 'on');
+	
+	response.sendRedirect('x_424426_devops_preferences.do');
+}).call(this, request, response);]]></processing_script>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-07 17:44:18</sys_created_on>
+        <sys_id>1cc9b09b93aa42101f07f5f08bba102b</sys_id>
+        <sys_mod_count>42</sys_mod_count>
+        <sys_name>preferences</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_1cc9b09b93aa42101f07f5f08bba102b</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-06-11 15:50:36</sys_updated_on>
+    </sys_ui_page>
+</record_update>
