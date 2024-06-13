@@ -2,16 +2,16 @@
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>package_private</access>
         <active>true</active>
-        <api_name>x_424426_devops.CodeSearchHandlerWorkflow</api_name>
+        <api_name>x_424426_devops.CodeSearchHandlerWF</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
         <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
-        <name>CodeSearchHandlerWorkflow</name>
+        <name>CodeSearchHandlerWF</name>
         <script><![CDATA[/* global global, gs, x_424426_devops */
 /* global Class, GlideRecordSecure, GlideStringUtil */
 /* eslint no-undef: "error" */
-var CodeSearchHandlerWorkflow = Class.create();
-CodeSearchHandlerWorkflow.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+var CodeSearchHandlerWF = Class.create();
+CodeSearchHandlerWF.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
     initialize: function() {
 		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
     },
@@ -74,51 +74,65 @@ CodeSearchHandlerWorkflow.prototype = Object.extendsObject(x_424426_devops.CodeS
 				sysId: workflowGr.getUniqueValue()
 			};
 
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+
 			if (context.search_related) {
 				const wfVersionGr = new GlideRecordSecure('wf_workflow_version');
 				wfVersionGr.addQuery('workflow', workflowGr.sys_id);
 				wfVersionGr.orderBy('order');
 				wfVersionGr.query();
 				while (wfVersionGr.next()) {
+					const wfName = wfVersionGr.getDisplayValue() || wfVersionGr.getUniqueValue();
+					const hit = {
+						name: wfName + (wfVersionGr.published ? ' (current version)' : ' (previous version)'),
+						className: wfVersionGr.getRecordClassName(),
+						matches: [] ,
+						sysId: wfVersionGr.getUniqueValue()
+					};
+
 					const wfActivityGr = new GlideRecordSecure('wf_activity');
 					wfActivityGr.addQuery('workflow_version', wfVersionGr.sys_id);
 					wfActivityGr.query();
 					while (wfActivityGr.next()) {
+						const activityName = 'Activity: ' + wfActivityGr.getDisplayValue() || wfActivityGr.getDisplayValue('activity_definition');
 						const variableGr = new GlideRecordSecure('sys_variable_value');
 						variableGr.addQuery('document', 'wf_activity');
 						variableGr.addQuery('document_key', wfActivityGr.sys_id);
 						variableGr.addQuery('value', 'CONTAINS', context.term);
 						variableGr.query();
 						while (variableGr.next()) {
-							hit.matches = hit.matches.concat(
-								this.getMatches(variableGr, ['value'], context.term)
-							);
+							this.getMatches(variableGr, ['value'], context.term).forEach(m => {
+								m.fieldLabel = activityName + ' > ' + variableGr.getDisplayValue('variable');
+								hit.matches.push(m);
+							});
 						}
 					}
-				}
-			}
 
-			if (hit.matches.length) {
-				result.hits.push(hit);
+					if (hit.matches.length) {
+						result.hits.push(hit);
+					}
+				}
 			}
 		}
 
 		return result;
     },
 
-    type: 'CodeSearchHandlerWorkflow'
+    type: 'CodeSearchHandlerWF'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:09:28</sys_created_on>
         <sys_id>cd3f1f8593f2c2101f07f5f08bba1087</sys_id>
-        <sys_mod_count>5</sys_mod_count>
-        <sys_name>CodeSearchHandlerWorkflow</sys_name>
+        <sys_mod_count>13</sys_mod_count>
+        <sys_name>CodeSearchHandlerWF</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-13 16:45:02</sys_updated_on>
+        <sys_updated_on>2024-06-13 20:16:51</sys_updated_on>
     </sys_script_include>
 </record_update>
