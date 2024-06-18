@@ -66,6 +66,23 @@
     	</div>
 		<div class="row">
 			<div class="col-md-12">
+				<p>Add record scope on Save</p>
+				<p>This prevents 'Action not authorized' failures which happen when saving a record after changing the application in a different browser window.</p>
+			</div>
+      		<div class="col-md-12">
+        		<span class="input-group-checkbox">
+					<j:if test="${gs.getUser().getPreference('devops_add_scope_on_save') == 'true'}">
+						<input id="add-scope-on-save" class="checkbox" type="checkbox" name="add-scope-on-save-enabled" checked="checked"/>
+					</j:if>
+					<j:if test="${gs.getUser().getPreference('devops_add_scope_on_save') != 'true'}">
+						<input id="add-scope-on-save" class="checkbox" type="checkbox" name="add-scope-on-save-enabled"/>
+					</j:if>
+					<label for="add-scope-on-save" class="checkbox-label">Add Scope on Save</label>
+        		</span>
+      		</div>
+    	</div>
+		<div class="row">
+			<div class="col-md-12">
 				<button type="submit">${gs.getMessage('Save')}</button>
 			</div>
 		</div>
@@ -88,6 +105,7 @@
 	user.savePreference('devops_show_hidden_metadata', this['show-hidden-metadata'] == 'on');
 	user.savePreference('devops_show_context_menu', this['show-context-menu'] == 'on');
 	user.savePreference('devops_hotkeys_enabled', this['hotkeys-enabled'] == 'on');
+	user.savePreference('devops_add_scope_on_save', this['add-scope-on-save-enabled'] == 'on');
 	
 	response.sendRedirect('x_424426_devops_preferences.do');
 }).call(this, request, response);]]></processing_script>
@@ -95,13 +113,13 @@
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-07 17:44:18</sys_created_on>
         <sys_id>1cc9b09b93aa42101f07f5f08bba102b</sys_id>
-        <sys_mod_count>42</sys_mod_count>
+        <sys_mod_count>43</sys_mod_count>
         <sys_name>preferences</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_1cc9b09b93aa42101f07f5f08bba102b</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-11 15:50:36</sys_updated_on>
+        <sys_updated_on>2024-06-18 10:04:30</sys_updated_on>
     </sys_ui_page>
 </record_update>
