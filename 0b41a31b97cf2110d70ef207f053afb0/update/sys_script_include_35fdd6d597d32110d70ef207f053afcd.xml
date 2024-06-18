@@ -5,7 +5,10 @@
         <api_name>x_424426_devops.CodeSearchUtilClient</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
-        <description/>
+        <description>Entry point for handling:&#13;
+- "find references"&#13;
+- code search itself&#13;
+- code search config: generate config for {all|metadata|custom} search</description>
         <name>CodeSearchUtilClient</name>
         <script><![CDATA[/* global global, gs, sn_scoped_cache, x_424426_devops */
 /* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
@@ -154,8 +157,9 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				result.context.search_related = true;
 			}
 
+			result.tables = getSortedTables(params.table, params.scope, 'sys_updated_on')
 			// getTableExtensions doesn't return a ES2021 Array by default
-			const tables = [...new GlideTableHierarchy(params.table).getTableExtensions()];
+			/*const tables = [...new GlideTableHierarchy(params.table).getTableExtensions()];
 			if (tables.length) {
 				// reorder the list of tables so that the last changed application files get searched first
 				const anyGa = new GlideAggregate(params.table);
@@ -176,9 +180,10 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						tables.slice(pos, 1);
 					}
 				}
-				
+					sn_scoped_cache.ScopedCacheManager.flushScopedCache('devops_plus_code_search_config_metadata', current.getValue('sys_scope'));
+
 			} else
-				result.tables = [params.table];
+				result.tables = [params.table]; */
 
 			result.status = 'success';
 		} else {
@@ -186,6 +191,47 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		}
 
 		return JSON.stringify(result);
+
+		function getSortedTables(baseTable, scope, orderBy) {
+			const tables = [baseTable, ...new GlideTableHierarchy(baseTable).getTableExtensions()];
+			if (tables.length == 1)
+				return tables;
+
+			const cacheKey = (scope || '') + (orderBy || '');
+			if (cacheKey) {
+				const sortedTables = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_sorted_tables', cacheKey);
+				if (sortedTables)
+					return JSON.parse(sortedTables);
+			}
+
+			// reorder the list of tables so that the last changed application files get searched first
+			const anyGa = new GlideAggregate(params.table);
+			if (scope)
+				anyGa.addQuery('sys_scope', scope);
+			
+			if (orderBy) {
+				anyGa.addAggregate('MAX', orderBy);
+				anyGa.orderByAggregate('MAX', orderBy);
+			}
+			
+			anyGa.groupBy('sys_class_name');
+			anyGa.query();
+
+			const sortedTables = [];
+			while (anyGa.next()) {
+				const klass = anyGa.getValue('sys_class_name');
+				const pos = tables.indexOf(klass);
+				if (pos != -1) {
+					sortedTables.push(tables[pos]);
+					tables.slice(pos, 1);
+				}
+			}
+
+			if (cacheKey)
+				sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_sorted_tables', cacheKey, JSON.stringify(sortedTables));
+
+			return sortedTables;
+		}
 	},
 	
 	// the OOTB code search only allows for sys_metadata tables to be searched - even though you can configure the sn_codesearch_table otherwise,
@@ -300,13 +346,13 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>144</sys_mod_count>
+        <sys_mod_count>146</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-13 16:36:19</sys_updated_on>
+        <sys_updated_on>2024-06-18 08:49:11</sys_updated_on>
     </sys_script_include>
 </record_update>
