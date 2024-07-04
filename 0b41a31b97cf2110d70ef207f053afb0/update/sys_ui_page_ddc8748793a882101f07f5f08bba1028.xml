@@ -110,7 +110,7 @@ function searchTable(tableConfig, sysID, callback) {
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchReference');
 	ga.addParam('table', tableConfig.table);
-	ga.addParam('fields', tableConfig.fields);
+	ga.addParam('fields', JSON.stringify(tableConfig.fields));
 	ga.addParam('sys_id', sysID);
 	ga.getXMLAnswer(function (result) {
 		result = JSON.parse(result);
@@ -144,19 +144,17 @@ function searchTable(tableConfig, sysID, callback) {
 			new GlideTableHierarchy(recordTable).getTables().forEach(tableName => {
 				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
 				dictionaryGr.addQuery('name', 'NOT IN', privateTables);
-				dictionaryGr.addQuery('internal_type', 'reference');
+				dictionaryGr.addQuery('internal_type', 'IN', ['reference', 'glide_list']);
 				dictionaryGr.addQuery('reference', tableName);
 				dictionaryGr.addQuery('sys_class_name', 'sys_dictionary');
 				dictionaryGr.query();
 				while (dictionaryGr.next()) {
 					const columnTable = dictionaryGr.getValue('name');
 					const columnName = dictionaryGr.getValue('element');
-		
-					if (columnTable in refQueries) {
-						refQueries[columnTable].push(columnName);
-					} else {
-						refQueries[columnTable] = [columnName];
-					}
+					(refQueries[columnTable] ??= []).push({
+						column: columnName,
+						type: dictionaryGr.getValue('internal_type')
+					});
 				}
 			});
 		
@@ -213,13 +211,13 @@ function searchTable(tableConfig, sysID, callback) {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-28 12:48:52</sys_created_on>
         <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
-        <sys_mod_count>42</sys_mod_count>
+        <sys_mod_count>43</sys_mod_count>
         <sys_name>references</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-19 12:06:07</sys_updated_on>
+        <sys_updated_on>2024-07-04 17:45:18</sys_updated_on>
     </sys_ui_page>
 </record_update>
