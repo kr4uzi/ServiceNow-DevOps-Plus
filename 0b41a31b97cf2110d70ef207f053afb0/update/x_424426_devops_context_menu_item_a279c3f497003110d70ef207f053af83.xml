@@ -23,7 +23,6 @@
 	return menu;
 	
 	function openTranslationPopUp(recordTable, recordSysID, langID, langName) {
-		debugger;
 		var originalLanguage = getPreference('user.language') || '';
 		setPreference('user.language', langID, function () {
 			var userLangReverted = false;
@@ -73,14 +72,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-07-13 08:05:57</sys_created_on>
         <sys_id>a279c3f497003110d70ef207f053af83</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>17</sys_mod_count>
         <sys_name>translated</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_a279c3f497003110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-01-17 07:26:53</sys_updated_on>
+        <sys_updated_on>2024-06-21 17:27:59</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

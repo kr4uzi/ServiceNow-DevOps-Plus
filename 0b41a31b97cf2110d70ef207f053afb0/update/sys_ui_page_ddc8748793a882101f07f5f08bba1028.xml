@@ -137,9 +137,13 @@ function searchTable(tableConfig, sysID, callback) {
 		const recordSysID = RP.getParameterValue('record_sys_id') || RP.getWindowProperties().record_sys_id;
 		if (recordTable &amp;&amp; recordSysID) {
 			pageConfig.record = recordSysID;
+
+			const privateTables = getPrivateTables();
+
 			const refQueries = {};
 			new GlideTableHierarchy(recordTable).getTables().forEach(tableName => {
 				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+				dictionaryGr.addQuery('name', 'NOT IN', privateTables);
 				dictionaryGr.addQuery('internal_type', 'reference');
 				dictionaryGr.addQuery('reference', tableName);
 				dictionaryGr.addQuery('sys_class_name', 'sys_dictionary');
@@ -162,6 +166,19 @@ function searchTable(tableConfig, sysID, callback) {
 			}
 		} else {
 			pageConfig.errorMessage = 'Parameter "record_table" and "record_sys_id" are manatory!';
+		}
+
+		function getPrivateTables() {
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('access', '!=', 'public');
+			dbObjectGr.query();
+
+			const tables = [];
+			while (dbObjectGr.next()) {
+				tables.push(dbObjectGr.getValue('name'));
+			}
+
+			return tables;
 		}
 	</g:evaluate>
 	<script>var pageConfig = '${JSON.stringify(pageConfig)}';</script>
@@ -196,13 +213,13 @@ function searchTable(tableConfig, sysID, callback) {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-28 12:48:52</sys_created_on>
         <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
-        <sys_mod_count>41</sys_mod_count>
+        <sys_mod_count>42</sys_mod_count>
         <sys_name>references</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-28 17:10:21</sys_updated_on>
+        <sys_updated_on>2024-06-19 12:06:07</sys_updated_on>
     </sys_ui_page>
 </record_update>
