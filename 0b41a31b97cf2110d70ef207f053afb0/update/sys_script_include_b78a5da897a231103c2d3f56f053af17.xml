@@ -15,6 +15,75 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
 	},
+
+	getAttributes: function () {
+		const result = {
+			status: 'error',
+			message: ''
+		};
+
+		const table = this.getParameter('table');
+		let elements = this.getParameter('elements');
+		if (table && gs.tableExists(table) && elements) {
+			try {
+				elements = JSON.parse(elements);
+				for (const name in elements) {
+					if (!(elements[name] instanceof Array)) {
+						throw new Error();
+					}
+				}
+			} catch (e) {
+				result.message = 'Invalid element config: Map<String, Array> expected';
+				return JSON.stringify(result);
+			}
+
+			const tableGr = new GlideRecordSecure('sys_db_object');
+			tableGr.addQuery('name', table);
+			tableGr.setLimit(1);
+			tableGr.query();
+			if (tableGr.next()) {
+				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
+				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+				scriptGr.setLimit(1);
+				scriptGr.query();
+				if (scriptGr.next()) {
+					scriptGr.sys_scope = tableGr.sys_scope.toString();
+					scriptGr.script = `
+						(function (table, elements) {
+							var attributes = {};
+							var anyGr = new GlideRecordSecure(table);
+							for (var name in elements) {
+								var element = anyGr.getElement(name);
+								if (element != null) {
+									attributes[name] = {};
+									elements[name].forEach(function (attr) {
+										attributes[name][attr] = element.getAttribute(attr);
+									});
+								}
+							}
+
+							return JSON.stringify(attributes);
+						})(table, JSON.parse(elements));`;
+					
+					result.attributes = JSON.parse(new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+						table: table,
+						elements: JSON.stringify(elements)
+					}));
+
+					result.status = 'success';
+				} else {
+					result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+				}
+			} else {
+				result.message = 'Script execution not possible!';
+			}
+		} else {
+			result.message = gs.getMessage('devops_invalid_parameters');
+		}
+		
+
+		return JSON.stringify(result);
+	},
 	
 	getReferencingTables: function () {
 		const result = {
@@ -133,13 +202,13 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-11-13 10:56:29</sys_created_on>
         <sys_id>b78a5da897a231103c2d3f56f053af17</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>ContextMenuUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b78a5da897a231103c2d3f56f053af17</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-11 19:56:09</sys_updated_on>
+        <sys_updated_on>2024-07-05 16:15:31</sys_updated_on>
     </sys_script_include>
 </record_update>

@@ -3,79 +3,94 @@
         <active>true</active>
         <client_script><![CDATA[/* global $context, g_form, GlideModalForm, devStudioAPI, navigator, event, g_navigation */
 /* eslint no-undef: "error" */
-(function ($context) {					
-	var gmf;
-	var isMac = navigator.userAgent.indexOf('Mac OS X') > -1;
-	var openInWindow = isMac ? event.metaKey : event.ctrlKey;
-	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
-	if (typeElement) {
-		var type = typeElement.getAttribute('type');
-		if (type == 'table_name') {
+(function ($context) {
+	let gmf;
+	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.menu.devops_currentEvent.metaKey : $context.menu.devops_currentEvent.ctrlKey;
+	const element = g_form.getGlideUIElement(g_form.getTableName() == 'ni' ? g_form.resolveNameMap($context.FIELD) : $context.FIELD);
+	if (element) {
+		if (element.type == 'table_name') {
 			if (openInWindow) {
-				g_navigation.openPopup('nav_to.do?uri=' + g_form.getValue($context.FIELD) + '_list.do');
+				g_navigation.openPopup('nav_to.do?uri=' + element.getValue() + '_list.do');
 				return;
 			}
-		
+
 			gmf = new GlideModalForm(
 				'Open "' + $context.FIELD + '"',
-				g_form.getValue($context.FIELD) + '_list'
+				element.getValue() + '_list'
 			);
-		} else {			
-			var uiElement = g_form.getGlideUIElement($context.FIELD);
+		} else if (element.type == 'glide_list') {
 			if (openInWindow) {
-				g_navigation.openPopup('nav_to.do?uri=' + uiElement.reference + '.do%3Fsys_id%3D' + g_form.getValue($context.FIELD));
+				g_navigation.openPopup('nav_to.do?uri=' + element.reference + '_list.do%3Fsysparm_query%3Dsys_idIN' + element.getValue());
 				return;
 			}
-			
+
 			gmf = new GlideModalForm(
 				'Open "' + $context.FIELD + '"',
-				uiElement.reference
+				element.reference + '_list'
 			);
-			gmf.setSysID(g_form.getValue($context.FIELD));
+			gmf.addParm('sysparm_query', 'sys_idIN' + element.getValue());
+		} else if (element.type == 'reference') {
+			if (openInWindow) {
+				g_navigation.openPopup('nav_to.do?uri=' + element.reference + '.do%3Fsys_id%3D' + element.getValue());
+				return;
+			}
+
+			gmf = new GlideModalForm(
+				'Open "' + $context.FIELD + '"',
+				element.reference
+			);
+			gmf.setSysID(element.getValue());
 		}
 	}
 	
 	if (gmf) {
 		// if in Studio, add the currently selected scoped so that
 		// the translations are created in the currently selected application
-		if (typeof devStudioAPI !== "undefined") {
-			gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+		if (typeof devStudioAPI !== 'undefined') {
+			gmf.addParm('sysparm_transaction_scope', devStudioAPI.appMetadata.APP_ID);
 		}
 
 		gmf.render();
 	}
 	
 })($context);]]></client_script>
-        <condition_script><![CDATA[/* global $context, g_form, Table */
+        <condition_script><![CDATA[/* global $context, Promise, g_form, GlideAjax */
 /* eslint no-undef: "error" */
 (function ($context) {
-	if (g_form.getTableName() == 'ni') {
-		return false;
-	}
-	
-	var typeElement = g_form.getLabel($context.FIELD).closest('[type]');
-	if (typeElement) {
-		var type = typeElement.getAttribute('type');
-		if (type == 'reference') {
-			if (g_form.getValue($context.FIELD)) {
-				var table = Table.get(g_form.getTableName());
-				if (table) {
-					var element = table.getElement($context.FIELD);
-					if (element) {
-						if (element.attributes.attributes && element.attributes.attributes.indexOf('readonly_clickthrough=true') > -1) {
-							return false;
-						}
-						
-						return true;
-					}
-				}
-			}
-		} else if (type == 'table_name') {
-			return true;
-		}
-	}
+	return new Promise(resolve => {
+		// catalog context menu not supported at the moment
+		const element = g_form.getGlideUIElement(g_form.getTableName() == 'ni' ? g_form.resolveNameMap($context.FIELD) : $context.FIELD);
+		if (element.type == 'table_name') {
+			resolve(true);
+		} else if (element.type == 'glide_list') {
+			resolve(!!element.getValue());
+		} else if (element.type == 'reference' && g_form.getTableName() != 'ni') {
+			if (element.getValue()) {
+				const elements = {};
+				elements[$context.FIELD] = ['readonly_clickthrough'];
 
-	return false;
+				const ga = new GlideAjax('x_424426_devops.ContextMenuUtilClient').setScope('x_424426_devops');
+				ga.addParam('sysparm_name', 'getAttributes');
+				ga.addParam('table', g_form.getTableName());
+				ga.addParam('elements', JSON.stringify(elements));
+				ga.getXMLAnswer(function (result) {
+					result = JSON.parse(result);
+					if (result.status == 'success') {
+						// only show the "open" entry readonly_clickthrough is not enabled
+						// (otherwise the user can use ) 
+						resolve(!result.attributes[$context.FIELD].readonly_clickthrough);
+					} else if (result.message) {
+						g_form.addErrorMessage(result.message);
+						resolve(false);
+					}
+				});
+
+				return;
+			}
+		} else {		
+			resolve(false);
+		}
+	});
 })($context);]]></condition_script>
         <item_type>link</item_type>
         <label>open</label>
@@ -84,14 +99,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-10-31 20:23:36</sys_created_on>
         <sys_id>cd165820979e71503c2d3f56f053af39</sys_id>
-        <sys_mod_count>13</sys_mod_count>
+        <sys_mod_count>32</sys_mod_count>
         <sys_name>open</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_cd165820979e71503c2d3f56f053af39</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2023-12-18 10:10:20</sys_updated_on>
+        <sys_updated_on>2024-07-05 17:27:20</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

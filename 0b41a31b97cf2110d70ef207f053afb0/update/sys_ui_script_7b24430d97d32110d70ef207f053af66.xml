@@ -8,18 +8,19 @@
         <script><![CDATA[var x_424426_devops = x_424426_devops || {};
 x_424426_devops.context_menu = (function() {
 	"use strict";
-	
-	/* global GwtContextMenu, console, g_form */
+
+	/* global GwtContextMenu, Promise, console, g_form */
 	/* eslint no-undef: "error" */
+	/* eslint sn-no-async-await: "off" */
 	if (x_424426_devops.context_menu) {
 		return x_424426_devops.context_menu;
 	}
-	
+
 	let bcm = null; // breadcrumb context menu
 	let $window, $config;	
 	x_424426_devops.loader.get('window', function (_window) {
 		inject($window = _window, $config);
-		
+
 		const ootbContextMenu = $window.GwtContextMenu;
 		const DevOpsContextMenuPrototype = {
 			initialize: function (id) {
@@ -28,6 +29,11 @@ x_424426_devops.context_menu = (function() {
 				}
 
 				return ootbContextMenu.prototype.initialize.apply(this, arguments);
+			},
+
+			execute: function (e) {
+				this.devops_currentEvent = e;
+				return ootbContextMenu.prototype.execute.apply(this, arguments);
 			},
 
 			type: 'DevopsContextMenu'
@@ -42,7 +48,7 @@ x_424426_devops.context_menu = (function() {
 		});
 		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, DevOpsContextMenuPrototype);
 	});
-	
+
 	x_424426_devops.loader.get('config', function (_config) {
 		inject($window, $config = _config);
 	});
@@ -50,7 +56,7 @@ x_424426_devops.context_menu = (function() {
 	return {
 		type: 'context_menu'
 	};
-	
+
 	function inject($window, $config) {
 		if ($window && $config) {			
 			injectHeaderMenu($window, $config);
@@ -58,7 +64,7 @@ x_424426_devops.context_menu = (function() {
 			injectBreadCrumbsMenu($window, $config);
 		}
 	}
-	
+
 	function injectFieldContextMenu($window, $config) {
 		if (!$config.fieldItems) {
 			return;
@@ -78,7 +84,7 @@ x_424426_devops.context_menu = (function() {
 					fieldName = id.substring(id.indexOf(tableName) + tableName.length + 1);
 				}
 			}
-			
+
 			// if this callback is registered before the OOTB callback which creates the context menu,
 			// either the context menu variable (window.gcm) isn't created at all or it is created in 
 			// the next browser tick - by using setTimeout, we make sure that this callback
@@ -96,7 +102,7 @@ x_424426_devops.context_menu = (function() {
 			});
 		});
 	}
-		
+
 	function injectBreadCrumbsMenu($window, $config) {
 		// breadcrumbs created after this scripts will be injected by the MutationObserver
 		var observer = new $window.MutationObserver(function (mutations) {
@@ -112,22 +118,22 @@ x_424426_devops.context_menu = (function() {
 				}
 			}   
 		});
-		
+
 		observer.observe($window.document, {
 			childList: true,
 			subtree: true
 		});
-		
+
 		// breadcrumbs already existing when this script runs will be injected by the querySelectorAll
 		$window.document.querySelectorAll('.breadcrumb_link').forEach(function (element) {
 			injectBreadCrumbContextMenu(element);
 		});
-		
+
 		function injectBreadCrumbContextMenu(element) {
 			if (!$config.breadcrumbItems) {
 				return;
 			}
-			
+
 			element.addEventListener('contextmenu', function () {
 				var listID = element.closest('span.breadcrumb_container').getAttribute('list_id');
 				var filter = getFilter(element);
@@ -145,16 +151,16 @@ x_424426_devops.context_menu = (function() {
 				});
 			});
 		}
-		
+
 		function getFilter(element) {
 			while (element && !element.hasAttribute('filter')) {
 				element = element.parentElement;
 			}
-			
+
 			return (element && element.getAttribute('filter')) || '';
 		}
 	}
-	
+
 	function injectHeaderMenu($window, $config) {
 		if (!$config.headerItems) {
 			return;
@@ -168,7 +174,7 @@ x_424426_devops.context_menu = (function() {
 				configurable: true,
 				set: function (v) {
 					Object.defineProperty($window, 'gcmSection', {
-						configurable: true, enumerable: true, writable: true, value: v 
+						configurable: true, enumerable: true, writable: true, value: v
 					});
 					
 					// right after setting the value, the menu gets .clear()-ed
@@ -178,14 +184,14 @@ x_424426_devops.context_menu = (function() {
 					});
 				}
 			});
-			
+
 			Object.defineProperty($window, 'headerGCM', {
 				configurable: true,
 				set: function (v) {
 					Object.defineProperty($window, 'headerGCM', {
 						configurable: true, enumerable: true, writable: true, value: v 
 					});
-					
+
 					// right after setting the value, the menu gets .clear()-ed
 					// the DevOps+ menu building needs to be postponed slightly
 					$window.setTimeout(function () {
@@ -194,43 +200,39 @@ x_424426_devops.context_menu = (function() {
 				}
 			});
 		}
-		
+
 		function addHeaderMenuItems($window, $config, headerMenu) {
 			// by this time the g_form should have already loaded...
 			if (!$window.g_form) {
 				return;
 			}
-			
+
 			const $context = {
 				$window: $window,
 				g_form: g_form
 			};
-			
+
 			buildMenu($window.gcm, 'devops_header_menu', $config.headerItems, $context);
 		}
 	}
-	
-	function buildMenu(parentMenu, menuName, items, context) {
-		// add the DevOps menu after the OOTB menu(s) have been fully built
-		if (new Date().getTime() - parentMenu.devops_lastAdded < 25) {
-			$window.setTimeout(buildMenu, 50, parentMenu, menuName, items, context);
-			return;
-		}
 
+	async function buildMenu(parentMenu, menuName, items, context) {
 		let itemsAdded = 0;
-		
+
 		const devopsMenu = new GwtContextMenu(menuName);
 		devopsMenu.clear();
-		items.forEach(function (item) {						
+		context.menu = devopsMenu;
+
+		for (const item of items) {				
 			const conditionScript = item.condition_script;
 			if (conditionScript) {
 				try {
-					if (new $window.Function('script', '$context', 'return eval(script)')(conditionScript, context) != true) {
-						return;
+					if (await new $window.Function('script', '$context', 'return eval(script)')(conditionScript, context) != true) {
+						continue;
 					}
 				} catch (e) {
 					$window.console.error('[DevOps+] Failed to add item for (' + menuName + ')', e, items, context);
-					return;
+					continue;
 				}
 			}
 
@@ -242,19 +244,24 @@ x_424426_devops.context_menu = (function() {
 				try {
 					devopsMenu.addMenu(
 						item.label,
-						new Function('script', '$context', 'return eval(script)')(item.script, context)
+						await new Function('script', '$context', 'return eval(script)')(item.script, context)
 					);
 				} catch (e) {
 					$window.console.error('[DevOps+] Failed to add menu for (' + menuName + ')', e, items, context);
 				}
 			} else {
-				return;
+				continue;
 			}
 
 			itemsAdded++;
-		});
+		}
 
 		if (itemsAdded) {
+			// add the DevOps menu after the OOTB menu(s) have been fully built
+			while (new Date().getTime() - parentMenu.devops_lastAdded < 25) {
+				await new Promise(r => $window.setTimeout(r, 25));
+			}
+
 			parentMenu.addLine();
 			parentMenu.addMenu('DevOps+', devopsMenu);
 		}
@@ -266,14 +273,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>89</sys_mod_count>
+        <sys_mod_count>102</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-11 19:31:19</sys_updated_on>
+        <sys_updated_on>2024-07-05 17:28:34</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
