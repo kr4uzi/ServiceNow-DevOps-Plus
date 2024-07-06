@@ -14,7 +14,7 @@ function devopsSubmit() {
 addLoadEvent(function(){
 	devops_users.clear();
 	
-	x_424426_devops_users.available.forEach(function (user) {
+	x_424426_devops_users.selectable.forEach(function (user) {
 		devops_users.addLeftChoice(user.value, user.label);
 	});
 	
@@ -23,47 +23,46 @@ addLoadEvent(function(){
 	});
 });
 ]]></client_script>
-        <description>UI Page to administrate 'DevOps+' user role</description>
+        <description>UI Page to administrate 'DevOps+' user role&#13;
+It is used to directly assign devops_user role directly to users - while direct role assignment is usually not desired, because of the scoped administration design of the app.</description>
         <direct>false</direct>
         <endpoint>x_424426_devops_users.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
 	<g2:evaluate>
-		const [selectedUsers, unavailableUsers] = (function () {
+		const selectedUsers = (function () {
 			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 			userRoleGr.addQuery('role.name', 'x_424426_devops.devops_user');
+			userRoleGr.addQuery('inherited', false);
 			userRoleGr.query();
 
 			const selected = [];
-			const unavailable = [];
 			while (userRoleGr.next()) {
-				const label = userRoleGr.getDisplayValue('user');
-				if (label) {
-					const userSysID = userRoleGr.getValue('user');
-					unavailable.push(userSysID);
-
-					if (!userRoleGr.inherited) {
-						// only show the directly assigned (not-inherited) roles on the right side of the slushbucket
-						selected.push({
-							value: userSysID,
-							label: label
-						});
-					}
+				let label = userRoleGr.getDisplayValue('user');
+				const userSysID = userRoleGr.getValue('user');
+				if (!userRoleGr.user.active) {
+					label += ' (inactive)';
 				}
+
+				selected.push({
+					value: userSysID,
+					label: label.trim()
+				});
 			}
 			
-			return [selected, unavailable];
+			return selected;
 		})();
 		
-		const availableUsers = (function (unavailable) {
+		const selectableUsers = (function (selected) {
 			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
+			userRoleGr.addQuery('user', 'NOT IN', selected.map(u => u.value));
+			userRoleGr.addQuery('user.active', true);
 			userRoleGr.addQuery('role.name', 'admin');
-			userRoleGr.addQuery('user', 'NOT IN', unavailable);
 			userRoleGr.query();
 
 			const adminUsers = [];
 			while (userRoleGr.next()) {
-				const label = userRoleGr.getDisplayValue('user')
+				const label = userRoleGr.getDisplayValue('user');
 				if (label) {
 					adminUsers.push({
 						value: userRoleGr.getValue('user'),
@@ -73,12 +72,12 @@ addLoadEvent(function(){
 			}
 			
 			return adminUsers;
-		})(unavailableUsers);
+		})(selectedUsers);
 	</g2:evaluate>
 	<script>
 		var x_424426_devops_users = { 
 			selected: JSON.parse('$[JS:JSON.stringify(selectedUsers)]'),
-			available: JSON.parse('$[JS:JSON.stringify(availableUsers)]') 
+			selectable: JSON.parse('$[JS:JSON.stringify(selectableUsers)]') 
 		};
 	</script>
 	<h4 style="padding: 10px 15px 0px; font-weight: bold;">Select users who should be assigned to the 'DevOps+ User' role</h4><br></br>
@@ -108,28 +107,38 @@ addLoadEvent(function(){
 	
 	// this
 	// [represents the values from the <g:ui_form>]
-	cleanupDevOpsUsers(this.selected_devops_users || '');
-	
+	const deleteCount = cleanupDevOpsUsers(this.selected_devops_users || '');
+	let assignCount = 0;
+
 	if (this.selected_devops_users) {		
-		const eligibleUsers = getEligibleUsers();
-		const devopsUsers = getDevOpUsers();
+		const eligibleUsers = getEligibleUsers(this.selected_devops_users);
+		const devopsUsers = getDevOpUsers(this.selected_devops_users);
 			
 		const unassigned = this.selected_devops_users.split(',')
 			.filter(x => !devopsUsers.includes(x))
 			.filter(x => eligibleUsers.includes(x));
+
 		unassigned.forEach(function (x) {
 			const userRoleGr = new GlideRecordSecure('sys_user_has_role');
 			userRoleGr.newRecord();
 			userRoleGr.role.setDisplayValue('x_424426_devops.devops_user');
 			userRoleGr.user = x;
 			const sysID = userRoleGr.insert();
-			if (!sysID) {
+			if (sysID) {
+				assignCount++;
+			} else {
 				gs.addErrorMessage(
 					gs.getMessage('devops_admin_assignment_failed_insert', userRoleGr.getDisplayValue('user'))
 				);
 			}
 		});
-	}	
+	}
+
+	if (deleteCount || assignCount) {
+		gs.addInfoMessage(gs.getMessage('devops_roles_updated', [String(deleteCount), String(assignCount)]));
+	} else {
+		gs.addInfoMessage(gs.getMessage('devops_roles_unchanged'));
+	}
 	
 	response.sendRedirect('x_424426_devops_users.do');
 
@@ -140,16 +149,21 @@ addLoadEvent(function(){
 		userRoleGr.addQuery('inherited', false);
 		userRoleGr.query();
 		
+		let count = 0;
+		// abusing the ChangeProcessSNC to delete a global-scope-table record
 		const hack = new global.ChangeProcessSNC();
 		while (userRoleGr.next()) {
+			count++;
 			hack._gr = userRoleGr;
 			hack.deleteRecord();
 		}
+
+		return count;
 	}
 
-	function getEligibleUsers() {
+	function getEligibleUsers(selectedUsers) {
 		const userRoleGr = new GlideRecordSecure('sys_user_has_role');
-		userRoleGr.addQuery('user', 'IN', this.selected_devops_users);
+		userRoleGr.addQuery('user', 'IN', selectedUsers);
 		userRoleGr.addQuery('role.name', 'admin');
 		userRoleGr.query();
 		
@@ -161,9 +175,9 @@ addLoadEvent(function(){
 		return assigned;
 	}
 
-	function getDevOpUsers() {
+	function getDevOpUsers(selectedUsers) {
 		const userRoleGr = new GlideRecordSecure('sys_user_has_role');
-		userRoleGr.addQuery('user', 'IN', this.selected_devops_users);
+		userRoleGr.addQuery('user', 'IN', selectedUsers);
 		userRoleGr.addQuery('role.name', 'x_424426_devops.devops_user');
 		userRoleGr.addQuery('inherited', false);
 		userRoleGr.query();
@@ -181,13 +195,13 @@ addLoadEvent(function(){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-13 20:21:19</sys_created_on>
         <sys_id>71f2eb5b97d72110d70ef207f053af97</sys_id>
-        <sys_mod_count>14</sys_mod_count>
+        <sys_mod_count>26</sys_mod_count>
         <sys_name>users</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_71f2eb5b97d72110d70ef207f053af97</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-01-18 11:03:16</sys_updated_on>
+        <sys_updated_on>2024-07-06 14:04:18</sys_updated_on>
     </sys_ui_page>
 </record_update>

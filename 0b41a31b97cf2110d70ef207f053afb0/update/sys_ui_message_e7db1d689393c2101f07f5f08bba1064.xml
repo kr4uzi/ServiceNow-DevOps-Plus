@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_message">
+    <sys_ui_message action="INSERT_OR_UPDATE">
+        <application/>
+        <code/>
+        <commented_message/>
+        <key>devops_roles_updated</key>
+        <language>en</language>
+        <message>{0} role assignment(s) deleted, {1} role assignment(s) created</message>
+        <sys_class_name>sys_ui_message</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-07-06 13:50:05</sys_created_on>
+        <sys_id>e7db1d689393c2101f07f5f08bba1064</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>devops_roles_updated</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_message_e7db1d689393c2101f07f5f08bba1064</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-07-06 14:05:42</sys_updated_on>
+    </sys_ui_message>
+</record_update>
