@@ -56,13 +56,18 @@
  */
 (function () {
 	var visible = true;
-	if (NOW.isPolarisEnabled == 'true') {
-		// with polaris enabled, this property will load every page with "nav_to"
-		if (getPreference('glide.ui.polaris.ui16_tabs_inside_polaris') == 'true') {
+	if (typeof devStudioAPI != 'undefined') {
+		// executing this action would reload the studio
+		visible = false;
+	} else {
+		if (NOW.isPolarisEnabled == 'true') {
+			// with polaris enabled, this property will load every page with "nav_to"
+			if (getPreference('glide.ui.polaris.ui16_tabs_inside_polaris') == 'true') {
+				visible = false;
+			}
+		} else if (getNavWindow()) {
 			visible = false;
 		}
-	} else if (getNavWindow()) {
-		visible = false;
 	}
 	
 	if (visible) {
@@ -82,7 +87,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>8c8fcd7197372110d70ef207f053af08</sys_id>
-        <sys_mod_count>21</sys_mod_count>
+        <sys_mod_count>24</sys_mod_count>
         <sys_name>/nav_to</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -90,7 +95,7 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_context_menu_8c8fcd7197372110d70ef207f053af08</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-24 13:24:11</sys_updated_on>
+        <sys_updated_on>2024-07-06 16:40:46</sys_updated_on>
         <table>global</table>
         <track_selected>false</track_selected>
         <type>action</type>
