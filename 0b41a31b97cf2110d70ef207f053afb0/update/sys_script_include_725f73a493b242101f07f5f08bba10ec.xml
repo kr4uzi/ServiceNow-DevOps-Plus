@@ -9,10 +9,39 @@
         <name>CodeSearchHandlerBase</name>
         <script><![CDATA[var CodeSearchHandlerBase = Class.create();
 CodeSearchHandlerBase.prototype = {
+	/**
+	 * @typedef {CodeSearchContext}
+	 * @property {string} term - the search term
+	 * @property {Array.<string>} [fields] - if all_fields is not set contains the list of fields to be searched
+	 * @property {boolean} [all_fields] - wether all fields shoud be searched
+	 * @property {string} [additional_filter] - encoded query which should be added on top of the search query
+	 * @property {string} [scope] - limit search to the supplied scope
+	 * @property {boolean} [match_table] - match sys_class_name aka do not search extending tables
+	 * @property {number} limit - search limit
+	 */
+	/**
+	 * @typedef {CodeSearchHit}
+	 * @property {string} name
+	 * @property {string} className
+	 * @property {Array.<CodeSearchMatch>} matches
+	 * @property {string} sysId
+	 */
+	/**
+	 * @typedef {CodeSearchResult}
+	 * @property {string} tableLabel
+	 * @property {Array.<CodeSearchHit>} hits
+	 */
+	
 	initialize: function() {
 		this.max_context_length = 500;
 	},
 
+	/**
+	 * get all searchable fields for the given table
+	 * note: the result is cached
+	 * @param {string} table - the table name
+	 * @return {Array.<string>}
+	 */
 	getFields: function (table) {
 		let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
 		if (cachedFields) {
@@ -37,6 +66,16 @@ CodeSearchHandlerBase.prototype = {
 		return fields;
 	},
 
+	/**
+	 * @typedef {{ fieldLabel: string, lineMatches: Array.<LineMatch> }} CodeSearchMatch
+	 */
+	/**
+	 * get all matches of the supplied search term
+	 * @param {GlideRecordGenerated} anyGr
+	 * @param {Array.<string>} fields
+	 * @param {string} term
+	 * @return {Array.<CodeSearchMatch>}
+	 */
 	getMatches: function (anyGr, fields, term) {
 		const matches = [];
 		fields.forEach(field => {
@@ -62,6 +101,17 @@ CodeSearchHandlerBase.prototype = {
 		return matches;
 	},
 
+	/**
+	 * @typedef {Object} LineMatch
+	 * @property {number} line - the line number in which the match occurred
+	 * @property {string} context - the line and the surrounding lines for visualisation on the result page
+	 */
+	/**
+	 * get matching lines of the supplied term within the supplied text
+	 * @param {string} text
+	 * @param {string} term
+	 * @return {Array.<LineMatch>}
+	 */
 	getMatchingLines: function (text, term) {
 		const lineMatches = [];
 		let scanProgress = 0;
@@ -92,13 +142,13 @@ CodeSearchHandlerBase.prototype = {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 05:14:02</sys_created_on>
         <sys_id>725f73a493b242101f07f5f08bba10ec</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>21</sys_mod_count>
         <sys_name>CodeSearchHandlerBase</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_725f73a493b242101f07f5f08bba10ec</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-13 16:07:20</sys_updated_on>
+        <sys_updated_on>2024-07-06 19:26:42</sys_updated_on>
     </sys_script_include>
 </record_update>

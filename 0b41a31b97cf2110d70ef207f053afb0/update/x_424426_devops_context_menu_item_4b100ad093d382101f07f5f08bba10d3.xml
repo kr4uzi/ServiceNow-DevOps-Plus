@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[/* global x_424426_devops, g_form, getPreference, setPreference, GlideModal, GlideModalForm, Proxy */
+/* eslint no-undef: "error" */
+(function ($context) {
+	
+	const functions = {};
+	try {
+		const extensions = [];
+		const instances = [];
+		const klass = {
+			create: function () {
+				const obj = {};
+				instances.push(obj);
+				return obj;
+			}
+		};
+
+		const script = g_form.getValue('script');
+		const extension = script.match(/Object\.extendsObject\((.+)\.(.+),/);
+		if (extension) {
+			const object = {
+				extendsObject: function (objA, objB) {
+					const dest = objA.prototype || {};
+					for (const attr in objB) {
+						dest[attr] = objB[attr];
+					}
+
+					extensions.push({ prototype: dest });
+					return dest;
+				}
+			};
+
+			const scopeProxy = new Proxy({}, {
+				get (target, property, receiver) {
+					return {};
+				}
+			});
+		
+			new Function(extension[1], 'Class', 'Object', script)(scopeProxy, klass, object);
+		} else {
+			new Function('Class', g_form.getValue('script'))(klass);
+		}
+
+		const instance = extensions.length ? extensions[0] : instances[0];
+		Object.keys(instance.prototype)
+			.filter(attr => typeof instance.prototype[attr] == 'function')
+			.forEach(attr => functions[attr] = instance.prototype[attr].toString());
+	} catch (e) {
+		return;
+	}
+	
+	var menu = new $context.window.GwtContextMenu('devops_test_menu');
+	menu.clear();
+
+	const apiName = g_form.getValue('api_name');
+	const isClientSide = g_form.getBooleanValue('client_callable');
+	const scope = g_form.getValue('sys_scope');
+	const initFunction = functions['initialize'] || '';
+	for (const name in functions) {
+		if (name != 'initialize') {
+			menu.addFunc(name, openBGS.bind(null, apiName, scope, isClientSide, name, functions[name], initFunction));
+		}
+	}
+	
+	return menu;
+	
+	function openBGS(apiName, scope, isClientSide, funcName, funcStr, initFuncStr) {
+		const _var = scope == 'global' ? 'var' : 'const';
+		let testScript = '';
+
+		if (isClientSide) {
+			// parse all getParameter('MYPARAM') - regex not ideal, but for the moment "good enough"
+			const paramNames = funcStr.matchAll(/getParameter\(["'](.+)["']\)/g);
+			const paramConfig = {};
+			for (const name of paramNames) {
+				paramConfig[name[1]] = 'tbd';
+			}
+
+			testScript += _var + ' params = ' + JSON.stringify(paramConfig, null, 2) + '\n';
+			testScript += _var + ' inst = new ' + apiName + '()\n';
+			testScript += 'int.getParameter = function (paramName) { return (paramName in params) ? params[paramName] : null; };\n';
+		} else {
+			let initArgs = [];
+			parseParamNames(initFuncStr).forEach(name => {
+				initArgs.push(name);
+				testScript += _var + ' ' + name + ' = \'tbd\';\n';
+			});
+
+			testScript += _var + ' inst = new ' + apiName + '(' + initArgs.join(', ') + ');\n';
+		}
+
+		testScript += '\n';
+		testScript += _var + ' ' + funcName + 'Res = ';
+		const params = parseParamNames(funcStr);
+		if (params.length) {
+			testScript += scope == 'global' ? '(function () {\n' : '(() => {\n';
+			testScript += '  ' + params.map(p => _var + ' ' + p + ' = \'tbd\';').join('  ') + '\n';
+			testScript += '  return inst.' + funcName + '(' + params.join(', ') + ');\n';
+			testScript += scope == 'global' ? '})()\n' : '})();\n';
+		} else {
+			testScript += 'inst.' + funcName + '();\n';
+		}
+
+		testScript += '\n';
+		testScript += 'gs.info(' + funcName + 'Res);';
+
+		const x = $context.event.screenX - 500;
+		const y = $context.event.screenY - 250;
+		const bgs = $context.window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+		bgs.addEventListener('DOMContentLoaded', function () {
+			bgs.document.getElementById('runscript').value = testScript;
+
+			bgs.setTimeout(function selectScope() {
+				const scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
+				const options = scopeSelector && scopeSelector.querySelectorAll('option');
+				for (let i = 0; options && i < options.length; i++) {
+					if (options[i].innerText == scope || options[i].value == scope) {
+						scopeSelector.value = options[i].value;
+						return;
+					}
+				}
+
+				bgs.setTimeout(selectScope, 100);
+			});
+		});
+	}
+
+	function parseParamNames(fnStr) {
+		const params = fnStr.match(/[\(]\s*\{*\s*([^\}^\)]*)\s*[^\)]*[\)]/) || [];
+		const list = (params[1] || '').trim().replace(/\/\*[^\*^\/]*\*\//g);
+		return list.match(/[\w\$]+/g) || [];
+	}
+	
+})($context);]]></client_script>
+        <condition_script><![CDATA[/* global g_form, Proxy */
+/* eslint no-undef: "error" */
+(function () {
+	
+	if (g_form.getTableName() == 'sys_script_include') {
+		try {
+			const extensions = [];
+			const instances = [];
+			const klass = {
+				create: function () {
+					const obj = {};
+					instances.push(obj);
+					return obj;
+				}
+			};
+
+			const script = g_form.getValue('script');
+			const extension = script.match(/Object\.extendsObject\((.+)\.(.+),/);
+			if (extension) {
+				const object = {
+					extendsObject: function (objA, objB) {
+						const dest = objA.prototype || {};
+						for (const attr in objB) {
+							dest[attr] = objB[attr];
+						}
+
+						extensions.push({ prototype: dest });
+						return dest;
+					}
+				};
+
+				const scopeProxy = new Proxy({}, {
+					get (target, property, receiver) {
+						return {};
+					}
+				});
+			
+				new Function(extension[1], 'Class', 'Object', script)(scopeProxy, klass, object);
+			} else {
+				new Function('Class', g_form.getValue('script'))(klass);
+			}
+			
+			if (instances.length || extensions.length) {
+				const instance = extensions.length ? extensions[0] : instances[0];
+				if (Object.keys(instance.prototype).any(attr => typeof instance.prototype[attr] == 'function' && attr != 'initialize')) {
+					// only show the menu if there is at least one real (non-initialize) function
+					return true;
+				}
+			}
+		} catch (e) {
+			// only standard classes can be currently processed
+		}
+	}
+
+	return false;
+	
+})();]]></condition_script>
+        <item_type>menu</item_type>
+        <label>test</label>
+        <order>600</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-07-05 21:49:57</sys_created_on>
+        <sys_id>4b100ad093d382101f07f5f08bba10d3</sys_id>
+        <sys_mod_count>25</sys_mod_count>
+        <sys_name>test</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_4b100ad093d382101f07f5f08bba10d3</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-07-06 21:12:22</sys_updated_on>
+        <type>header</type>
+        <use_condition>true</use_condition>
+    </x_424426_devops_context_menu_item>
+</record_update>

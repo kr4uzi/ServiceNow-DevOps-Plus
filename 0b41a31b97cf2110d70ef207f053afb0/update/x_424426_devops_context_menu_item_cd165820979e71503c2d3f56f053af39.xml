@@ -5,7 +5,7 @@
 /* eslint no-undef: "error" */
 (function ($context) {
 	let gmf;
-	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.menu.devops_currentEvent.metaKey : $context.menu.devops_currentEvent.ctrlKey;
+	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.event.metaKey : $context.event.ctrlKey;
 	const element = g_form.getGlideUIElement(g_form.getTableName() == 'ni' ? g_form.resolveNameMap($context.FIELD) : $context.FIELD);
 	if (element) {
 		if (element.type == 'table_name') {
@@ -99,14 +99,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-10-31 20:23:36</sys_created_on>
         <sys_id>cd165820979e71503c2d3f56f053af39</sys_id>
-        <sys_mod_count>37</sys_mod_count>
+        <sys_mod_count>38</sys_mod_count>
         <sys_name>open</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_cd165820979e71503c2d3f56f053af39</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 15:18:50</sys_updated_on>
+        <sys_updated_on>2024-07-06 20:41:55</sys_updated_on>
         <type>field</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

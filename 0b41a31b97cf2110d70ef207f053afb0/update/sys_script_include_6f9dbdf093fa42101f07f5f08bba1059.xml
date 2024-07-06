@@ -16,18 +16,52 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
     },
 
+	/**
+	 * test if this extension point can handle the given scope
+	 * @param {string} scopeName
+	 * @return {boolean}
+	 */
     handlesScope: function (scopeName) {
 		return true;
 	},
 
+	/**
+	 * test if this extensionpoint can handle the given table
+	 * @param {string} tableName
+	 * @return {boolean}
+	 */
 	handlesTable: function (tableName) {
 		return true;
 	},
 
-	// context.{table|fields|term|additional_filter|scope|match_class|limit}
-	// => result.{tableLabel|hits}
-	// => result.hits{name|className|matches[]|sysId}
-	// => result.hits.matches[].{line|context}
+	/**
+	 * @typedef {CodeSearchContext}
+	 * @property {string} term - the search term
+	 * @property {Array.<string>} [fields] - if all_fields is not set contains the list of fields to be searched
+	 * @property {boolean} [all_fields] - wether all fields shoud be searched
+	 * @property {string} [additional_filter] - encoded query which should be added on top of the search query
+	 * @property {string} [scope] - limit search to the supplied scope
+	 * @property {boolean} [match_table] - match sys_class_name aka do not search extending tables
+	 * @property {number} limit - search limit
+	 */
+	/**
+	 * @typedef {CodeSearchHit}
+	 * @property {string} name
+	 * @property {string} className
+	 * @property {Array.<CodeSearchMatch>} matches
+	 * @property {string} sysId
+	 */
+	/**
+	 * @typedef {CodeSearchResult}
+	 * @property {string} tableLabel
+	 * @property {Array.<CodeSearchHit>} hits
+	 */
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {CodeSearchContext} context
+	 * @return {CodeSearchResult}
+	 */
 	search: function(table, context) {
 		const dbObjectGr = new GlideRecordSecure('sys_db_object');
 		dbObjectGr.addQuery('name', table);
@@ -113,13 +147,13 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 14:24:37</sys_created_on>
         <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
-        <sys_mod_count>16</sys_mod_count>
+        <sys_mod_count>17</sys_mod_count>
         <sys_name>CodeSearchHandlerGeneral</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-13 16:39:13</sys_updated_on>
+        <sys_updated_on>2024-07-06 19:18:08</sys_updated_on>
     </sys_script_include>
 </record_update>

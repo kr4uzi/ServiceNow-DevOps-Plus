@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, console, window, GlideList2, GlideAjax */
+        <client_script><![CDATA[/* global $context, GlideList2, GlideAjax */
 /* eslint no-undef: "error" */
 (function ($context) {
 	
-	const x = window.event.screenX - 500;
-	const y = window.event.screenY - 250;
+	const x = $context.event.screenX - 500;
+	const y = $context.event.screenY - 250;
 	const list = GlideList2.get($context.LISTID);	
 	const tableName = list.getTableName();
 	
@@ -138,7 +138,7 @@
 
 			script += '\n}';
 
-			const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+			const bgs = $context.window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
 			bgs.addEventListener('DOMContentLoaded', function () {
 				bgs.document.getElementById('runscript').value = script;
 
@@ -169,7 +169,7 @@
 			if (result.status == 'success') {
 				cb(result.variable_name);
 			} else if (result.message) {
-				console.error(result.message);
+				$context.window.console.error(result.message);
 			}
 		});
 	}
@@ -182,14 +182,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-09 07:04:08</sys_created_on>
         <sys_id>59f580c697132110d70ef207f053afc5</sys_id>
-        <sys_mod_count>31</sys_mod_count>
+        <sys_mod_count>34</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_59f580c697132110d70ef207f053afc5</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-03-07 20:29:24</sys_updated_on>
+        <sys_updated_on>2024-07-06 21:11:58</sys_updated_on>
         <type>breadcrumb</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

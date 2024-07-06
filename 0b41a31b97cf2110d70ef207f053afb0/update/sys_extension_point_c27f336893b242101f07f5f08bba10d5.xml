@@ -7,10 +7,15 @@
 /* eslint no-undef: "error" */
 var CodeSearchHandler = Class.create();
 CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
-    initialize: function() {
+	initialize: function() {
 		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
-    },
+	},
 
+	/**
+	 * test if this extension point can handle the given scope
+	 * @param {string} scopeName
+	 * @return {boolean}
+	 */
     handlesScope: function (scopeName) {
 		var extScopeName = gs.getCurrentScopeName();
 		if (['rhino.global', 'global'].includes(extScopeName)) {
@@ -20,6 +25,11 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
 		return scopeName == extScopeName;
 	},
 
+	/**
+	 * test if this extensionpoint can handle the given table
+	 * @param {string} tableName
+	 * @return {boolean}
+	 */
 	handlesTable: function (tableName) {
 		var extScopeName = gs.getCurrentScopeName();
 		if (['rhino.global', 'global'].includes(extScopeName)) {
@@ -34,11 +44,13 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
 		return dbObjectGr.hasNext();
 	},
 
-	// context.{table|fields|term|additional_filter|scope|match_class|limit}
-	// => result.{tableLabel|hits}
-	// => result.hits{name|className|matches[]|sysId}
-	// => result.hits.matches[].{line|context}
-	search: function(table, context) {
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {CodeSearchContext} context
+	 * @return {CodeSearchResult}
+	 */
+	search: function (table, context) {
         var term = GlideStringUtil.escapeQueryTermSeparator(context.term);
 		var query = 'sys_id=' + term;
 		var fields = context.all_fields ? this.getFields(table) : context.fields;
@@ -103,13 +115,13 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 05:14:50</sys_created_on>
         <sys_id>c27f336893b242101f07f5f08bba10d5</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>4</sys_mod_count>
         <sys_name>CodeSearchHandler</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_extension_point_c27f336893b242101f07f5f08bba10d5</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-12 19:21:04</sys_updated_on>
+        <sys_updated_on>2024-07-06 19:26:22</sys_updated_on>
     </sys_extension_point>
 </record_update>

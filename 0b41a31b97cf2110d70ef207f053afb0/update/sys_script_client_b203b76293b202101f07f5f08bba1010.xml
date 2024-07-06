@@ -14,7 +14,7 @@ Note: Only added for OOTB save UI Actions (not on insert, because this will effe
         <script><![CDATA[function onSubmit() {
 	try {
 		var config = g_scratchpad.devops_plus;
-		if (config && config.add_scope_on_save) {
+		if (config && config.add_scope_on_save && !config.is_dev_studio) {
 			var action = g_form.getActionName();
 			if (action && action.startsWith('sysverb_update')) {
 				g_form.getFormElement().sysparm_record_scope.value = config.record_scope;
@@ -30,7 +30,7 @@ Note: Only added for OOTB save UI Actions (not on insert, because this will effe
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>b203b76293b202101f07f5f08bba1010</sys_id>
-        <sys_mod_count>13</sys_mod_count>
+        <sys_mod_count>15</sys_mod_count>
         <sys_name>DevOps+ Set Record Scope</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -38,7 +38,7 @@ Note: Only added for OOTB save UI Actions (not on insert, because this will effe
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_client_b203b76293b202101f07f5f08bba1010</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-18 10:17:36</sys_updated_on>
+        <sys_updated_on>2024-07-06 21:14:21</sys_updated_on>
         <table>sys_metadata</table>
         <type>onSubmit</type>
         <ui_type>0</ui_type>
