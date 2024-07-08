@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global x_424426_devops, g_form, getPreference, setPreference, GlideModal, GlideModalForm, Proxy */
+        <client_script><![CDATA[/* global $context, g_form, getPreference, setPreference, GlideModal, GlideModalForm, Proxy */
 /* eslint no-undef: "error" */
 (function ($context) {
 	
@@ -18,8 +18,8 @@
 		};
 
 		const script = g_form.getValue('script');
-		const extension = script.match(/Object\.extendsObject\((.+)\.(.+),/);
-		if (extension) {
+		const extendMatch = script.match(/Object\.extendsObject\((.+),/);
+		if (extendMatch) {
 			const object = {
 				extendsObject: function (objA, objB) {
 					const dest = objA.prototype || {};
@@ -32,13 +32,11 @@
 				}
 			};
 
-			const scopeProxy = new Proxy({}, {
-				get (target, property, receiver) {
-					return {};
-				}
-			});
-		
-			new Function(extension[1], 'Class', 'Object', script)(scopeProxy, klass, object);
+			const extend = {};
+			let lastExtendObj = extend;
+			const path = extendMatch[1].split('.');
+			path.slice(1).forEach(obj => lastExtendObj = (lastExtendObj[obj] = {}));
+			new Function(path[0], 'Class', 'Object', script)(extend, klass, object);
 		} else {
 			new Function('Class', g_form.getValue('script'))(klass);
 		}
@@ -78,7 +76,7 @@
 				paramConfig[name[1]] = 'tbd';
 			}
 
-			testScript += _var + ' params = ' + JSON.stringify(paramConfig, null, 2) + '\n';
+			testScript += _var + ' params = ' + JSON.stringify(paramConfig, null, 2) + ';\n';
 			testScript += _var + ' inst = new ' + apiName + '()\n';
 			testScript += 'int.getParameter = function (paramName) { return (paramName in params) ? params[paramName] : null; };\n';
 		} else {
@@ -151,8 +149,8 @@
 			};
 
 			const script = g_form.getValue('script');
-			const extension = script.match(/Object\.extendsObject\((.+)\.(.+),/);
-			if (extension) {
+			const extendMatch = script.match(/Object\.extendsObject\((.+),/);
+			if (extendMatch) {
 				const object = {
 					extendsObject: function (objA, objB) {
 						const dest = objA.prototype || {};
@@ -165,13 +163,11 @@
 					}
 				};
 
-				const scopeProxy = new Proxy({}, {
-					get (target, property, receiver) {
-						return {};
-					}
-				});
-			
-				new Function(extension[1], 'Class', 'Object', script)(scopeProxy, klass, object);
+				const extend = {};
+				let lastExtendObj = extend;
+				const path = extendMatch[1].split('.');
+				path.slice(1).forEach(obj => lastExtendObj = (lastExtendObj[obj] = {}));
+				new Function(path[0], 'Class', 'Object', script)(extend, klass, object);
 			} else {
 				new Function('Class', g_form.getValue('script'))(klass);
 			}
@@ -198,14 +194,14 @@
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-07-05 21:49:57</sys_created_on>
         <sys_id>4b100ad093d382101f07f5f08bba10d3</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>32</sys_mod_count>
         <sys_name>test</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_4b100ad093d382101f07f5f08bba10d3</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 21:12:22</sys_updated_on>
+        <sys_updated_on>2024-07-08 08:40:11</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
