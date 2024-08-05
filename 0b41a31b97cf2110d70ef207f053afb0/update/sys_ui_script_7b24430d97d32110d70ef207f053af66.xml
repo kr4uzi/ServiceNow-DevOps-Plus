@@ -17,6 +17,8 @@ x_424426_devops.context_menu = (function() {
 	}
 
 	let bcm = null; // breadcrumb context menu
+	// header context menu is always either headerGCM (Service Catalog) or gcmSection (non-SC Forms)
+	// element context menu is always gcm
 	let $window, $config;	
 	x_424426_devops.loader.get('window', function (_window) {
 		inject($window = _window, $config);
@@ -216,7 +218,7 @@ x_424426_devops.context_menu = (function() {
 				g_form: g_form
 			};
 
-			buildMenu($window.gcm, 'devops_header_menu', $config.headerItems, $context);
+			buildMenu(headerMenu, 'devops_header_menu', $config.headerItems, $context);
 		}
 	}
 
@@ -281,14 +283,14 @@ x_424426_devops.context_menu = (function() {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>115</sys_mod_count>
+        <sys_mod_count>116</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-29 21:06:12</sys_updated_on>
+        <sys_updated_on>2024-07-31 15:11:32</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
