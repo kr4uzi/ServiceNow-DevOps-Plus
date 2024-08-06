@@ -1,25 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global g_form, GlideModalForm, devStudioAPI */
+        <client_script><![CDATA[/* global $context, GlideAjax, g_form, GlideModalForm, devStudioAPI, navigator, g_navigation, setTimeout, clearTimeout */
 /* eslint no-undef: "error" */
-(function () {
-	
-	var tableName = g_form.getTableName();
-	var gmf = new GlideModalForm('Filter: ' + tableName, tableName + '_list', function () {
-		// on render callback
-	}, false);
-	gmf.addParm('sysparm_query', 'sys_id=' + g_form.getUniqueValue());
-	
-	// if in Studio, add the currently selected scoped so that
-	// the translations are created in the currently selected application
-	if (typeof devStudioAPI !== "undefined") {
-		gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+(function ($context) {
+
+	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.event.metaKey : $context.event.ctrlKey;
+	const tableName = g_form.getTableName();
+	if (openInWindow) {
+		g_navigation.openPopup('nav_to.do?uri=' + tableName + '_list.do?sysparm_query=sys_id%3D' + g_form.getUniqueValue());
+	} else {
+		getFields(tableName, function (oldFields, newFields) {
+			setFields(tableName, newFields, function () {
+				openModal(tableName, function () {
+					setFields(tableName, oldFields);
+				});
+			});
+		});
+	}
+
+	function openModal(tableName, cb) {
+		var cbCalled = false;
+		var timeoutId = setTimeout(function () {
+			cbCalled = true;
+			cb();
+		}, 500);
+		var gmf = new GlideModalForm('Filter: ' + tableName, tableName + '_list', function () {
+			// on render callback
+			if (!cbCalled) {
+				clearTimeout(timeoutId);
+				cb();
+			}
+		}, false);
+		gmf.addParm('sysparm_query', 'sys_id=' + g_form.getUniqueValue());
+		
+		// if in Studio, add the currently selected scoped so that
+		// the translations are created in the currently selected application
+		if (typeof devStudioAPI !== "undefined") {
+			gmf.addParm("sysparm_transaction_scope", devStudioAPI.appMetadata.APP_ID);
+		}
+		
+		gmf.render();
+	}
+
+	function setFields(tableName, fields, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'createListMechanic');
+		ga.addParam('sysparm_table', tableName);
+		ga.addParam('sysparm_f', fields.join(','));
+		ga.addParam('sysparm_synch', true);
+		ga.addParam('sysparm_changes', true);
+		ga.getXMLAnswer(function () {
+			if (cb) {
+				cb();
+			}
+		});
+	}
+
+	function getFields(tableName, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'getList');
+		ga.addParam('sysparm_table', tableName);
+		ga.getXML(function (request) {
+			var xml = request.responseXML.documentElement;
+			var selectedFields = xml.querySelectorAll('selected choice');
+			var oldFields = [];
+			for (var i = 0; i < selectedFields.length; i++) {
+				oldFields.push(selectedFields[i].getAttribute('value'));
+			}
+
+			var newFields = [];
+			var selectableFields = xml.querySelectorAll('columns choice');
+			for (var i = 0; i < selectableFields.length; i++) {
+				var field = selectableFields[i].getAttribute('value');
+				newFields.push(field);
+			}
+
+			cb(oldFields, newFields);
+		});
 	}
 	
-	gmf.render();
-	
-})();]]></client_script>
+})($context);]]></client_script>
         <condition_script><![CDATA[/* global g_form */
 /* eslint no-undef: "error" */
 (function () {
@@ -35,14 +96,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:32:18</sys_created_on>
         <sys_id>4f9266d997d32110d70ef207f053af60</sys_id>
-        <sys_mod_count>8</sys_mod_count>
+        <sys_mod_count>14</sys_mod_count>
         <sys_name>filter (sys_id)</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_4f9266d997d32110d70ef207f053af60</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-11 13:36:00</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-08-06 17:38:22</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

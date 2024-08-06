@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[/* global $context, GlideList2, GlideAjax, prompt */
+/* eslint no-undef: "error" */
+(function ($context) {
+	
+	const list = GlideList2.get($context.LISTID);	
+	const tableName = list.getTableName();
+	getFields(tableName, function (selected, available) {
+		var result = prompt('Set new filter', selected.join(','));
+		if (result != null) {
+			const resultList = result
+				.split(',')
+				.map(function (f) { return f.trim(); })
+				.filter(function (f) { return f && available.includes(f.split('.')[0]); });
+			setFields(tableName, resultList, function () {
+				list.refresh();
+			});
+		}
+	});
+
+	function getFields(tableName, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'getList');
+		ga.addParam('sysparm_table', tableName);
+		ga.getXML(function (request) {
+			var xml = request.responseXML.documentElement;
+			var selectedFields = xml.querySelectorAll('selected choice');
+			var oldFields = [];
+			for (var i = 0; i < selectedFields.length; i++) {
+				oldFields.push(selectedFields[i].getAttribute('value'));
+			}
+
+			var available = [].concat(oldFields);
+			var allFields = xml.querySelectorAll('columns choice');
+			for (var i = 0; i < allFields.length; i++) {
+				available.push(allFields[i].getAttribute('value'));
+			}
+
+			cb(oldFields, available);
+		});
+	}
+
+	function setFields(tableName, fields, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'createListMechanic');
+		ga.addParam('sysparm_table', tableName);
+		ga.addParam('sysparm_f', fields.join(','));
+		ga.addParam('sysparm_synch', true);
+		ga.addParam('sysparm_changes', true);
+		ga.getXMLAnswer(function () {
+			cb();
+		});
+	}
+	
+})($context);]]></client_script>
+        <condition_script/>
+        <item_type>link</item_type>
+        <label>setColumns</label>
+        <order>300</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-08-06 17:30:27</sys_created_on>
+        <sys_id>f495316a93734a10e02873718bba105d</sys_id>
+        <sys_mod_count>5</sys_mod_count>
+        <sys_name>setColumns</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_f495316a93734a10e02873718bba105d</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-08-06 17:39:56</sys_updated_on>
+        <type>breadcrumb</type>
+        <use_condition>false</use_condition>
+    </x_424426_devops_context_menu_item>
+</record_update>

@@ -37,19 +37,24 @@ x_424426_devops.app_metadata = (function() {
 	
 	function infuse($window) {
 		const g_form = $window.g_form;
-		if (!g_form || !g_form.getUniqueValue() || !$window.g_scratchpad || !$window.g_scratchpad.devops_plus) {
+		if (!g_form || !g_form.getUniqueValue() || !$window.g_scratchpad) {
+			return;
+		}
+
+		const devOpsConfig = $window.g_scratchpad.devops_plus;
+		if (!devOpsConfig || devOpsConfig.action.startsWith('merge_form_current_version')) {
 			return;
 		}
 		
 		const METADATA_TABLE_SYLE_SHEET_SYS_ID = '877dbaa697c886903c2d3f56f053afd8';
-		const canWrite = $window.g_scratchpad.devops_plus.can_write;
+		const canWrite = devOpsConfig.can_write;
 		const element = $window.document.createElement('link');
 		element.rel = 'stylesheet';
 		element.href = METADATA_TABLE_SYLE_SHEET_SYS_ID + '.cssdbx?v=1';
 		$window.document.head.appendChild(element);
 		
 		// we only need to show fields which aren't visible on the form
-		const fields = $window.g_scratchpad.devops_plus.fields.filter(f => {
+		const fields = devOpsConfig.fields.filter(f => {
 			return !g_form.isFieldVisible(f.name);
 		});
 		
@@ -154,14 +159,14 @@ x_424426_devops.app_metadata = (function() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:41:06</sys_created_on>
         <sys_id>e8a48fda974846903c2d3f56f053af89</sys_id>
-        <sys_mod_count>46</sys_mod_count>
+        <sys_mod_count>47</sys_mod_count>
         <sys_name>x_424426_devops.app_metadata</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_e8a48fda974846903c2d3f56f053af89</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-29 22:29:01</sys_updated_on>
+        <sys_updated_on>2024-08-06 16:44:33</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>
