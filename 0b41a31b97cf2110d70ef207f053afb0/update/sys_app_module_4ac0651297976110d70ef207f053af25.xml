@@ -17,6 +17,7 @@
         <override_menu_roles>true</override_menu_roles>
         <query>x_424426_devops_admins.do</query>
         <report/>
+        <require_confirmation>false</require_confirmation>
         <roles>x_424426_devops.devops_admin</roles>
         <sys_class_name>sys_app_module</sys_class_name>
         <sys_created_by>admin</sys_created_by>

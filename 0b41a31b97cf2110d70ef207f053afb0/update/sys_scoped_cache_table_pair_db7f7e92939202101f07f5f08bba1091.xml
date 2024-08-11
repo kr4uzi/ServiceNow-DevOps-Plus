@@ -2,7 +2,7 @@
     <sys_scoped_cache_table_pair action="INSERT_OR_UPDATE">
         <columns/>
         <pair_type>table</pair_type>
-        <scoped_cache display_value="devops_plus_code_search_tables">621f3692939202101f07f5f08bba1012</scoped_cache>
+        <scoped_cache display_value="devops_plus_code_sorted_tables">621f3692939202101f07f5f08bba1012</scoped_cache>
         <sys_class_name>sys_scoped_cache_table_pair</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-05-23 14:32:46</sys_created_on>

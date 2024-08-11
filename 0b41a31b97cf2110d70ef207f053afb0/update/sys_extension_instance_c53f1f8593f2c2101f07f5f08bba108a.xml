@@ -3,7 +3,7 @@
         <active>true</active>
         <order>100</order>
         <point>x_424426_devops.CodeSearchHandler</point>
-        <script_include display_value="CodeSearchHandlerWorkflow">cd3f1f8593f2c2101f07f5f08bba1087</script_include>
+        <script_include display_value="CodeSearchHandlerWF">cd3f1f8593f2c2101f07f5f08bba1087</script_include>
         <sys_class_name>sys_extension_instance</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:09:28</sys_created_on>

@@ -7,7 +7,6 @@
         <grantable>true</grantable>
         <includes_roles/>
         <name>x_424426_devops.devops_admin</name>
-        <requires_subscription>-1</requires_subscription>
         <scoped_admin>true</scoped_admin>
         <suffix>devops_admin</suffix>
         <sys_class_name>sys_user_role</sys_class_name>

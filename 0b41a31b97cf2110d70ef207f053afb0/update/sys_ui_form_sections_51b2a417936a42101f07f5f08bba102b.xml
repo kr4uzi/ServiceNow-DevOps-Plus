@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_ui_form_sections form_id="51b2a417936a42101f07f5f08bba102b" sys_domain="global" table="sys_hub_step_ext_output" version="3">
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>0</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>d1b2a417936a42101f07f5f08bba103f</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">9db2a417936a42101f07f5f08bba1038</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>1</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>11b2a417936a42101f07f5f08bba1045</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">d5b2a417936a42101f07f5f08bba103f</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>2</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>d1b2a417936a42101f07f5f08bba1031</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">59b2a417936a42101f07f5f08bba102d</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>3</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>11b2a417936a42101f07f5f08bba1035</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">d5b2a417936a42101f07f5f08bba1031</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>4</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>99b2a417936a42101f07f5f08bba1038</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">15b2a417936a42101f07f5f08bba1035</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form_section action="INSERT_OR_UPDATE">
+            <position>5</position>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:33</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>2db2a417936a42101f07f5f08bba1048</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_overrides/>
+            <sys_ui_form display_value="sys_hub_step_ext_output" name="sys_hub_step_ext_output" sys_domain="global" view="7966be310a0a0b8c00bd504090503227">51b2a417936a42101f07f5f08bba102b</sys_ui_form>
+            <sys_ui_section display_value="">15b2a417936a42101f07f5f08bba1045</sys_ui_section>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:33</sys_updated_on>
+        </sys_ui_form_section>
+        <sys_ui_form action="INSERT_OR_UPDATE">
+            <name>sys_hub_step_ext_output</name>
+            <roles/>
+            <sys_class_name>sys_ui_form</sys_class_name>
+            <sys_created_by>markus.kraus</sys_created_by>
+            <sys_created_on>2024-06-07 15:56:32</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_id>51b2a417936a42101f07f5f08bba102b</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>sys_hub_step_ext_output</sys_name>
+            <sys_overrides/>
+            <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+            <sys_update_name>sys_ui_form_sections_51b2a417936a42101f07f5f08bba102b</sys_update_name>
+            <sys_updated_by>markus.kraus</sys_updated_by>
+            <sys_updated_on>2024-06-07 15:56:32</sys_updated_on>
+            <sys_user/>
+            <view display_value="Advanced" name="advanced">7966be310a0a0b8c00bd504090503227</view>
+            <view_name/>
+        </sys_ui_form>
+    </sys_ui_form_sections>
+</record_update>

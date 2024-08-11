@@ -69,5 +69,9 @@ function devops_openRecordVersions() {
         <table>sys_metadata</table>
         <ui11_compatible>false</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
+        <x_376096_pxp_client_script/>
+        <x_376096_pxp_enabled>false</x_376096_pxp_enabled>
+        <x_376096_pxp_list_disabled_condition/>
+        <x_376096_pxp_list_label/>
     </sys_ui_action>
 </record_update>
