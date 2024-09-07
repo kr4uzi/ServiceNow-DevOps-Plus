@@ -27,7 +27,9 @@
         <rest_service_text/>
         <rest_variables/>
         <role_conditions>x_424426_devops.devops_user</role_conditions>
-        <script><![CDATA[/* global gs, g_scratchpad, current, previous, gs, GlideTableHierarchy, x_424426_devops, RP */
+        <script><![CDATA[/* global current, previous */
+/* global gs, x_424426_devops */
+/* global g_scratchpad, GlideTableHierarchy, GlideStringUtil, RP */
 /* eslint no-undef: "error" */
 (function executeRule(current, previous /*null when async*/) {
 
@@ -61,6 +63,8 @@
 							
 							if (field.type == 'reference') {
 								field.table_name = fieldElement.getReferenceTable();
+							} else if (field.type == 'string') {
+								field.display_value = GlideStringUtil.newLinesToBreaks(field.display_value);
 							}
 							
 							if (tables.indexOf('sys_metadata') != -1 && fieldName == 'sys_scope' && current.getValue('sys_scope') != gs.getCurrentApplicationId()) {
@@ -85,7 +89,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>d0cae139975b2110d70ef207f053af6c</sys_id>
-        <sys_mod_count>54</sys_mod_count>
+        <sys_mod_count>56</sys_mod_count>
         <sys_name>DevOps+ Generate Scratchpad</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -93,7 +97,7 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_d0cae139975b2110d70ef207f053af6c</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-08-06 16:42:57</sys_updated_on>
+        <sys_updated_on>2024-08-27 10:12:02</sys_updated_on>
         <template/>
         <when>before_display</when>
     </sys_script>

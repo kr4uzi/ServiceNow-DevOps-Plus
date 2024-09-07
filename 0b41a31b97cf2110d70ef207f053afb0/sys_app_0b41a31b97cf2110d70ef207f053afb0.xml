@@ -13,7 +13,7 @@
         <license_category>none</license_category>
         <license_definition/>
         <license_model>none</license_model>
-        <logo>f50fd7cf930602101f07f5f08bba10a8</logo>
+        <logo>75360e3c93a05e90e02873718bba1053</logo>
         <menu display_value="DevOps+">ae7ed61997d32110d70ef207f053af89</menu>
         <name>DevOps+</name>
         <package_json/>
@@ -38,16 +38,55 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-01 09:58:19</sys_created_on>
         <sys_id>0b41a31b97cf2110d70ef207f053afb0</sys_id>
-        <sys_mod_count>39</sys_mod_count>
+        <sys_mod_count>41</sys_mod_count>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-08-11 21:04:02</sys_updated_on>
+        <sys_updated_on>2024-09-07 15:07:41</sys_updated_on>
         <template/>
         <trackable>true</trackable>
         <uninstall_blocked>false</uninstall_blocked>
         <user_role display_value="x_424426_devops.devops_user" name="x_424426_devops.devops_user">ada2cbc997d32110d70ef207f053af7f</user_role>
         <vendor/>
         <vendor_prefix/>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
     </sys_app>
     <sys_translated_text action="delete_multiple" query="documentkey=0b41a31b97cf2110d70ef207f053afb0"/>
+    <sys_attachment action="INSERT_OR_UPDATE">
+        <average_image_color>#50505</average_image_color>
+        <chunk_size_bytes>700000</chunk_size_bytes>
+        <compressed>true</compressed>
+        <content_type>image/png</content_type>
+        <file_name>logo</file_name>
+        <hash>34f398cda5a37f6d3f342fbbb90bafad8621cf33dd1cad98d0c51b335fc29b29</hash>
+        <image_height>128</image_height>
+        <image_width>128</image_width>
+        <size_bytes>2091</size_bytes>
+        <size_compressed>2052</size_compressed>
+        <state>available</state>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-09-07 14:52:04</sys_created_on>
+        <sys_id>75360e3c93a05e90e02873718bba1053</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-09-07 14:52:05</sys_updated_on>
+        <table_name>ZZ_YYsys_app</table_name>
+        <table_sys_id>0b41a31b97cf2110d70ef207f053afb0</table_sys_id>
+    </sys_attachment>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>H4sIAAAAAAAA/w==</data>
+        <length>16</length>
+        <position>0</position>
+        <sys_attachment display_value="logo" sys_id="75360e3c93a05e90e02873718bba1053">75360e3c93a05e90e02873718bba1053</sys_attachment>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-09-07 14:52:04</sys_created_on>
+        <sys_id>b5360e3c93a05e90e02873718bba1053</sys_id>
+    </sys_attachment_doc>
+    <sys_attachment_doc action="INSERT_OR_UPDATE">
+        <data>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</data>
+        <length>2724</length>
+        <position>1</position>
+        <sys_attachment display_value="logo" sys_id="75360e3c93a05e90e02873718bba1053">75360e3c93a05e90e02873718bba1053</sys_attachment>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-09-07 14:52:04</sys_created_on>
+        <sys_id>39360e3c93a05e90e02873718bba1053</sys_id>
+    </sys_attachment_doc>
 </record_update>

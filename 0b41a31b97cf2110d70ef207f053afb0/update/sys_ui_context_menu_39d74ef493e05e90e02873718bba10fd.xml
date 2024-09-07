@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_context_menu">
+    <sys_ui_context_menu action="INSERT_OR_UPDATE">
+        <action_script><![CDATA[/**
+ * Script executed on the Client for this menu action
+ *
+ * The following variables are available to the script:
+ *    'g_list' the GlideList2 that the script is running against (only valid for List context menus)
+ *    'g_fieldName' the name of the field that the context menu is running against (only valid for List context menus)
+ *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
+ *    'g_sysId' the sys_id of the row or form that the script is running against
+ *    'rowSysId' is also set to the sys_id of the row to support legacy actions, but g_sysId is preferred
+ */
+/* global g_list, GlideModal, GlideAjax */
+/* eslint no-undef: "error" */
+(function () {
+	
+	var list = g_list;
+	var tableName = list.getTableName();
+	getFields(tableName, function (selected, available, params) {
+		var ga = new GlideModal('x_424426_devops_input_dialog');
+		ga.setTitle('Personalize List Columns'); 
+		ga.setPreference('value', selected.join(','));
+		ga.setPreference('onPromptComplete', setColumns.bind(g_list));
+		ga.render();
+
+		function setColumns(columns) {
+			columns = columns.trim();
+			if (columns) {
+				var resultList = columns
+					.split(',')
+					.map(function (f) { return f.trim(); })
+					.filter(function (f) { return f && available.includes(f.split('.')[0]); });
+				setFields(tableName, resultList, params, function () {
+					list.refresh();
+				});
+			}
+		}
+	});
+
+	function getFields(tableName, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'getList');
+		ga.addParam('sysparm_table', tableName);
+		ga.getXML(function (request) {
+			var xml = request.responseXML.documentElement;
+			var params = {};
+			var choiceSet = xml.querySelector('choice_list_set');
+			choiceSet.getAttributeNames().forEach(function (name) {
+				params[name.replace(/^(list_|table.)/, '')] = choiceSet.getAttribute(name);
+			});
+
+			var selectedFields = xml.querySelectorAll('selected choice');
+			var oldFields = [];
+			for (var i = 0; i < selectedFields.length; i++) {
+				oldFields.push(selectedFields[i].getAttribute('value'));
+			}
+
+			var available = [].concat(oldFields);
+			var allFields = xml.querySelectorAll('columns choice');
+			for (var i = 0; i < allFields.length; i++) {
+				available.push(allFields[i].getAttribute('value'));
+			}
+
+			cb(oldFields, available, params);
+		});
+	}
+
+	function setFields(tableName, fields, params, cb) {
+		var ga = new GlideAjax('global.UIPage').setScope('global');
+		ga.addParam('sysparm_name', 'createListMechanic');
+		ga.addParam('sysparm_table', tableName);
+		ga.addParam('sysparm_f', fields.join(','));
+		ga.addParam('sysparm_synch', true);
+		ga.addParam('sysparm_changes', true);
+		for (var param in params) {
+			ga.addParam('sysparm_' + param, params[param]);
+		}
+		ga.getXMLAnswer(function () {
+			cb();
+		});
+	}
+	
+})();]]></action_script>
+        <active>true</active>
+        <comments/>
+        <condition/>
+        <do_not_cache>false</do_not_cache>
+        <dynamic_actions_script><![CDATA[/** 
+ * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
+ * 
+ * The following variables are available to the script: 
+ *    'g_tableName' the name of the current table 
+ *    'g_listId' the id of the list we are building the context menu for 
+ *    'g_itemName' the name of the UI Context Menu item we are building 
+ *    'g_itemOrder' the order defined in the UI Context Menu item we are building 
+ * 
+ * Add items to the context menu by calling: 
+ *    g_contextMenu.addAction(item_id, label, script_string, order); 
+ */]]></dynamic_actions_script>
+        <menu>list_title</menu>
+        <name>setColumns</name>
+        <on_show_script><![CDATA[/**
+ * This client-side script is used to dynamically change the context menu before it is displayed.
+ * It is called before showing the context menu if the Run onShow script flag is checked.
+ *
+ * The following variables are available to the script:
+ *    'g_menu' the context menu that is about to be shown
+ *    'g_item' the current context menu item
+ *    'g_list' the GlideList2 that the script is running against (only valid for List context menus)
+ *    'g_fieldName' the name of the field that the context menu is running against (only valid for List context menus)
+ *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
+ *    'g_sysId' the sys_id of the row or form that the script is running against
+ */
+ 
+]]></on_show_script>
+        <order>1050</order>
+        <parent display_value="DevOps+">384fcd3197372110d70ef207f053afd6</parent>
+        <run_on_show_script>false</run_on_show_script>
+        <sys_class_name>sys_ui_context_menu</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-09-07 14:59:10</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>39d74ef493e05e90e02873718bba10fd</sys_id>
+        <sys_mod_count>5</sys_mod_count>
+        <sys_name>setColumns</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_context_menu_39d74ef493e05e90e02873718bba10fd</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-09-07 15:06:40</sys_updated_on>
+        <table>global</table>
+        <track_selected>false</track_selected>
+        <type>action</type>
+    </sys_ui_context_menu>
+</record_update>
