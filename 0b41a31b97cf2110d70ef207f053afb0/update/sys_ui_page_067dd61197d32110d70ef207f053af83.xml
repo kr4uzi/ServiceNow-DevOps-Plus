@@ -196,7 +196,10 @@ function addTable(tableName, hits, open, searchTerm) {
 			matchCode.classList.add('javascript', 'hljs');
 			
 			var lastLine = null;
-			match.lineMatches.sort(function (a, b) { return a.line - b.line; }).forEach(function (line) {
+			match.lineMatches
+				.sort(function (a, b) { return a.line - b.line; })
+				.filter(function (match, pos, matches) { return matches.findIndex(m => m.line == match.line) == pos; })
+				.forEach(function (line) {
 				if (lastLine && (lastLine < (line.line - 1))) {
 					matchCode.append(document.createElement('br'));
 				}
@@ -388,13 +391,24 @@ function searchTable(table, context, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>68</sys_mod_count>
+        <sys_mod_count>69</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 12:30:56</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:29:22</sys_updated_on>
     </sys_ui_page>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>067dd61197d32110d70ef207f053af83</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-04 13:40:06</sys_created_on>
+        <sys_id>95f1acef836d5e100971c810feaad30f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-04 13:40:06</sys_updated_on>
+        <table>sys_ui_page</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

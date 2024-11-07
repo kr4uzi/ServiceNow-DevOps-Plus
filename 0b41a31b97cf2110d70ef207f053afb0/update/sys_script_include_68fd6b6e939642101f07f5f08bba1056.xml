@@ -6,7 +6,9 @@
         <caller_access/>
         <client_callable>true</client_callable>
         <description/>
+        <mobile_callable>false</mobile_callable>
         <name>RevertUtil</name>
+        <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global Class, global, gs, GlideRecordSecure, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var RevertUtil = Class.create();
@@ -78,55 +80,46 @@ RevertUtil.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 		const businessRules = this.getParameter('business_rules') == 'true';
 		if (table && sysID && checkpoint && gs.tableExists(table)) {
 			const oldValues = this._getRevertValues(table, sysID, checkpoint);			
-			const dbObjectGr = new GlideRecordSecure('sys_db_object');
-			dbObjectGr.addQuery('name', table);
-			dbObjectGr.setLimit(1);
-			dbObjectGr.query();
-			if (dbObjectGr.next()) {
-				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-				scriptGr.setLimit(1);
-				scriptGr.query();
-				if (scriptGr.next()) {
-					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
-					scriptGr.script = `
-						(function (table, sys_id, values, runBusinessRules) {
+			const scriptGr = new GlideRecordSecure('clone_cleanup_script');
+			scriptGr.addQuery('sys_scope', 'global');
+			scriptGr.setLimit(1);
+			scriptGr.query();
+			if (scriptGr.next()) {
+				scriptGr.script = `
+					(function (table, sys_id, values, runBusinessRules) {
 
-							var recordGr = new GlideRecordSecure(table);
-							recordGr.addQuery('sys_id', sys_id);
-							recordGr.setLimit(1);
-							recordGr.query();
-							if (recordGr.next()) {
-								for (var key in values) {
-									recordGr.setValue(key, values[key]);
-								}
-
-								if (!runBusinessRules) {
-									recordGr.setWorkflow(false);
-								}
-
-								return recordGr.update();
+						var recordGr = new GlideRecordSecure(table);
+						recordGr.addQuery('sys_id', sys_id);
+						recordGr.setLimit(1);
+						recordGr.query();
+						if (recordGr.next()) {
+							for (var key in values) {
+								recordGr.setValue(key, values[key]);
 							}
 
-						})(table, sys_id, JSON.parse(values), runBusinessRules);
-					`;
+							if (!runBusinessRules) {
+								recordGr.setWorkflow(false);
+							}
 
-					const updateResult = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-						table: table,
-						sys_id: sysID,
-						values: JSON.stringify(oldValues),
-						runBusinessRules: businessRules
-					});
+							return recordGr.update();
+						}
 
-					result.status = updateResult ? 'success' : 'error';
-					if (result.status == 'error') {
-						result.message = 'Failed to update record';
-					}
-				} else {
-					result.message = gs.getMessage('Cannot update record');
+					})(table, sys_id, JSON.parse(values), runBusinessRules);
+				`;
+
+				const updateResult = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+					table: table,
+					sys_id: sysID,
+					values: JSON.stringify(oldValues),
+					runBusinessRules: businessRules
+				});
+
+				result.status = updateResult ? 'success' : 'error';
+				if (result.status == 'error') {
+					result.message = 'Failed to update record';
 				}
 			} else {
-				result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+				result.message = gs.getMessage('Cannot update record');
 			}
 		} else {
 			result.message = gs.getMessage('devops_invalid_parameters');
@@ -160,13 +153,24 @@ RevertUtil.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-05-24 13:10:56</sys_created_on>
         <sys_id>68fd6b6e939642101f07f5f08bba1056</sys_id>
-        <sys_mod_count>25</sys_mod_count>
+        <sys_mod_count>26</sys_mod_count>
         <sys_name>RevertUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_68fd6b6e939642101f07f5f08bba1056</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-05-24 22:52:29</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:14:57</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>68fd6b6e939642101f07f5f08bba1056</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 13:14:57</sys_created_on>
+        <sys_id>82f8ff1c83f516900971c810feaad3cf</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 13:14:57</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

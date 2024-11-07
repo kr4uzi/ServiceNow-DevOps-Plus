@@ -6,7 +6,9 @@
         <caller_access/>
         <client_callable>true</client_callable>
         <description/>
+        <mobile_callable>false</mobile_callable>
         <name>ContextMenuUtilClient</name>
+        <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global global, gs */
 /* global Class, GlideRecordSecure, GlideTableHierarchy, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
@@ -37,42 +39,37 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
 				return JSON.stringify(result);
 			}
 
-			const tableGr = new GlideRecordSecure('sys_db_object');
-			tableGr.addQuery('name', table);
-			tableGr.setLimit(1);
-			tableGr.query();
-			if (tableGr.next()) {
-				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-				scriptGr.setLimit(1);
-				scriptGr.query();
-				if (scriptGr.next()) {
-					scriptGr.sys_scope = tableGr.sys_scope.toString();
-					scriptGr.script = `
-						(function (table, elements) {
-							var attributes = {};
-							var anyGr = new GlideRecordSecure(table);
-							for (var name in elements) {
-								var element = anyGr.getElement(name);
-								if (element != null) {
-									attributes[name] = {};
-									elements[name].forEach(function (attr) {
-										attributes[name][attr] = element.getAttribute(attr);
-									});
-								}
+			const scriptGr = new GlideRecordSecure('clone_cleanup_script');
+			scriptGr.addQuery('sys_scope', 'global');
+			scriptGr.setLimit(1);
+			scriptGr.query();
+			if (scriptGr.next()) {
+				scriptGr.script = `
+					(function (table, elements) {
+						var attributes = {};
+						var anyGr = new GlideRecordSecure(table);
+						for (var name in elements) {
+							var element = anyGr.getElement(name);
+							if (element != null) {
+								attributes[name] = {};
+								elements[name].forEach(function (attr) {
+									attributes[name][attr] = element.getAttribute(attr);
+								});
 							}
+						}
 
-							return JSON.stringify(attributes);
-						})(table, JSON.parse(elements));`;
-					
-					result.attributes = JSON.parse(new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-						table: table,
-						elements: JSON.stringify(elements)
-					}));
+						return JSON.stringify(attributes);
+					})(table, JSON.parse(elements));`;
+				
+				result.attributes = JSON.parse(new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
+					table: table,
+					elements: JSON.stringify(elements)
+				}));
 
+				if (result.attributes) {
 					result.status = 'success';
 				} else {
-					result.message = gs.getMessage('devops_record_unauthorized_or_invalid_record');
+					result.message = 'Failed to gather field attributes';
 				}
 			} else {
 				result.message = 'Script execution not possible!';
@@ -124,12 +121,11 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
 		const table = this.getParameter('table');
 		const field = this.getParameter('field');
 		if (table && gs.tableExists(table) && field) {
-			const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-			scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+			const scriptGr = new GlideRecordSecure('clone_cleanup_script');
+			scriptGr.addQuery('sys_scope', 'global');
 			scriptGr.setLimit(1);
 			scriptGr.query();
 			if (scriptGr.next()) {
-				scriptGr.sys_scope = 'global';
 				scriptGr.script = `
 					(function () {
 						var choices = [];
@@ -202,13 +198,24 @@ ContextMenuUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-11-13 10:56:29</sys_created_on>
         <sys_id>b78a5da897a231103c2d3f56f053af17</sys_id>
-        <sys_mod_count>16</sys_mod_count>
+        <sys_mod_count>19</sys_mod_count>
         <sys_name>ContextMenuUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b78a5da897a231103c2d3f56f053af17</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-05 16:15:31</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:20:52</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>b78a5da897a231103c2d3f56f053af17</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 13:13:34</sys_created_on>
+        <sys_id>bda83f1883f516900971c810feaad346</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 13:13:34</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

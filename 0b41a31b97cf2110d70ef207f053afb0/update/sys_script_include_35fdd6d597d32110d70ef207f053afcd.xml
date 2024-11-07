@@ -9,7 +9,9 @@
 - "find references"&#13;
 - code search itself&#13;
 - code search config: generate config for {all|metadata|custom} search</description>
+        <mobile_callable>false</mobile_callable>
         <name>CodeSearchUtilClient</name>
+        <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global global, gs, sn_scoped_cache, x_424426_devops */
 /* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
 /* eslint no-undef: "error" */
@@ -27,7 +29,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			.addOrCondition('source', 'com.glide.ui.ServletErrorListener');
 		logGr.addQuery('sys_created_by', gs.getUserName());
 		logGr.addEncodedQuery('sys_created_onBETWEEN' + this.startTime + '@' + new GlideDateTime());
-		return `<a href="/nav_to.do?uri=%2Fsyslog_list.do%3Fsysparm_query%3DencodeURIComponent(${logGr.getEncodedQuery()})" target="_blank">Logs</a>`;
+		return `<a href="/nav_to.do?uri=%2Fsyslog_list.do%3Fsysparm_query%3D${encodeURIComponent(logGr.getEncodedQuery())}" target="_blank">Logs</a>`;
 	},
 	
 	searchReference: function () {
@@ -37,12 +39,9 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		};
 		
 		const table = this.getParameter('table');
-		let fields = [];
+		let fields = {};
 		try {
 			fields = JSON.parse(this.getParameter('fields'));
-			if (!(fields instanceof Array)) {
-				throw new Error();
-			}
 		} catch (e) {
 			result.message = 'Invalid fields';
 			return JSON.stringify(result);
@@ -55,64 +54,24 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			dbObjectGr.setLimit(1);
 			dbObjectGr.query();
 			if (dbObjectGr.next()) {
-				const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-				scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
-				scriptGr.setLimit(1);
-				scriptGr.query();
-				if (scriptGr.next()) {
-					// Note: Never set sys_scope to null in scoped apps (this will cause a NullPointerException)
-					scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
+				const scope = dbObjectGr.sys_scope.toString() || 'global';
+				const searchHandlers = new GlideScriptedExtensionPoint().getExtensions('CodeSearchHandler');
+				for (let i = 0; i < searchHandlers.length; i++) {
+					try {
+						searchHandlers[i].initialize();
+						if (searchHandlers[i].handlesScope(scope) && searchHandlers[i].handlesTable(table)) {
+							result.search_result = searchHandlers[i].search(table, sysID, {
+								exact: true,
+								fields: fields,
+								match_table: true
+							});
 
-					// Note: Building an encoded query is required to prevent db-error to occurr (it is unknown why this happens!)
-					scriptGr.script = `
-						(function (table, fields, sys_id) {
-							var anyGr = new GlideRecordSecure(table);
-							if (anyGr.isValidField('sys_class_name')) {
-								anyGr.addQuery('sys_class_name', table);
-							}
-							
-							var fieldQuery = fields
-								.map(function (f) { 
-									var element = anyGr.getElement(f);
-									if (element != null) {
-										var type = element.getED().getInternalType();
-										if (type == 'reference') return f + '=' + sys_id;
-										else if (type == 'glide_list') return f + 'LIKE' + sys_id;
-									}
-								})
-								.filter(function (queryPart) { return !!queryPart; })
-								.join('^OR');
-							anyGr.addEncodedQuery(fieldQuery);
-							anyGr.query();
-							
-							var result = {
-								recordType: table,
-								tableLabel: anyGr.getLabel(),
-								hits: []
-							};
-							
-							while (anyGr.next()) {
-								result.hits.push({
-									name: anyGr.getDisplayValue(),
-									className: anyGr.getRecordClassName(),
-									tableLabel: anyGr.getTableName(),
-									sysId: anyGr.getUniqueValue()
-								});
-							}
-							
-							return result;
-						})(table, JSON.parse(fields), sys_id);
-					`;
-					
-					result.search_result = new GlideScopedEvaluator().evaluateScript(scriptGr, 'script', { 
-						table: table,
-						fields: JSON.stringify(fields),
-						sys_id: sysID
-					});
-					
-					result.status = 'success';
-				} else {
-					result.message = 'Unable to run script';
+							result.status = 'success';
+							break;
+						}
+					} catch (e) {
+						result.message = `SearchHandler ${i} failed (${e}): ${this._getLogLink()}\n${e.stack}`;
+					}
 				}
 			} else {
 				result.message = 'Unable to find table';
@@ -297,7 +256,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 						try {
 							searchHandlers[i].initialize();
 							if (searchHandlers[i].handlesScope(scopeName) && searchHandlers[i].handlesTable(table)) {
-								result.search_result = searchHandlers[i].search(table, context);
+								result.search_result = searchHandlers[i].search(table, context.term, context);
 								if (result.search_result) {
 									result.message = '';
 									result.status = 'success';
@@ -339,13 +298,24 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>152</sys_mod_count>
+        <sys_mod_count>156</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 19:25:23</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:05:42</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>35fdd6d597d32110d70ef207f053afcd</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 12:48:46</sys_created_on>
+        <sys_id>d2f2739c83f116900971c810feaad307</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 12:48:46</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

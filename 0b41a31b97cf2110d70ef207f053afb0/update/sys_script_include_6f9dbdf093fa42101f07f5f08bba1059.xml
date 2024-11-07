@@ -6,22 +6,25 @@
         <caller_access/>
         <client_callable>false</client_callable>
         <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <mobile_callable>false</mobile_callable>
         <name>CodeSearchHandlerGeneral</name>
+        <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
 /* global Class, GlideRecordSecure, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var CodeSearchHandlerGeneral = Class.create();
 CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
-    initialize: function() {
+	initialize: function () {
 		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
-    },
+		this._scriptCache = {};
+	},
 
 	/**
 	 * test if this extension point can handle the given scope
 	 * @param {string} scopeName
 	 * @return {boolean}
 	 */
-    handlesScope: function (scopeName) {
+	handlesScope: function (scopeName) {
 		return true;
 	},
 
@@ -35,125 +38,159 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	},
 
 	/**
-	 * @typedef {CodeSearchContext}
-	 * @property {string} term - the search term
-	 * @property {Array.<string>} [fields] - if all_fields is not set contains the list of fields to be searched
-	 * @property {boolean} [all_fields] - wether all fields shoud be searched
-	 * @property {string} [additional_filter] - encoded query which should be added on top of the search query
-	 * @property {string} [scope] - limit search to the supplied scope
-	 * @property {boolean} [match_table] - match sys_class_name aka do not search extending tables
-	 * @property {number} limit - search limit
-	 */
-	/**
-	 * @typedef {CodeSearchHit}
-	 * @property {string} name
-	 * @property {string} className
-	 * @property {Array.<CodeSearchMatch>} matches
-	 * @property {string} sysId
-	 */
-	/**
-	 * @typedef {CodeSearchResult}
-	 * @property {string} tableLabel
-	 * @property {Array.<CodeSearchHit>} hits
-	 */
-	/**
 	 * search in the supplied table using the (fixed) context
 	 * @param {string} table
-	 * @param {CodeSearchContext} context
+	 * @param {string} term
+	 * @param {{fields: Object<string, {type: string}>?, exact: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
 	 * @return {CodeSearchResult}
 	 */
-	search: function(table, context) {
+	search: function (table, term, options) {
 		const dbObjectGr = new GlideRecordSecure('sys_db_object');
 		dbObjectGr.addQuery('name', table);
 		dbObjectGr.setLimit(1);
 		dbObjectGr.query();
-		if (dbObjectGr.next()) {
-			const scriptGr = new GlideRecordSecure('sys_rte_eb_script_operation');
-			scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+		if (!dbObjectGr.next()) {
+			throw new Error(`Table ${table} not found!`);
+		}
+
+		let scriptInfo = this._getInfuseableScript('global');
+		if (dbObjectGr.access == 'package_private' || !dbObjectGr.read_access) {
+			scriptInfo = this._getInfuseableScript(dbObjectGr.sys_scope.toString());
+		}
+		
+		scriptInfo.scriptGr.script = `
+			(function (table, term, options) {
+		// an exact sys_id query can increase performance for sys_id queries
+		var query = 'sys_id=' + term;
+		var fields = (options && options.fields) ? options.fields : this.getFields(table);
+		for (var field in fields) {
+			var operator = 'LIKE';
+			if (options && options.exact) {
+				operator = '=';
+			}
+			
+			query += '^OR' + field + (fields[field].operator || operator) + term;
+		}
+
+		var anyGr = new GlideRecordSecure(table);
+		if (options && options.additional_filter) {
+			anyGr.addEncodedQuery(options.additional_filter);
+		}
+		
+		anyGr.addEncodedQuery(query);
+
+		if (options && options.scope && anyGr.isValidField('sys_scope')) {
+			anyGr.addQuery('sys_scope', options.scope);
+		}
+
+		if (anyGr.isValidField('sys_class_name')) {
+			if (options && options.match_table) {
+				anyGr.addQuery('sys_class_name', table);
+			}
+
+			anyGr.orderBy('sys_class_name');
+		}
+
+		if (anyGr.isValidField('sys_name')) {
+			anyGr.orderBy('sys_name');
+		}
+
+		if (options && options.limit) {
+			anyGr.setLimit(options.limit);
+		}
+
+		anyGr.query();
+
+		var result = {
+			tableLabel: anyGr.getLabel(),
+			hits: []
+		};
+
+		while (anyGr.next()) {
+			var matches = this.getMatches(anyGr, fields, term);
+			if (matches.length) {
+				result.hits.push({
+					name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
+					className: anyGr.getRecordClassName(),
+					matches: matches,
+					sysId: anyGr.getUniqueValue()
+				});
+			}
+		}
+
+		return result;
+			}).call(self, table, term, JSON.parse(options));`;
+
+		const gse = new GlideScopedEvaluator();
+		gse.putVariable('table', table);
+		gse.putVariable('term', term);
+		gse.putVariable('options', JSON.stringify(options || {}));
+		gse.putVariable('self', this);
+		return gse.evaluateScript(scriptInfo.scriptGr, scriptInfo.scriptField);
+	},
+
+	/**
+	 * @param {string} scopeSysID
+	 * @returns {{scriptGr: GlideRecordGenerated & sys_metadata, scriptField: string}}
+	 */
+	_getInfuseableScript: function (scopeSysID) {
+		if (scopeSysID in this._scriptCache) {
+			return this._scriptCache[scopeSysID];
+		}
+
+		const infuseableTables = gs.getProperty('x_424426_devops.infusable_tables', '')
+			.split(',').map(t => t.trim()).filter(t => !!t);
+		for (let i = 0; i < infuseableTables.length; i++) {
+			const scriptGr = new GlideRecordSecure(infuseableTables[i]);
+			scriptGr.addQuery('sys_scope', scopeSysID);
 			scriptGr.setLimit(1);
 			scriptGr.query();
 			if (scriptGr.next()) {
-				scriptGr.sys_scope = dbObjectGr.sys_scope.toString();
-				scriptGr.script = `
-				(function (table, context) {
-					var term = GlideStringUtil.escapeQueryTermSeparator(context.term);
-					var query = 'sys_id=' + term;
-					var fields = context.all_fields ? this.getFields(table) : context.fields;
-					fields.forEach(function (f) {
-						query += '^OR' + f + 'LIKE' + term;
-					});
+				const elements = scriptGr.getElements();
+				for (let j = 0; j < elements.length; j++) {
+					const element = elements[j];
+					if (element.getED().getInternalType().includes('script')) {
+						const result = {
+							scriptGr: scriptGr,
+							scriptField: element.getName()
+						};
 
-					var anyGr = new GlideRecordSecure(table);
-					if (context.additional_filter) {
-						anyGr.addEncodedQuery(context.additional_filter);
+						this._scriptCache = result;
+						return result;
 					}
-					
-					anyGr.addEncodedQuery(query);
+				}
 
-					if (context.scope && anyGr.isValidField('sys_scope')) {
-						anyGr.addQuery('sys_scope', context.scope);
-					}
-
-					if (anyGr.isValidField('sys_class_name')) {
-						if (context.match_table) {
-							anyGr.addQuery('sys_class_name', table);
-						}
-
-						anyGr.orderBy('sys_class_name');
-					}
-
-					if (anyGr.isValidField('sys_name')) {
-						anyGr.orderBy('sys_name');
-					}
-
-					if (context.limit) {
-						anyGr.setLimit(context.limit);
-					}
-
-					anyGr.query();
-
-					var result = {
-						tableLabel: anyGr.getLabel(),
-						hits: []
-					};
-
-					while (anyGr.next()) {
-						var matches = this.getMatches(anyGr, fields, context.term);
-						if (matches.length) {
-							result.hits.push({
-								name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
-								className: anyGr.getRecordClassName(),
-								matches: matches,
-								sysId: anyGr.getUniqueValue()
-							});
-						}
-					}
-
-					return result;
-				}).call(self, table, JSON.parse(context));`;
-
-				const gse = new GlideScopedEvaluator();
-				gse.putVariable('table', table);
-				gse.putVariable('context', JSON.stringify(context));
-				gse.putVariable('self', this);
-				return gse.evaluateScript(scriptGr, 'script');
+				throw new Error(`Infuseable Table ${infuseableTables[i]} does not have a script field!`);
 			}
 		}
-    },
 
-    type: 'CodeSearchHandlerGeneral'
+		throw new Error('No infuseable record found for scope ' + scopeSysID);
+	},
+
+	type: 'CodeSearchHandlerGeneral'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 14:24:37</sys_created_on>
         <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
-        <sys_mod_count>17</sys_mod_count>
+        <sys_mod_count>23</sys_mod_count>
         <sys_name>CodeSearchHandlerGeneral</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 19:18:08</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:02:16</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>6f9dbdf093fa42101f07f5f08bba1059</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-10-29 20:56:37</sys_created_on>
+        <sys_id>345cc76d83e5d2500971c810feaad39e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-10-29 20:56:37</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

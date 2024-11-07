@@ -6,7 +6,9 @@
         <caller_access/>
         <client_callable>false</client_callable>
         <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <mobile_callable>false</mobile_callable>
         <name>CodeSearchHandlerFlow</name>
+        <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
 /* global Class, GlideRecordSecure, GlideStringUtil */
 /* eslint no-undef: "error" */
@@ -24,39 +26,48 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 		return tableName == 'sys_hub_flow';
 	},
 
-	// context.{table|fields|term|additional_filter|scope|match_class|limit}
-	// => result.{tableLabel|hits}
-	// => result.hits{name|className|matches[]|sysId}
-	// => result.hits.matches[].{line|context}
-	search: function(table, context) {
-        const fields = context.all_fields ? this.getFields(table) : context.fields;
-        const term = GlideStringUtil.escapeQueryTermSeparator(context.term);
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {{fields: Object<string, {type: string}>?, exact: boolean?, search_related: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
+	 */
+	search: function (table, term, options) {
+        const fields = options?.fields || this.getFields(table);
 		let query = [];
-		if (context.additional_filter)
-			query.push(context.additional_filter);
+		if (options?.additional_filter)
+			query.push(options.additional_filter);
 
-		if (context.scope)
-			query.push('sys_scope=' + context.scope);
+		if (options?.scope)
+			query.push('sys_scope=' + options.scope);
 
-		if (context.match_table)
+		if (options?.match_table)
 			query.push('sys_class_name=' + table);
 
 		const flowGr = new GlideRecordSecure('sys_hub_flow');
 		if (query.length)
 			flowGr.addEncodedQuery(query.join('^'));
 
-		if (fields.length)
-			flowGr.addEncodedQuery(fields.map(f => f + 'LIKE' + term).join('^OR'));
+		const fieldQuery = [];
+		for (const field in fields) {
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + term);
+		}
+
+		if (fieldQuery.length) {
+			flowGr.addEncodedQuery(fieldQuery.join('^OR'));
+		}
 		
-		// related search must not contain the field conditions the term might be present in the fields but in the related records
-		if (context.search_related && query.length)
+		// with related search active, any match in a related record counts as a match for the parent record
+		// => we also have to search the whole table unconditionally as well
+		if (options?.search_related && query.length)
 			flowGr.addEncodedQuery('^NQ' + query.join('^'));
 
 		flowGr.orderBy('sys_class_name');
 		flowGr.orderBy('sys_name');
 
-		if (context.limit) {
-			flowGr.setLimit(context.limit);
+		if (options?.limit) {
+			flowGr.setLimit(options.limit);
 		}
 
 		flowGr.query();
@@ -70,11 +81,11 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 			const hit = {
 				name: flowGr.getDisplayValue() || flowGr.getUniqueValue(),
 				className: flowGr.getRecordClassName(),
-				matches: this.getMatches(flowGr, fields, context.term),
+				matches: this.getMatches(flowGr, fields, term),
 				sysId: flowGr.getUniqueValue()
 			};
 
-			if (context.search_related) {
+			if (options?.search_related) {
 				const flowTriggerGr = new GlideRecordSecure('sys_hub_trigger_instance');
 				flowTriggerGr.addQuery('flow', flowGr.sys_id);
 				flowTriggerGr.query();
@@ -82,11 +93,11 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 					const variableGr = new GlideRecordSecure('sys_variable_value');
 					variableGr.addQuery('document', 'sys_hub_trigger_instance');
 					variableGr.addQuery('document_key', flowTriggerGr.sys_id);
-					variableGr.addQuery('value', 'CONTAINS', context.term);
+					variableGr.addQuery('value', 'CONTAINS', term);
 					variableGr.query();
 					while (variableGr.next()) {
 						hit.matches = hit.matches.concat(
-							this.getMatches(variableGr, ['value'], context.term)
+							this.getMatches(variableGr, ['value'], term)
 						);
 					}
 				}
@@ -99,11 +110,11 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 					const variableGr = new GlideRecordSecure('sys_variable_value');
 					variableGr.addQuery('document', 'sys_hub_action_instance');
 					variableGr.addQuery('document_key', flowTriggerGr.sys_id);
-					variableGr.addQuery('value', 'CONTAINS', context.term);
+					variableGr.addQuery('value', 'CONTAINS', term);
 					variableGr.query();
 					while (variableGr.next()) {
 						hit.matches = hit.matches.concat(
-							this.getMatches(variableGr, ['value'], context.term)
+							this.getMatches(variableGr, ['value'], term)
 						);
 					}
 				}
@@ -123,13 +134,24 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:30:28</sys_created_on>
         <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>4</sys_mod_count>
         <sys_name>CodeSearchHandlerFlow</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-13 20:21:50</sys_updated_on>
+        <sys_updated_on>2024-11-07 11:56:16</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>b4046f8993f2c2101f07f5f08bba10f8</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 11:49:06</sys_created_on>
+        <sys_id>24556fd4837116900971c810feaad341</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 11:49:06</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

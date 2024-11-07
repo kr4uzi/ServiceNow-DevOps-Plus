@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>Comma-separated list of tables that allow script infusion:&#13;
+Accessible from [access] = true &#13;
+Can update [update_access] = true&#13;
+&#13;
+Note: Modifying this property can result in the creation of additional cross scope privileges which customizes the DevOps application. &#13;
+DevOps+ is shipped with cross scope privileges records for this property's default value.</description>
+        <ignore_cache>true</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_424426_devops.infusable_tables</name>
+        <read_roles/>
+        <suffix>infusable_tables</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 10:28:38</sys_created_on>
+        <sys_id>caca0f9c8339d2900971c810feaad395</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.infusable_tables</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_properties_caca0f9c8339d2900971c810feaad395</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 10:28:38</sys_updated_on>
+        <type>string</type>
+        <value>clone_cleanup_script, sys_rte_eb_script_operation</value>
+        <write_roles>x_424426_devops.devops_admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=caca0f9c8339d2900971c810feaad395"/>
+</record_update>

@@ -97,6 +97,13 @@ function addTable(tableName, hits) {
 		var matchUl = document.createElement('ul');
 		matchUl.classList.add('file-section');
 		matchUl.setAttribute('role', 'group');
+
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			matchLi.append(match.fieldLabel);
+			matchUl.append(matchLi);
+		});
 		
 		hitLi.append(hitToggleBar, matchUl);
 		hitsList.append(hitLi);
@@ -107,6 +114,7 @@ function addTable(tableName, hits) {
 }
 
 function searchTable(tableConfig, sysID, callback) {
+	document.getElementById('progress-text').innerText = 'Searching: ' + tableConfig.table;
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchReference');
 	ga.addParam('table', tableConfig.table);
@@ -151,7 +159,13 @@ function searchTable(tableConfig, sysID, callback) {
 				while (dictionaryGr.next()) {
 					const columnTable = dictionaryGr.getValue('name');
 					const columnName = dictionaryGr.getValue('element');
-					(refQueries[columnTable] ??= []).push(columnName);
+					(refQueries[columnTable] ??= {})[columnName] = {
+						name: columnName,
+						table: columnTable,
+						reference: dictionaryGr.reference.toString(),
+						label: dictionaryGr.column_label.toString(),
+						operator: dictionaryGr.internal_type == 'reference' ? '=' : 'LIKE'
+					};
 				}
 			});
 		
@@ -165,7 +179,8 @@ function searchTable(tableConfig, sysID, callback) {
 
 		function getPrivateTables() {
 			const dbObjectGr = new GlideRecordSecure('sys_db_object');
-			dbObjectGr.addQuery('access', '!=', 'public');
+			dbObjectGr.addQuery('access', 'package_private')
+				.addOrCondition('read_access', false);
 			dbObjectGr.query();
 
 			const tables = [];
@@ -208,13 +223,24 @@ function searchTable(tableConfig, sysID, callback) {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-28 12:48:52</sys_created_on>
         <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
-        <sys_mod_count>44</sys_mod_count>
+        <sys_mod_count>49</sys_mod_count>
         <sys_name>references</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 16:05:41</sys_updated_on>
+        <sys_updated_on>2024-11-07 13:32:50</sys_updated_on>
     </sys_ui_page>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>ddc8748793a882101f07f5f08bba1028</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 12:20:51</sys_created_on>
+        <sys_id>e19ca39883f116900971c810feaad398</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 12:20:51</sys_updated_on>
+        <table>sys_ui_page</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>
