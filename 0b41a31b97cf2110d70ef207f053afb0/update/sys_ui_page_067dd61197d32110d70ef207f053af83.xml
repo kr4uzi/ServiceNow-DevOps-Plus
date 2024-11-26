@@ -27,20 +27,26 @@ addLoadEvent(function () {
 		searchScope.style.display = this.checked ? 'none' : '';
 	});
 	
-	var canceled = false;
+	var cancellationRequested = false;
+	//var canceled = false;
 	var cancelButton = document.querySelector('#progress-container a');
 	cancelButton.addEventListener('click', function () {
-		canceled = true;
+		//canceled = true;
+		cancellationRequested = true;
+		cancelButton.setAttribute('disabled', '');
+		submitButton.setAttribute('disabled', '');
+		searchInput.setAttribute('disabled', '');
 	});
 	
 	document.addEventListener('keyup', function (event) {
 		if (event.key == 'Escape') {
-			canceled = true;
+			//canceled = true;
+			cancellationRequested = true;
 		}
 	});
 	
 	document.getElementById('search-form').addEventListener('submit', function (event) {
-		canceled = false;
+		//canceled = false;
 		event.preventDefault();
 		
 		var fd = new FormData(this);
@@ -74,6 +80,7 @@ addLoadEvent(function () {
 			else
 				configParams.script = config;
 
+			gel('searchDetail').innerHTML = '(aquire config)';
 			getSearchConfig(configParams, function (config) {
 				if (config.tables.length) {
 					var i = 0;
@@ -90,10 +97,19 @@ addLoadEvent(function () {
 							addTable(result.tableLabel, result.hits, true, term);
 						}
 
-						if (i < config.tables.length && !canceled) {
+						if (i < config.tables.length && !cancellationRequested) {
 							searchTable(config.tables[i++], config.context, processTableResults, onError);
 						} else {
 							gel('progress-container').style.display = 'none';
+							gel('searchDetail').style.display = 'none';
+
+							if (cancellationRequested) {
+								submitButton.removeAttribute('disabled');
+								cancelButton.removeAttribute('disabled');
+								searchInput.removeAttribute('disabled');
+								//canceled = true;
+								cancellationRequested = false;
+							}
 						}
 					}, onError);
 				}
@@ -248,6 +264,8 @@ function getSearchConfig(params, onSuccess, onError) {
 }
 
 function searchTable(table, context, onSuccess, onError) {
+	gel('searchDetail').innerHTML = '(searching: ' + table + ')';
+
 	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchTerm');
 	ga.addParam('table', table);
@@ -264,13 +282,16 @@ function searchTable(table, context, onSuccess, onError) {
 			}
 
 			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', table);
-			onSuccess([]);
+			onSuccess({ tableLabel: table, hits: [] });
 			return;
 		}
 
 		result = JSON.parse(result);
 		if (result.status == 'success') {
 			onSuccess(result.search_result);
+		} else if (result.missingHandlerMessage) {
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.missingHandlerMessage });
+			onSuccess({ tableLabel: table, hits: [] });
 		} else if (result.message) {
 			onError(result.message);
 		} else {
@@ -358,7 +379,7 @@ function searchTable(table, context, onSuccess, onError) {
 	<div class="search-pane">
 		<div id="progress-header" style="display: none;">
 			<div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline">
-				<strong id="numResults"></strong>results for<strong id="searchTerm"></strong>in<strong id="searchedScope"></strong>
+				<strong id="numResults"></strong>results for<strong id="searchTerm"></strong>in<strong id="searchedScope"></strong>$[SP]<span id="searchDetail"></span>
 			</div>
 			<div id="progress-limit" style="display: none;">
 				<span class="error">
@@ -391,14 +412,14 @@ function searchTable(table, context, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>69</sys_mod_count>
+        <sys_mod_count>78</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-07 13:29:22</sys_updated_on>
+        <sys_updated_on>2024-11-26 22:37:42</sys_updated_on>
     </sys_ui_page>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>067dd61197d32110d70ef207f053af83</id>

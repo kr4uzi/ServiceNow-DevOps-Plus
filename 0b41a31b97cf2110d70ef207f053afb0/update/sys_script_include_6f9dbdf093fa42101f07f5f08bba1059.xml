@@ -10,13 +10,21 @@
         <name>CodeSearchHandlerGeneral</name>
         <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
-/* global Class, GlideRecordSecure, GlideScopedEvaluator */
+/* global Class, GlideRecord, GlideScopedEvaluator */
 /* eslint no-undef: "error" */
 var CodeSearchHandlerGeneral = Class.create();
 CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
 	initialize: function () {
 		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
-		this._scriptCache = {};
+		const scriptGr = new GlideRecord('clone_cleanup_script');
+		scriptGr.addQuery('sys_scope', 'global');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('No infuseable record found');
+		}
 	},
 
 	/**
@@ -34,7 +42,15 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	 * @return {boolean}
 	 */
 	handlesTable: function (tableName) {
-		return true;
+		const dbObjectGr = new GlideRecord('sys_db_object');
+		dbObjectGr.addQuery('sys_scope.scope', 'global');
+		dbObjectGr.addQuery('name', tableName);
+		dbObjectGr.addEncodedQuery('^NQaccess=^ORaccess=public');
+		dbObjectGr.addQuery('read_access', true);
+		dbObjectGr.addQuery('name', tableName);
+		dbObjectGr.setLimit(1);
+		dbObjectGr.query();
+		return dbObjectGr.hasNext();
 	},
 
 	/**
@@ -45,20 +61,7 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	 * @return {CodeSearchResult}
 	 */
 	search: function (table, term, options) {
-		const dbObjectGr = new GlideRecordSecure('sys_db_object');
-		dbObjectGr.addQuery('name', table);
-		dbObjectGr.setLimit(1);
-		dbObjectGr.query();
-		if (!dbObjectGr.next()) {
-			throw new Error(`Table ${table} not found!`);
-		}
-
-		let scriptInfo = this._getInfuseableScript('global');
-		if (dbObjectGr.access == 'package_private' || !dbObjectGr.read_access) {
-			scriptInfo = this._getInfuseableScript(dbObjectGr.sys_scope.toString());
-		}
-		
-		scriptInfo.scriptGr.script = `
+		this.scriptGr.script = `
 			(function (table, term, options) {
 		// an exact sys_id query can increase performance for sys_id queries
 		var query = 'sys_id=' + term;
@@ -126,61 +129,23 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 		gse.putVariable('term', term);
 		gse.putVariable('options', JSON.stringify(options || {}));
 		gse.putVariable('self', this);
-		return gse.evaluateScript(scriptInfo.scriptGr, scriptInfo.scriptField);
+		return gse.evaluateScript(this.scriptGr, 'script');
 	},
-
-	/**
-	 * @param {string} scopeSysID
-	 * @returns {{scriptGr: GlideRecordGenerated & sys_metadata, scriptField: string}}
-	 */
-	_getInfuseableScript: function (scopeSysID) {
-		if (scopeSysID in this._scriptCache) {
-			return this._scriptCache[scopeSysID];
-		}
-
-		const infuseableTables = gs.getProperty('x_424426_devops.infusable_tables', '')
-			.split(',').map(t => t.trim()).filter(t => !!t);
-		for (let i = 0; i < infuseableTables.length; i++) {
-			const scriptGr = new GlideRecordSecure(infuseableTables[i]);
-			scriptGr.addQuery('sys_scope', scopeSysID);
-			scriptGr.setLimit(1);
-			scriptGr.query();
-			if (scriptGr.next()) {
-				const elements = scriptGr.getElements();
-				for (let j = 0; j < elements.length; j++) {
-					const element = elements[j];
-					if (element.getED().getInternalType().includes('script')) {
-						const result = {
-							scriptGr: scriptGr,
-							scriptField: element.getName()
-						};
-
-						this._scriptCache = result;
-						return result;
-					}
-				}
-
-				throw new Error(`Infuseable Table ${infuseableTables[i]} does not have a script field!`);
-			}
-		}
-
-		throw new Error('No infuseable record found for scope ' + scopeSysID);
-	},
-
+	
 	type: 'CodeSearchHandlerGeneral'
 });]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 14:24:37</sys_created_on>
         <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
-        <sys_mod_count>23</sys_mod_count>
+        <sys_mod_count>26</sys_mod_count>
         <sys_name>CodeSearchHandlerGeneral</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-07 13:02:16</sys_updated_on>
+        <sys_updated_on>2024-11-26 21:30:29</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>6f9dbdf093fa42101f07f5f08bba1059</id>
