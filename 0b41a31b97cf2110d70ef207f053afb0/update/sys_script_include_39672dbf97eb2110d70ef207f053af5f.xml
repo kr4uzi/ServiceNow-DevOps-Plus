@@ -6,7 +6,9 @@
         <caller_access/>
         <client_callable>true</client_callable>
         <description/>
+        <mobile_callable>false</mobile_callable>
         <name>TranslateUtilClient</name>
+        <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global global, gs, sn_fd, sn_cc, sn_ws, x_424426_devops */
 /* global Class, GlideRecordSecure */
 /* eslint no-undef: "error" */
@@ -25,6 +27,7 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 		
 		const message = this.getParameter('message');
 		const language = this.getParameter('language');
+		const context = this.getParameter('context');
 		if (message && language) {
 			result.status = 'success';
 			
@@ -72,7 +75,7 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
 				return JSON.stringify(result);
 			}
 			
-			const deeplResult = this._translateDeepl(language, message);
+			const deeplResult = this._translateDeepl(language, message, context);
 			if (deeplResult.status == 'success') {
 				result.status = 'success';
 				result.translated_message = deeplResult.text;
@@ -294,13 +297,24 @@ TranslateUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcesso
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 10:54:43</sys_created_on>
         <sys_id>39672dbf97eb2110d70ef207f053af5f</sys_id>
-        <sys_mod_count>29</sys_mod_count>
+        <sys_mod_count>30</sys_mod_count>
         <sys_name>TranslateUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_39672dbf97eb2110d70ef207f053af5f</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-08-05 20:19:51</sys_updated_on>
+        <sys_updated_on>2024-11-10 16:28:44</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>39672dbf97eb2110d70ef207f053af5f</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-10 16:28:43</sys_created_on>
+        <sys_id>2512c06d837556100971c810feaad33f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-10 16:28:43</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

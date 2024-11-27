@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.lang_cmp_infuse</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.lang_cmp_infuse = (function() {
+	"use strict";
+
+	/* global setTimeout */
+	/* eslint no-undef: "error" */	
+	if (x_424426_devops.lang_cmp_infuse) {
+		return x_424426_devops.lang_cmp_infuse;
+	}
+
+	let $window, $config;
+	x_424426_devops.loader.get('window', function (_window) {
+		inject($window = _window, $config);
+	});
+
+	x_424426_devops.loader.get('config', function (_config) {
+		inject($window, $config = _config);
+	});
+
+	function inject($window, $config) {
+		if (!$config?.deepl_support) {
+			return;
+		}
+		
+		if (!$window?.location.pathname.startsWith('/sn_lf_comparison_ui.do')) {
+			return;
+		}
+
+		const app = $window.document.querySelector('div[ng-app=LFComparisonUI]');
+		const $scope = app && $window.angular.element(app).scope();
+		if (!$scope) {
+			setTimeout(inject, 100, $window, $config);
+			return;
+		}
+
+		const actionBar = $window.document.querySelector('.collapse-actions');
+		if (actionBar) {
+			const translateBtn = $window.document.createElement('A');
+			translateBtn.setAttribute('href', '#');
+			translateBtn.innerText = 'Translate missing (Deepl)';
+			translateBtn.addEventListener('click', () => {
+				for (const [itemName, itemContent] of Object.entries($scope.groupedItemsToTranslate)) {
+					for (const [groupName, content] of Object.entries(itemContent.documentContent)) {
+						for (const [contentElementIdx, contentElement] of Object.entries(content)) {
+							for (const field of contentElement.fieldInfo) {
+								if (field.originalValue && !field.translatedValue) {
+									var ga = new GlideAjax('x_424426_devops.TranslateUtilClient').setScope('x_424426_devops');
+									ga.addParam('sysparm_name', 'translate');
+									ga.addParam('message', field.originalValue);
+									ga.addParam('language', itemContent.targetLanguage);
+									ga.getXMLAnswer(function (result) {
+										result = JSON.parse(result);
+										if (result.status == 'success') {
+											$scope.$evalAsync(_ => field.translatedValue = result.translated_message);
+										} else if (result.message) {
+											console.error(result.message);
+										}
+									});
+								}
+							}
+						}
+					}
+				}
+			});
+
+			actionBar.append(actionBar.children[1].clone(true), translateBtn);
+		}
+	}
+	
+	return {
+		version: '1.0'
+	};
+
+})();]]></script>
+        <script_name>lang_cmp_infuse</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-10 21:46:36</sys_created_on>
+        <sys_id>1022c0e9837556100971c810feaad3aa</sys_id>
+        <sys_mod_count>22</sys_mod_count>
+        <sys_name>x_424426_devops.lang_cmp_infuse</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_1022c0e9837556100971c810feaad3aa</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-27 17:35:56</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+</record_update>

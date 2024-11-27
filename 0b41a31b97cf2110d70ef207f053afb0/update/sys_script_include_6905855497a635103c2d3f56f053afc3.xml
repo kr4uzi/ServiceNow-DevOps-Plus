@@ -6,7 +6,9 @@
         <caller_access/>
         <client_callable>false</client_callable>
         <description/>
+        <mobile_callable>false</mobile_callable>
         <name>ConfigUtil</name>
+        <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global gs, sn_cc */
 /* global Class, GlideRecordSecure */
 /* eslint no-undef: "error" */
@@ -30,7 +32,7 @@ ConfigUtil.prototype = {
 	 */
 	hasDeeplSupport: function () {
 		const credentialsProvider = new sn_cc.StandardCredentialsProvider();
-		return !!credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.deepl']);
+		return credentialsProvider.getCredentials(['api_key'], ['x_424426_devops.deepl'])?.length > 0;
 	},
 	
 	/**
@@ -58,13 +60,24 @@ ConfigUtil.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-11-12 14:34:45</sys_created_on>
         <sys_id>6905855497a635103c2d3f56f053afc3</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>ConfigUtil</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6905855497a635103c2d3f56f053afc3</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-06 18:44:37</sys_updated_on>
+        <sys_updated_on>2024-11-27 17:39:07</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>6905855497a635103c2d3f56f053afc3</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-27 17:39:07</sys_created_on>
+        <sys_id>a6357f3a838e12100971c810feaad3ba</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-27 17:39:07</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

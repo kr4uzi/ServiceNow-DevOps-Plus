@@ -293,7 +293,8 @@ function searchTable(table, context, onSuccess, onError) {
 			GlideUI.get().addOutputMessage({ type: 'error', msg: result.missingHandlerMessage });
 			onSuccess({ tableLabel: table, hits: [] });
 		} else if (result.message) {
-			onError(result.message);
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.message });
+			onSuccess({ tableLabel: table, hits: [] });
 		} else {
 			onError();
 		}
@@ -412,14 +413,14 @@ function searchTable(table, context, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>78</sys_mod_count>
+        <sys_mod_count>79</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-26 22:37:42</sys_updated_on>
+        <sys_updated_on>2024-11-27 17:42:15</sys_updated_on>
     </sys_ui_page>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>067dd61197d32110d70ef207f053af83</id>
