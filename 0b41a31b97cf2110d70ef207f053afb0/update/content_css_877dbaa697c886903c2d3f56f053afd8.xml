@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="content_css">
     <content_css action="INSERT_OR_UPDATE">
-        <name>DevOps+ Metadata Table</name>
-        <style>#devops_plus_metadata_message table {&#13;
+        <name>DevOps+ Hidden Fields Table</name>
+        <style>#devops_plus_hidden_fields_message table {&#13;
   margin-top: 1rem;&#13;
   border: .1rem solid black;&#13;
   background-color: inherit;&#13;
 }&#13;
-#devops_plus_metadata_message td,&#13;
-#devops_plus_metadata_message th {&#13;
+#devops_plus_hidden_fields_message td,&#13;
+#devops_plus_hidden_fields_message th {&#13;
   padding: .5rem;&#13;
   width: 1%;&#13;
   border: .1rem solid black;&#13;
 }&#13;
-#devops_plus_metadata_message td:nth-child(2),&#13;
-#devops_plus_metadata_message th:nth-child(2) {&#13;
+#devops_plus_hidden_fields_message td:nth-child(2),&#13;
+#devops_plus_hidden_fields_message th:nth-child(2) {&#13;
   width: 98%;&#13;
 }</style>
         <sys_class_name>content_css</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-02 12:54:14</sys_created_on>
         <sys_id>877dbaa697c886903c2d3f56f053afd8</sys_id>
-        <sys_mod_count>2</sys_mod_count>
-        <sys_name>DevOps+ Metadata Table</sys_name>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>DevOps+ Hidden Fields Table</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>content_css_877dbaa697c886903c2d3f56f053afd8</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-02 20:16:21</sys_updated_on>
+        <sys_updated_on>2024-12-08 12:00:13</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

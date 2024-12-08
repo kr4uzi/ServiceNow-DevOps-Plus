@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description>Implements extension point x_424426_devops.DevOpsLoader</description>
+        <global>true</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.loader</name>
+        <script><![CDATA[(function () {
+
+	if (typeof addRenderEvent == 'function') {
+		addRenderEvent(function() {
+			loadConfig(function (config) {
+				if (config.skip_initialization) {
+					return;
+				}
+
+				config.skip_initialization = true;
+				
+				globalThis.devops_plus_config = config;
+				config.ui_scripts.forEach(function (script) {
+					try {
+						new Function('$window', '$config', script)(window, config);
+					} catch (e) {
+						console.error(e);
+					}
+				});
+			});
+		});
+	}
+
+	function loadConfig(cb) {
+		if (typeof g_scratchpad != 'undefined' && g_scratchpad.devops_plus_config) {
+			cb(g_scratchpad.devops_plus_config);
+			return;
+		}
+
+		var ga = new GlideAjax('x_424426_devops.ConfigUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getConfig');
+		if (typeof g_form != 'undefined') {
+			ga.addParam('record_table', g_form.getTableName());
+			ga.addParam('record_sys_id', g_form.getUniqueValue());
+		}
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result && result.status == 'success') {
+				cb(result.config);
+			}
+		});
+	}
+
+})();]]></script>
+        <script_name>loader</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 21:10:08</sys_created_on>
+        <sys_id>51b83e63834a92100971c810feaad3ca</sys_id>
+        <sys_mod_count>59</sys_mod_count>
+        <sys_name>x_424426_devops.loader</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_51b83e63834a92100971c810feaad3ca</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-08 12:07:38</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>

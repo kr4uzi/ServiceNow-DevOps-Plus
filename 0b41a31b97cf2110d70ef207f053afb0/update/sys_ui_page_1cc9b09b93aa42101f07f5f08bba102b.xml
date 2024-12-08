@@ -15,19 +15,19 @@
 	<g:ui_form>
 		<div class="row">
 			<div class="col-md-12">
-				<p>The "Show hidden Metadata" functionality will show critical fields not shown on the form via g_form.addInfoMessage.</p>
+				<p>The "Show hidden fields" functionality will show critical fields not shown on the form via g_form.addInfoMessage.</p>
 				<p>For example several application files do not show the Scope/Application in some views, this can cause for unintentional
 				updates ending up in your Update Set / Appication.</p>
 			</div>
       		<div class="col-md-12">
         		<span class="input-group-checkbox">
-					<j:if test="${gs.getUser().getPreference('devops_show_hidden_metadata') == 'true'}">
-						<input id="show-hidden-metadata" class="checkbox" type="checkbox" name="show-hidden-metadata" checked="checked"/>
+					<j:if test="${gs.getUser().getPreference('devops_show_hidden_fields') == 'true'}">
+						<input id="show-hidden-fields" class="checkbox" type="checkbox" name="show-hidden-fields" checked="checked"/>
 					</j:if>
-					<j:if test="${gs.getUser().getPreference('devops_show_hidden_metadata') != 'true'}">
-						<input id="show-hidden-metadata" class="checkbox" type="checkbox" name="show-hidden-metadata"/>
+					<j:if test="${gs.getUser().getPreference('devops_show_hidden_fields') != 'true'}">
+						<input id="show-hidden-fields" class="checkbox" type="checkbox" name="show-hidden-fields"/>
 					</j:if>
-            		<label for="show-hidden-metadata" class="checkbox-label">Show hidden Metadata</label>
+            		<label for="show-hidden-fields" class="checkbox-label">Show hidden fields</label>
         		</span>
       		</div>
     	</div>
@@ -120,7 +120,7 @@
 	// this
 	// [represents the values from the <g:ui_form>]
 	const user = gs.getUser(); 
-	user.savePreference('devops_show_hidden_metadata', this['show-hidden-metadata'] == 'on');
+	user.savePreference('devops_show_hidden_fields', this['show-hidden-fields'] == 'on');
 	user.savePreference('devops_show_context_menu', this['show-context-menu'] == 'on');
 	user.savePreference('devops_hotkeys_enabled', this['hotkeys-enabled'] == 'on');
 	user.savePreference('devops_add_scope_on_save', this['add-scope-on-save-enabled'] == 'on');
@@ -133,13 +133,24 @@
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-07 17:44:18</sys_created_on>
         <sys_id>1cc9b09b93aa42101f07f5f08bba102b</sys_id>
-        <sys_mod_count>48</sys_mod_count>
+        <sys_mod_count>49</sys_mod_count>
         <sys_name>preferences</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_1cc9b09b93aa42101f07f5f08bba102b</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-10 22:13:45</sys_updated_on>
+        <sys_updated_on>2024-12-06 16:46:58</sys_updated_on>
     </sys_ui_page>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>1cc9b09b93aa42101f07f5f08bba102b</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-12-06 16:46:57</sys_created_on>
+        <sys_id>ce9fb975835652100971c810feaad36e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-06 16:46:57</sys_updated_on>
+        <table>sys_ui_page</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

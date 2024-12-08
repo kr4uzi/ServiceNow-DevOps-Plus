@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
-        <access>package_private</access>
+        <access>public</access>
         <active>true</active>
         <api_name>x_424426_devops.ConfigUtilClient</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
         <description/>
+        <mobile_callable>false</mobile_callable>
         <name>ConfigUtilClient</name>
+        <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
-/* global Class, GlideRecordSecure */
+/* global Class, GlideRecordSecure, GlideScriptedExtensionPoint */
 /* eslint no-undef: "error" */
 var ConfigUtilClient = Class.create();
 ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
@@ -23,41 +25,43 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 			message: ''
 		};
 		
-		if (gs.hasRole('x_424426_devops.devops_user')) {
-			result.hotkeys_enabled = gs.getUser().getPreference('devops_hotkeys_enabled') == 'true';
-			result.set_scope_on_save = gs.getUser().getPreference('devops_add_scope_on_save') == 'true';
-			result.deepl_support = this.configUtil.hasDeeplSupport();
-			result.headerItems = [];
-			result.fieldItems = [];
-			result.breadcrumbItems = [];
-			result.languages = this.configUtil.getLanguages();
-			
-			if (this.configUtil.showContextMenu()) {
-				const itemGr = new GlideRecordSecure('x_424426_devops_context_menu_item');
-				itemGr.addQuery('active', true);
-				itemGr.orderBy('order');
-				itemGr.query();
-				while (itemGr.next()) {
-					const item = {
-						label: itemGr.label.toString(),
-						script: itemGr.client_script.toString(),
-						condition_script: itemGr.use_condition ? itemGr.condition_script.toString() : '',
-						item_type: itemGr.item_type.toString()
-					};
+		if (!gs.hasRole('x_424426_devops.devops_user')) {
+			result.message = gs.getMessage('devops_unauthorized');
+			return JSON.stringify(result);
+		}
 
-					if (itemGr.type == 'header') {
-						result.headerItems.push(item);
-					} else if (itemGr.type == 'field') {
-						result.fieldItems.push(item);
-					} else if (itemGr.type == 'breadcrumb') {
-						result.breadcrumbItems.push(item);
+		const tableName = this.getParameter('record_table');
+		const sysId = this.getParameter('record_sys_id');
+		if (tableName && !sysId) {
+			result.message = gs.getMessage('devops_invalid_parameters');
+			return JSON.stringify(result);
+		}
+
+		try {
+			let record = null;
+			try {
+				const searchHandlers = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
+				if (searchHandlers.length) {
+					const ext = searchHandlers[0];
+					ext.initialize();
+					const recordGr = ext.getRecord(tableName, sysId);
+					if (recordGr && recordGr.isValidRecord()) {
+						record = recordGr;
 					}
 				}
+			} catch (e) {
+				// we can still generate the config without an error
+				result.message = 'Failed to handle record: ' + e + '\n' + e.stack;
+				gs.error(e);
 			}
-			
+
+			result.config = this.configUtil.getConfig({
+				record: record
+			});
 			result.status = 'success';
-		} else {
-			result.message = gs.getMessage('devops_unauthorized');
+		} catch (e) {
+			result.message = e + '\n' + e.stack;
+			result.status = 'error';
 		}
 			
 		return JSON.stringify(result);
@@ -69,13 +73,24 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:23:15</sys_created_on>
         <sys_id>ef60538997172110d70ef207f053af6d</sys_id>
-        <sys_mod_count>26</sys_mod_count>
+        <sys_mod_count>33</sys_mod_count>
         <sys_name>ConfigUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_ef60538997172110d70ef207f053af6d</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-08 20:08:01</sys_updated_on>
+        <sys_updated_on>2024-12-06 16:45:09</sys_updated_on>
     </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>ef60538997172110d70ef207f053af6d</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 19:11:01</sys_created_on>
+        <sys_id>1c7dd22b830292100971c810feaad3f4</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 19:11:01</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>

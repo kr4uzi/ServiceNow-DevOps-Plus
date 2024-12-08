@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.DevOpsExt</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Implements extension point x_424426_devops.DevOpsExt</description>
+        <mobile_callable>false</mobile_callable>
+        <name>DevOpsExt</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global Class, GlideRecord, GlideRecordSecure, GlideScopedEvaluator */
+/* eslint no-undef: "error" */
+var DevOpsExt = Class.create();
+DevOpsExt.prototype = {
+	initialize: function () {
+		const scriptGr = new GlideRecord('clone_cleanup_script');
+		scriptGr.addQuery('sys_scope', 'global');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('Infuseable Script Record required!');
+		}
+	},
+
+	getRecord: function (tableName, sysId) {
+		this.scriptGr.script = `(function (tableName, sysId) {
+		var recordGr = new GlideRecordSecure(tableName);
+		recordGr.addQuery('sys_id', sysId);
+		recordGr.query();
+		if (recordGr.next()) {
+			// wrapped in an if because of healthscan
+		}
+
+		return recordGr;
+		})(tableName, sysId);`;
+		return new GlideScopedEvaluator().evaluateScript(this.scriptGr, 'script', {
+			tableName: tableName,
+			sysId: sysId
+		});
+	},
+
+	type: 'DevOpsExt'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-12-06 16:24:53</sys_created_on>
+        <sys_id>b28a3d7d83d252100971c810feaad3e0</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>DevOpsExt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_b28a3d7d83d252100971c810feaad3e0</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-06 16:26:54</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>b28a3d7d83d252100971c810feaad3e0</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-12-06 16:26:54</sys_created_on>
+        <sys_id>d40bb5f5831652100971c810feaad372</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-06 16:26:54</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="DELETE">
+        <active>true</active>
+        <description>Implements extension point x_424426_devops.DevOpsExt</description>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.DevOpsExt</name>
+        <script><![CDATA[(function () {
+
+		
+
+})();]]></script>
+        <script_name>DevOpsExt</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 18:35:54</sys_created_on>
+        <sys_id>31659eef83ca52100971c810feaad3d1</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>x_424426_devops.DevOpsExt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_31659eef83ca52100971c810feaad3d1</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 19:38:55</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>092f4577db2e3d9405ef1729139619fc</instance_id>
+        <instance_name>dev222234</instance_name>
+        <name>sys_ui_script_31659eef83ca52100971c810feaad3d1</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_script"&gt;&lt;sys_ui_script action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;description&gt;Implements extension point x_424426_devops.DevOpsExt&lt;/description&gt;&lt;global&gt;false&lt;/global&gt;&lt;ignore_in_now_experience&gt;false&lt;/ignore_in_now_experience&gt;&lt;name&gt;x_424426_devops.DevOpsExt&lt;/name&gt;&lt;script&gt;&lt;![CDATA[(function () {
+
+		
+
+})();]]&gt;&lt;/script&gt;&lt;script_name&gt;DevOpsExt&lt;/script_name&gt;&lt;sys_class_name&gt;sys_ui_script&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-29 18:35:54&lt;/sys_created_on&gt;&lt;sys_id&gt;31659eef83ca52100971c810feaad3d1&lt;/sys_id&gt;&lt;sys_mod_count&gt;1&lt;/sys_mod_count&gt;&lt;sys_name&gt;x_424426_devops.DevOpsExt&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ui_script_31659eef83ca52100971c810feaad3d1&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-29 19:38:55&lt;/sys_updated_on&gt;&lt;ui_type&gt;0&lt;/ui_type&gt;&lt;use_scoped_format&gt;false&lt;/use_scoped_format&gt;&lt;/sys_ui_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-41672538</payload_hash>
+        <record_name>x_424426_devops.DevOpsExt</record_name>
+        <reverted_from/>
+        <source>0ef01a2f838a52100971c810feaad376</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 19:38:55</sys_created_on>
+        <sys_id>30d36263838292100971c810feaad3ef</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>193796ef53c0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 19:38:55</sys_updated_on>
+        <type>UI Script</type>
+        <update_guid>b4d362634382921023859c7d157e1fee</update_guid>
+        <update_guid_history>b4d362634382921023859c7d157e1fee:-41672538,bd655e23284e521083e23414990b0e32:-736107343</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 20:50:25</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_script">sys_ui_script</sys_db_object>
+        <sys_id>0853baaab6a14bc18117e7c38e72b0c1</sys_id>
+        <sys_metadata>31659eef83ca52100971c810feaad3d1</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.DevOpsExt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_script_31659eef83ca52100971c810feaad3d1</sys_update_name>
+        <sys_update_version display_value="sys_ui_script_31659eef83ca52100971c810feaad3d1">30d36263838292100971c810feaad3ef</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 20:50:25</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

@@ -5,24 +5,28 @@
         <global>false</global>
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.context_menu</name>
-        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
-x_424426_devops.context_menu = (function() {
-	"use strict";
-
-	/* global GwtContextMenu, Promise, console, g_form */
+        <script><![CDATA[(function ($window, $config) {
+	/* global $window, $config, Promise */
 	/* eslint no-undef: "error" */
-	/* eslint sn-no-async-await: "off" */
-	if (x_424426_devops.context_menu) {
-		return x_424426_devops.context_menu;
+	if (!$config.preferences.show_context_menu) {
+		return;
+	}
+
+	const items = $config.context_menu.form_items;
+	if (!items || !items.header.length && !items.field.length && !items.breadcrumb.length) {
+		return;
 	}
 
 	let bcm = null; // breadcrumb context menu
-	// header context menu is always either headerGCM (Service Catalog) or gcmSection (non-SC Forms)
-	// element context menu is always gcm
-	let $window, $config;	
-	x_424426_devops.loader.get('window', function (_window) {
-		inject($window = _window, $config);
+	
+	overrideContextMenu($window);
+	injectFormHeaderMenu($window, items.header);
+	injectFormFieldContextMenu($window, items.field);
+	injectBreadCrumbsMenu($window, items.breadcrumb);
 
+	function overrideContextMenu($window) {
+		// header context menu is always either headerGCM (Service Catalog) or gcmSection (non-SC Forms)
+		// element context menu is always gcm
 		const ootbContextMenu = $window.GwtContextMenu;
 		const DevOpsContextMenuPrototype = {
 			initialize: function (id) {
@@ -52,30 +56,13 @@ x_424426_devops.context_menu = (function() {
 			};
 		});
 		$window.GwtContextMenu = $window.Class.create(ootbContextMenu, DevOpsContextMenuPrototype);
-	});
-
-	x_424426_devops.loader.get('config', function (_config) {
-		inject($window, $config = _config);
-	});
-
-	return {
-		type: 'context_menu'
-	};
-
-	function inject($window, $config) {
-		if ($window && $config) {			
-			injectHeaderMenu($window, $config);
-			injectFieldContextMenu($window, $config);
-			injectBreadCrumbsMenu($window, $config);
-		}
 	}
 
-	function injectFieldContextMenu($window, $config) {
-		if (!$config.fieldItems) {
+	function injectFormFieldContextMenu($window, fieldItems) {
+		if (fieldItems.length == 0) {
 			return;
 		}
 
-		//$window.document.on('contextmenu', 'div[data-type="label"], div[type*="script"], div[id^="label"]', function (evt, element) {
 		$window.document.on('contextmenu', 'div[id^="label"]', function (evt, element) {
 			const id = element.id;
 			let fieldName = id;
@@ -99,16 +86,20 @@ x_424426_devops.context_menu = (function() {
 					var $context = {
 						FIELD: fieldName,
 						window: $window,
-						g_form: g_form
+						g_form: $window.g_form
 					};
 					
-					buildMenu($window.gcm, 'devops_field_menu', $config.fieldItems, $context);
+					buildMenu($window.gcm, 'devops_field_menu', fieldItems, $context);
 				}
 			});
 		});
 	}
 
-	function injectBreadCrumbsMenu($window, $config) {
+	function injectBreadCrumbsMenu($window, breadcrumbItems) {
+		if (breadcrumbItems.length == 0) {
+			return;
+		}
+
 		// breadcrumbs created after this scripts will be injected by the MutationObserver
 		var observer = new $window.MutationObserver(function (mutations) {
 			for (var i = 0; i < mutations.length; i++) {
@@ -135,24 +126,20 @@ x_424426_devops.context_menu = (function() {
 		});
 
 		function injectBreadCrumbContextMenu(element) {
-			if (!$config.breadcrumbItems) {
-				return;
-			}
-
 			element.addEventListener('contextmenu', function () {
 				var listID = element.closest('span.breadcrumb_container').getAttribute('list_id');
 				var filter = getFilter(element);
-				// need to wait for the context menu will be build which happens after this cycle
+				// need to wait for the context menu will be build which happens after this (click) cycle
 				$window.setTimeout(function () {
 					if (bcm && $window.document.getElementById(bcm.getID())) {
 						var $context = {
 							window: $window,
-							g_form: g_form,
+							g_form: $window.g_form,
 							LISTID: listID,
 							FILTER: filter
 						};
 						
-						buildMenu(bcm, 'devops_breadcrumbs_menu', $config.breadcrumbItems, $context);
+						buildMenu(bcm, 'devops_breadcrumbs_menu', breadcrumbItems, $context);
 					}
 				});
 			});
@@ -167,14 +154,14 @@ x_424426_devops.context_menu = (function() {
 		}
 	}
 
-	function injectHeaderMenu($window, $config) {
-		if (!$config.headerItems) {
+	function injectFormHeaderMenu($window, headerItems) {
+		if (headerItems.length == 0) {
 			return;
 		}
 
 		var headerMenu = $window.gcmSection || $window.headerGCM;
 		if (headerMenu) {
-			addHeaderMenuItems($window, $config, headerMenu);
+			addFormHeaderMenuItems($window, headerItems, headerMenu);
 		} else {
 			Object.defineProperty($window, 'gcmSection', {
 				configurable: true,
@@ -185,8 +172,9 @@ x_424426_devops.context_menu = (function() {
 					
 					// right after setting the value, the menu gets .clear()-ed
 					// => the DevOps+ menu building needs to be postponed slightly
+					// otherwise the items we add would be cleared right away
 					$window.setTimeout(function () {
-						addHeaderMenuItems($window, $config, v);
+						addFormHeaderMenuItems($window, headerItems, v);
 					});
 				}
 			});
@@ -201,31 +189,31 @@ x_424426_devops.context_menu = (function() {
 					// right after setting the value, the menu gets .clear()-ed
 					// the DevOps+ menu building needs to be postponed slightly
 					$window.setTimeout(function () {
-						addHeaderMenuItems($window, $config, v);
+						addFormHeaderMenuItems($window, headerItems, v);
 					});
 				}
 			});
 		}
 
-		function addHeaderMenuItems($window, $config, headerMenu) {
-			// by this time the g_form should have already loaded...
+		function addFormHeaderMenuItems($window, headerItems, headerMenu) {
 			if (!$window.g_form) {
+				// if no g_form is unavailable by this time, we are on a list
 				return;
 			}
 
 			const $context = {
 				window: $window,
-				g_form: g_form
+				g_form: $window.g_form
 			};
 
-			buildMenu(headerMenu, 'devops_header_menu', $config.headerItems, $context);
+			buildMenu(headerMenu, 'devops_header_menu', headerItems, $context);
 		}
 	}
 
 	async function buildMenu(parentMenu, menuName, items, context) {
 		let itemsAdded = 0;
 
-		const devopsMenu = new GwtContextMenu(menuName);
+		const devopsMenu = new $window.GwtContextMenu(menuName);
 		devopsMenu.clear();
 		devopsMenu.devops_context = context;
 
@@ -233,22 +221,22 @@ x_424426_devops.context_menu = (function() {
 			const conditionScript = item.condition_script;
 			if (conditionScript) {
 				try {
-					if (!await new $window.Function('script', '$context', 'return eval(script)')(conditionScript, context)) {
+					if (!await new Function('script', '$context', '$config', 'return eval(script)')(conditionScript, context, $config)) {
 						continue;
 					}
 				} catch (e) {
-					$window.console.error('[DevOps+] Failed to add item for (' + menuName + ')', item, context, e);
+					$window.console.error('[DevOps+] Failed to add item for (' + menuName + ')', e, item, context);
 					continue;
 				}
 			}
 
 			if (item.item_type == '' || item.item_type == 'link') {
 				devopsMenu.addFunc(item.label, function () {
-					new Function('script', '$context', 'return eval(script)')(item.script, context);
+					new Function('script', '$context', '$config', 'return eval(script)')(item.script, context, $config);
 				});	
 			} else if (item.item_type == 'menu') {
 				try {
-					const menu = await new Function('script', '$context', 'return eval(script)')(item.script, context);
+					const menu = await new Function('script', '$context', '$config', 'return eval(script)')(item.script, context, $config);
 					if (menu) {
 						menu.devops_context = context;
 						devopsMenu.addMenu(
@@ -257,7 +245,7 @@ x_424426_devops.context_menu = (function() {
 						);
 					}
 				} catch (e) {
-					$window.console.error('[DevOps+] Failed to add menu for (' + menuName + ')', item, context, e);
+					$window.console.error('[DevOps+] Failed to add menu for (' + menuName + ')', e, item, context);
 				}
 			} else {
 				continue;
@@ -267,7 +255,7 @@ x_424426_devops.context_menu = (function() {
 		}
 
 		if (itemsAdded) {
-			// add the DevOps menu after the OOTB menu(s) have been fully built
+			// the DevOps menu should appear at the very bottom so wait for the OOTB menu(s) to be fully built
 			while (new Date().getTime() - parentMenu.devops_lastAdded < 25) {
 				await new Promise(r => $window.setTimeout(r, 25));
 			}
@@ -276,22 +264,22 @@ x_424426_devops.context_menu = (function() {
 			parentMenu.addMenu('DevOps+', devopsMenu);
 		}
 	}
-})();
+})($window, $config);
 ]]></script>
         <script_name>context_menu</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 18:59:03</sys_created_on>
         <sys_id>7b24430d97d32110d70ef207f053af66</sys_id>
-        <sys_mod_count>116</sys_mod_count>
+        <sys_mod_count>125</sys_mod_count>
         <sys_name>x_424426_devops.context_menu</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_7b24430d97d32110d70ef207f053af66</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-07-31 15:11:32</sys_updated_on>
+        <sys_updated_on>2024-12-08 11:58:24</sys_updated_on>
         <ui_type>0</ui_type>
-        <use_scoped_format>true</use_scoped_format>
+        <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

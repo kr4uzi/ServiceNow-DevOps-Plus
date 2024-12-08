@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_client_extension_point">
+    <sys_client_extension_point action="INSERT_OR_UPDATE">
+        <api_name>x_424426_devops.DevOpsLoader</api_name>
+        <description/>
+        <example><![CDATA[(function () {
+
+	if (typeof addRenderEvent == 'function') {
+		addRenderEvent(function() {
+			loadConfig(function (config) {
+				if (config.skip_initialization) {
+					return;
+				}
+
+				config.skip_initialization = true;
+				
+				globalThis.devops_plus_config = config;
+				config.ui_scripts.forEach(function (script) {
+					try {
+						new Function('$window', '$config', script)(window, config);
+					} catch (e) {
+						console.error(e);
+					}
+				});
+			});
+		});
+	}
+
+	function loadConfig(cb) {
+		if (typeof g_scratchpad != 'undefined' && g_scratchpad.devops_plus_config) {
+			cb(g_scratchpad.devops_plus_config);
+			return;
+		}
+
+		var ga = new GlideAjax('x_424426_devops.ConfigUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getConfig');
+		if (typeof g_form != 'undefined') {
+			ga.addParam('record_table', g_form.getTableName());
+			ga.addParam('record_sys_id', g_form.getUniqueValue());
+		}
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result && result.status == 'success') {
+				cb(result.config);
+			}
+		});
+	}
+
+})();]]></example>
+        <name>DevOpsLoader</name>
+        <public>false</public>
+        <restrict_scope>false</restrict_scope>
+        <sys_class_name>sys_client_extension_point</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 20:55:49</sys_created_on>
+        <sys_id>75b516e3834e52100971c810feaad3c8</sys_id>
+        <sys_mod_count>5</sys_mod_count>
+        <sys_name>DevOpsLoader</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_client_extension_point_75b516e3834e52100971c810feaad3c8</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-08 12:06:54</sys_updated_on>
+    </sys_client_extension_point>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>75b516e3834e52100971c810feaad3c8</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-29 20:55:48</sys_created_on>
+        <sys_id>97653e2f83c692100971c810feaad3e2</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 20:55:48</sys_updated_on>
+        <table>sys_client_extension_point</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>

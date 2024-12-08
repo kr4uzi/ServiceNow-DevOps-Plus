@@ -5,137 +5,93 @@
         <global>false</global>
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.translate</name>
-        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
-x_424426_devops.translate = (function() {
-	"use strict";
+        <script><![CDATA[(function ($window, $config) {
 	
-	/* global GlideAjax, jslog, g_event_handlers_onCellEdit */
+	/* global $window, $config, GlideAjax */
 	/* eslint no-undef: "error" */
-	x_424426_devops.loader.get('window', function ($window) {
-		$window.addAfterPageLoadedEvent(function () {
-			const g_form = $window.g_form;
-			if (!g_form) {
-				// don't execute this UI Script on Lists
-				return;
-			}
+	const g_form = $window.g_form;
+	if (!g_form) {
+		return;
+	}
 			
-			/*
-			const ootbListEditText = $window.GwtListEditText;
-			$window.GwtListEditText = $window.Class.create(ootbListEditText, {
-				initialize: function (editor) {
-					if (editor.name == 'sys_choice.label' && !editor.getValue()) {
-						const list = $window.GlideList2.get(editor.tableController.listID);
-						if (list) {
-							const value = list.getCell(editor.sysId, 'value');
-							const lang = list.getCell(editor.sysId, 'language');
-							if (value && value.innerHTML && lang && lang.innerHTML) {
-								const choiceGr = new $window.GlideRecord('sys_choice');
-								choiceGr.addQuery('value', value.innerHTML);
-								choiceGr.addQuery('language', lang.innerHTML);
-								choiceGr.addQuery('label', '!=', '');
-								choiceGr.orderByDesc('sys_updated_on');
-								choiceGr.setLimit(1);
-								choiceGr.query(function (result) {
-									if (result.next()) {
-										getTranslation(result.label, lang.innerHTML, function (translated) {
-											//editor.setValue(translated);
-											const element = $window.document.getElementById($window.GwtListEditWindow.inputID);
-											if (element) {
-												element.innerHTML = translated;
-											}
-										});
-									}
-								});
-							}
-						}						
-					}
-
-					ootbListEditText.prototype.initialize.apply(this, arguments);
-				},
-
-				type: 'DevOpsListEditText'
-			});*/
-			
-			const tableName = g_form.getTableName();
-			if (tableName == 'sys_choice') {
-				g_form.getControl('language').focus();
-				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
-					if (fieldName == 'sys_choice.language' || fieldName == 'sys_choice.value') {
-						const value = g_form.getValue('value');
-						const language = g_form.getValue('language');
-						if (value && language) {
-							g_form.addDecoration('label', 'icon-refreshing');
-							
-							// get the english choice label first and translate it to the selected language
-							const table = g_form.getValue('name');
-							const field = g_form.getValue('element');
-							const choiceValue = g_form.getValue('value');
-							getChoiceLabel(table, field, choiceValue, 'en', function (label) {
-								translate(g_form, label, language, 'label');
-							}, function (error) {
-								if (error) {
-									g_form.addErrorMessage(error);
-								}
-								
-								g_form.removeDecoration('label', 'icon-refreshing');
-							});
+	const tableName = g_form.getTableName();
+	if (tableName == 'sys_choice') {
+		g_form.getControl('language').focus();
+		g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+			if (fieldName == 'sys_choice.language' || fieldName == 'sys_choice.value') {
+				const value = g_form.getValue('value');
+				const language = g_form.getValue('language');
+				if (value && language) {
+					g_form.addDecoration('label', 'icon-refreshing');
+					
+					// get the english choice label first and translate it to the selected language
+					const table = g_form.getValue('name');
+					const field = g_form.getValue('element');
+					const choiceValue = g_form.getValue('value');
+					getChoiceLabel(table, field, choiceValue, 'en', function (label) {
+						translate(g_form, label, language, 'label');
+					}, function (error) {
+						if (error) {
+							g_form.addErrorMessage(error);
 						}
-					}
-				});
-			} else if (tableName == 'sys_documentation') {
-				g_form.getControl('language').focus();
-				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
-					const label = g_form.getValue('label');
-					if (!label) {
-						const language = g_form.getValue('language');
-						const table = g_form.getValue('name');
-						if (table && language) {
-							g_form.addDecoration('label', 'icon-refreshing');
-							
-							// get the english choice label first and translate it to the selected language
-							const table = g_form.getValue('name');
-							const field = g_form.getValue('element');
-							getDocLabel(table, field, 'en', function (label) {
-								translate(g_form, label, language, 'label');
-							}, function (error) {
-								if (error) {
-									g_form.addErrorMessage(error);
-								}
-								
-								g_form.removeDecoration('label', 'icon-refreshing');
-							});
-						}
-					}
-				});
-			} else if (tableName == 'sys_translated') {
-				g_form.getControl('language').focus();
-				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
-					if (fieldName == 'sys_translated.language') {
-						g_form.addDecoration('label', 'icon-refreshing');
-						translate(g_form, g_form.getValue('value'), newValue, 'label');
-					}
-				});
-			} else if (tableName == 'sys_translated_text') {
-				g_form.getControl('language').focus();
-				g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
-					if (fieldName == 'sys_translated_text.language') {
-						g_form.addDecoration('value', 'icon-refreshing');
 						
-						// Note: This API is deprecated but we still use it because this way we do not create Cross Scope Access records!
-						const anyGr = new $window.GlideRecord(g_form.getValue('tablename'));
-						anyGr.addQuery('sys_id', g_form.getValue('documentkey'));
-						anyGr.setLimit(1);
-						anyGr.query(function (result) {
-							if (result.next()) {
-								var message = result[g_form.getValue('fieldname')];
-								translate(g_form, message, newValue, 'value');
-							}
-						});
+						g_form.removeDecoration('label', 'icon-refreshing');
+					});
+				}
+			}
+		});
+	} else if (tableName == 'sys_documentation') {
+		g_form.getControl('language').focus();
+		g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+			const label = g_form.getValue('label');
+			if (!label) {
+				const language = g_form.getValue('language');
+				const table = g_form.getValue('name');
+				if (table && language) {
+					g_form.addDecoration('label', 'icon-refreshing');
+					
+					// get the english choice label first and translate it to the selected language
+					const table = g_form.getValue('name');
+					const field = g_form.getValue('element');
+					getDocLabel(table, field, 'en', function (label) {
+						translate(g_form, label, language, 'label');
+					}, function (error) {
+						if (error) {
+							g_form.addErrorMessage(error);
+						}
+						
+						g_form.removeDecoration('label', 'icon-refreshing');
+					});
+				}
+			}
+		});
+	} else if (tableName == 'sys_translated') {
+		g_form.getControl('language').focus();
+		g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+			if (fieldName == 'sys_translated.language') {
+				g_form.addDecoration('label', 'icon-refreshing');
+				translate(g_form, g_form.getValue('value'), newValue, 'label');
+			}
+		});
+	} else if (tableName == 'sys_translated_text') {
+		g_form.getControl('language').focus();
+		g_form.onUserChangeValue(function (fieldName, originalValue, newValue) {
+			if (fieldName == 'sys_translated_text.language') {
+				g_form.addDecoration('value', 'icon-refreshing');
+				
+				// Note: This API is deprecated but we still use it because this way we do not create Cross Scope Access records!
+				const anyGr = new $window.GlideRecord(g_form.getValue('tablename'));
+				anyGr.addQuery('sys_id', g_form.getValue('documentkey'));
+				anyGr.setLimit(1);
+				anyGr.query(function (result) {
+					if (result.next()) {
+						var message = result[g_form.getValue('fieldname')];
+						translate(g_form, message, newValue, 'value');
 					}
 				});
 			}
 		});
-	});
+	}
 	
 	function translate(g_form, message, language, targetField) {
 		const ga = new GlideAjax('x_424426_devops.TranslateUtilClient');
@@ -147,7 +103,7 @@ x_424426_devops.translate = (function() {
 			if (result.status == 'success') {
 				g_form.setValue(targetField, result.translated_message);
 			} else if (result.message) {
-				jslog(result.message, 'x_424426_devops.translate');
+				console.error(result.message, 'x_424426_devops.translate');
 			}
 			
 			g_form.removeDecoration(targetField, 'icon-refreshing');
@@ -187,39 +143,22 @@ x_424426_devops.translate = (function() {
 		});
 	}
 	
-	/*
-	function getTranslation(message, language, cb) {
-		const ga = new GlideAjax('x_424426_devops.TranslateUtilClient');
-		ga.addParam('sysparm_name', 'translate');
-		ga.addParam('message', message);
-		ga.addParam('language', language);
-		ga.getXMLAnswer(function (result) {
-			result = JSON.parse(result);
-			if (result.status == 'success') {
-				cb(result.translated_message);
-			}
-		});
-	}*/
-
-	return {
-		type: 'translate'
-	};
-})();
+})($window, $config);
 ]]></script>
         <script_name>translate</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-27 11:20:27</sys_created_on>
         <sys_id>c67a25f3972f2110d70ef207f053af92</sys_id>
-        <sys_mod_count>30</sys_mod_count>
+        <sys_mod_count>31</sys_mod_count>
         <sys_name>x_424426_devops.translate</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_c67a25f3972f2110d70ef207f053af92</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-12 16:38:05</sys_updated_on>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-29 21:50:33</sys_updated_on>
         <ui_type>0</ui_type>
-        <use_scoped_format>true</use_scoped_format>
+        <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

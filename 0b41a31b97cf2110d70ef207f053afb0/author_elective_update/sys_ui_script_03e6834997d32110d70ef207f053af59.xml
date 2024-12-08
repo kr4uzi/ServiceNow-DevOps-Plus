@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_script">
+    <sys_ui_script action="DELETE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <ignore_in_now_experience>false</ignore_in_now_experience>
+        <name>x_424426_devops.config</name>
+        <script><![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.config = (function() {
+	"use strict";
+	
+	/* eslint no-undef: "error" */
+	if (x_424426_devops.config) {
+		return x_424426_devops.config;
+	}
+	
+	x_424426_devops.loader.get('window', function ($window) {
+		loadConfig($window);
+	});
+	
+	function loadConfig($window) {
+		if ($window) {
+			if ($window.g_scratchpad && $window.g_scratchpad.devops_plus) {
+				setConfig($window.g_scratchpad.devops_plus.config);
+			} else {
+				var ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
+				ga.addParam('sysparm_name', 'getConfig');
+				ga.getXMLAnswer(function (result) {
+					setConfig(result);
+				});
+			}
+		}
+	}
+	
+	function setConfig(strConfig) {
+		strConfig = JSON.parse(strConfig);
+		if (strConfig && strConfig.status == 'success') {
+			delete strConfig.status;
+			delete strConfig.message;
+			x_424426_devops.loader.set('config', strConfig);
+		}
+	}
+
+	return {
+		type: 'config'
+	};
+})();
+]]></script>
+        <script_name>config</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-06 18:32:50</sys_created_on>
+        <sys_id>03e6834997d32110d70ef207f053af59</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_name>x_424426_devops.config</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_script_03e6834997d32110d70ef207f053af59</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-14 13:02:50</sys_updated_on>
+        <ui_type>0</ui_type>
+        <use_scoped_format>true</use_scoped_format>
+    </sys_ui_script>
+<sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>092f4577db2e3d9405ef1729139619fc</instance_id>
+        <instance_name>dev222234</instance_name>
+        <name>sys_ui_script_03e6834997d32110d70ef207f053af59</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_script"&gt;
+    &lt;sys_ui_script action="INSERT_OR_UPDATE"&gt;
+        &lt;active&gt;true&lt;/active&gt;
+        &lt;description/&gt;
+        &lt;global&gt;false&lt;/global&gt;
+        &lt;ignore_in_now_experience&gt;false&lt;/ignore_in_now_experience&gt;
+        &lt;name&gt;x_424426_devops.config&lt;/name&gt;
+        &lt;script&gt;&lt;![CDATA[var x_424426_devops = x_424426_devops || {};
+x_424426_devops.config = (function() {
+	"use strict";
+	
+	/* eslint no-undef: "error" */
+	if (x_424426_devops.config) {
+		return x_424426_devops.config;
+	}
+	
+	x_424426_devops.loader.get('window', function ($window) {
+		loadConfig($window);
+	});
+	
+	function loadConfig($window) {
+		if ($window) {
+			if ($window.g_scratchpad &amp;&amp; $window.g_scratchpad.devops_plus) {
+				setConfig($window.g_scratchpad.devops_plus.config);
+			} else {
+				var ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
+				ga.addParam('sysparm_name', 'getConfig');
+				ga.getXMLAnswer(function (result) {
+					setConfig(result);
+				});
+			}
+		}
+	}
+	
+	function setConfig(strConfig) {
+		strConfig = JSON.parse(strConfig);
+		if (strConfig &amp;&amp; strConfig.status == 'success') {
+			delete strConfig.status;
+			delete strConfig.message;
+			x_424426_devops.loader.set('config', strConfig);
+		}
+	}
+
+	return {
+		type: 'config'
+	};
+})();
+]]&gt;&lt;/script&gt;
+        &lt;script_name&gt;config&lt;/script_name&gt;
+        &lt;sys_class_name&gt;sys_ui_script&lt;/sys_class_name&gt;
+        &lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;
+        &lt;sys_created_on&gt;2023-06-06 18:32:50&lt;/sys_created_on&gt;
+        &lt;sys_id&gt;03e6834997d32110d70ef207f053af59&lt;/sys_id&gt;
+        &lt;sys_mod_count&gt;12&lt;/sys_mod_count&gt;
+        &lt;sys_name&gt;x_424426_devops.config&lt;/sys_name&gt;
+        &lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;
+        &lt;sys_policy/&gt;
+        &lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;
+        &lt;sys_update_name&gt;sys_ui_script_03e6834997d32110d70ef207f053af59&lt;/sys_update_name&gt;
+        &lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;
+        &lt;sys_updated_on&gt;2024-02-14 13:02:50&lt;/sys_updated_on&gt;
+        &lt;ui_type&gt;0&lt;/ui_type&gt;
+        &lt;use_scoped_format&gt;true&lt;/use_scoped_format&gt;
+    &lt;/sys_ui_script&gt;
+&lt;/record_update&gt;</payload>
+        <payload_hash>1154583217</payload_hash>
+        <record_name>x_424426_devops.config</record_name>
+        <reverted_from/>
+        <source>df3754b7932f0210e02873718bba1066</source>
+        <source_table>sys_upgrade_history</source_table>
+        <state>previous</state>
+        <sys_created_by>system</sys_created_by>
+        <sys_created_on>2024-07-28 21:26:23</sys_created_on>
+        <sys_id>ce4758b7932f0210e02873718bba10c8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>190fb3ccab10000001</sys_recorded_at>
+        <sys_updated_by>system</sys_updated_by>
+        <sys_updated_on>2024-07-28 21:26:23</sys_updated_on>
+        <type>UI Script</type>
+        <update_guid>8e4758b7f62f0210c342e29770e3e9c8</update_guid>
+        <update_guid_history>8e4758b7f62f0210c342e29770e3e9c8:1154583217</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-12-05 19:49:33</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_script">sys_ui_script</sys_db_object>
+        <sys_id>4b5d89d91ee44762999ed40e5364b4a4</sys_id>
+        <sys_metadata>03e6834997d32110d70ef207f053af59</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.config</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_script_03e6834997d32110d70ef207f053af59</sys_update_name>
+        <sys_update_version display_value="sys_ui_script_03e6834997d32110d70ef207f053af59">ce4758b7932f0210e02873718bba10c8</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-05 19:49:33</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

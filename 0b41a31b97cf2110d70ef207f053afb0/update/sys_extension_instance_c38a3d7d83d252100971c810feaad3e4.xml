@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_instance">
+    <sys_extension_instance action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <order>100</order>
+        <point>x_424426_devops.DevOpsExt</point>
+        <script_include display_value="DevOpsExt">b28a3d7d83d252100971c810feaad3e0</script_include>
+        <sys_class_name>sys_extension_instance</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-12-06 16:24:53</sys_created_on>
+        <sys_id>c38a3d7d83d252100971c810feaad3e4</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.DevOpsExt</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_extension_instance_c38a3d7d83d252100971c810feaad3e4</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-12-06 16:24:53</sys_updated_on>
+    </sys_extension_instance>
+</record_update>
