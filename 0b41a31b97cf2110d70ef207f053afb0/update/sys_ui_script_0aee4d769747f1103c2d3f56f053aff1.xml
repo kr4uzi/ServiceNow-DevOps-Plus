@@ -8,7 +8,7 @@
         <script><![CDATA[var x_424426_devops = x_424426_devops || {};
 x_424426_devops.portal_lang_select = (function() {
 	"use strict";
-	/* global setTimeout */
+	/* global setTimeout, globalThis */
 	/* eslint no-undef: "error" */
 	if (x_424426_devops.portal_lang_select) {
 		return x_424426_devops.portal_lang_select;
@@ -60,49 +60,62 @@ x_424426_devops.portal_lang_select = (function() {
 		const $scope = $element.scope();
 		
 		// only show if at least one other language than system language is available
-		const ga = new $window.GlideAjax('ConfigUtilClient').setScope('x_424426_devops');
-		ga.addParam('sysparm_name', 'getConfig');
-		ga.getXMLAnswer(function (result) {
-			result = JSON.parse(result);
-			if (result && result.status == 'success') {
-				if (result.languages.length > 1) {
-					if (widget == widgets.LANG_SELECT) {
-						$scope.$evalAsync(function () {
-							$scope.data.enableLangSelector = true;
-						});
-					} else if (widget == widgets.EC_HEADER) {
-						// matches to mobile, desktop and login-nav-bar
-						// Note: The latter isn't really relevant as the ESC has a custom login page
-						const menuItems = node.querySelector('ul.main-header-items.header-nav-item') || node.querySelector('div.navbar-right ul.nav.navbar-nav');
-						if (menuItems) {
-							const lastItem = menuItems.querySelector('li:last-child');
-							if (lastItem) {
-								// append a new list item with should look exactly like its siblings (copy classes)
-								const langSelectItem = $window.document.createElement('LI');
-								lastItem.classList.forEach(function (cl) {
-									if (!cl.startsWith('ng')) {
-										langSelectItem.classList.add(cl);
-									}
-								});
-								
-								const $injector = $element.injector();
-								const spUtil = $injector.get('spUtil');
-								const $compile = $injector.get('$compile');
-								spUtil.get('4ec9343d29b1c510f8779f284c7771c0').then(res => {
-									const loginWidgetScope = $scope.$new(true);
-									loginWidgetScope.widget = res;
-									loginWidgetScope.widget.data.enableLangSelector = true;
-									$window.angular.element(langSelectItem).append(
-										$compile('<sp-widget widget="widget"></sp-widget>')(loginWidgetScope)
-									);
-									menuItems.appendChild(langSelectItem);
-								});								
-							}
+		loadConfig(function (config) {
+			if (config.localization.languages.length > 1) {
+				if (widget == widgets.LANG_SELECT) {
+					$scope.$evalAsync(function () {
+						$scope.data.enableLangSelector = true;
+					});
+				} else if (widget == widgets.EC_HEADER) {
+					// matches to mobile, desktop and login-nav-bar
+					// Note: The latter isn't really relevant as the ESC has a custom login page
+					const menuItems = node.querySelector('ul.main-header-items.header-nav-item') || node.querySelector('div.navbar-right ul.nav.navbar-nav');
+					if (menuItems) {
+						const lastItem = menuItems.querySelector('li:last-child');
+						if (lastItem) {
+							// append a new list item with should look exactly like its siblings (copy classes)
+							const langSelectItem = $window.document.createElement('LI');
+							lastItem.classList.forEach(function (cl) {
+								if (!cl.startsWith('ng')) {
+									langSelectItem.classList.add(cl);
+								}
+							});
+							
+							const $injector = $element.injector();
+							const spUtil = $injector.get('spUtil');
+							const $compile = $injector.get('$compile');
+							const spLangSelectorWidget = '4ec9343d29b1c510f8779f284c7771c0';
+							spUtil.get(spLangSelectorWidget).then(res => {
+								const widgetScope = $scope.$new(true);
+								widgetScope.widget = res;
+								widgetScope.widget.data.enableLangSelector = true;
+								$window.angular.element(langSelectItem).append(
+									$compile('<sp-widget widget="widget"></sp-widget>')(widgetScope)
+								);
+								menuItems.appendChild(langSelectItem);
+							});								
 						}
 					}
 				}
 			}
 		});
+			
+		function loadConfig(cb) {
+			if (globalThis.devops_plus_config) {
+				cb(globalThis.devops_plus_config);
+				return;
+			}
+
+			var ga = new $window.GlideAjax('x_424426_devops.ConfigUtilClient').setScope('x_424426_devops');
+			ga.addParam('sysparm_name', 'getConfig');
+			// TODO: as g_form is not yet available at this point, parse table und sys_id from the URL (location)
+			ga.getXMLAnswer(function (result) {
+				result = JSON.parse(result);
+				if (result && result.status == 'success') {
+					cb(result.config);
+				}
+			});
+		}
 	}
 })();
 ]]></script>
@@ -111,14 +124,14 @@ x_424426_devops.portal_lang_select = (function() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2023-12-15 06:15:49</sys_created_on>
         <sys_id>0aee4d769747f1103c2d3f56f053aff1</sys_id>
-        <sys_mod_count>29</sys_mod_count>
+        <sys_mod_count>30</sys_mod_count>
         <sys_name>x_424426_devops.portal_lang_select</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_0aee4d769747f1103c2d3f56f053aff1</sys_update_name>
         <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-02-10 07:16:47</sys_updated_on>
+        <sys_updated_on>2025-01-31 12:54:51</sys_updated_on>
         <ui_type>1</ui_type>
         <use_scoped_format>true</use_scoped_format>
     </sys_ui_script>

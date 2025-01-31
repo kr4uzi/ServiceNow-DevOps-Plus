@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.JSLibs</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Collection of several JavaScript Libraries to enable gzip handling&#13;
+https://github.com/dankogai/js-base64&#13;
+https://github.com/beatgammit/deflate-js&#13;
+https://github.com/beatgammit/crc32&#13;
+https://github.com/beatgammit/gzip-js</description>
+        <mobile_callable>false</mobile_callable>
+        <name>JSLibs</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global Class, GlideScriptedExtensionPoint, gs */
+/* eslint no-undef: "error" */
+var JSLibs = Class.create();
+JSLibs.prototype = {
+	initialize: function () {
+		this.modules = {};
+
+		const eps = new GlideScriptedExtensionPoint().getExtensions('JSLibFactory');
+		for (let i = 0; i < eps.length; i++) {
+			try {
+				const factory = eps[i];
+				factory.initialize();
+				const module = factory.factory(this);
+				this.modules[factory.type] = module;
+			} catch (e) {
+				gs.error(`Failed to initialize JavaScript library ${eps[i].type}: ${e}\n${e.stack}`);
+			}
+		}
+	},
+	
+	require: function (module) {
+		return this.modules[module];
+	},
+
+	type: 'JSLibs'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-28 15:45:57</sys_created_on>
+        <sys_id>74b4a0db83c656100971c810feaad334</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>JSLibs</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_74b4a0db83c656100971c810feaad334</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-28 15:45:57</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>74b4a0db83c656100971c810feaad334</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-28 15:45:56</sys_created_on>
+        <sys_id>56e4e09f83c656100971c810feaad39d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-28 15:45:56</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>092f4577db2e3d9405ef1729139619fc</instance_id>
+        <instance_name>dev222234</instance_name>
+        <name>sys_script_include_74b4a0db83c656100971c810feaad334</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_424426_devops.JSLibs&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;Collection of several JavaScript Libraries to enable gzip handling&amp;#13;
+https://github.com/dankogai/js-base64&amp;#13;
+https://github.com/beatgammit/deflate-js&amp;#13;
+https://github.com/beatgammit/crc32&amp;#13;
+https://github.com/beatgammit/gzip-js&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;JSLibs&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[/* global Class, GlideScriptedExtensionPoint, gs */
+/* eslint no-undef: "error" */
+var JSLibs = Class.create();
+JSLibs.prototype = {
+	initialize: function () {
+		this.modules = {};
+
+		const eps = new GlideScriptedExtensionPoint().getExtensions('JSLibFactory');
+		for (let i = 0; i &lt; eps.length; i++) {
+			try {
+				const factory = eps[i];
+				factory.initialize();
+				const module = factory.factory(this);
+				this.modules[factory.type] = module;
+			} catch (e) {
+				gs.error(`Failed to initialize JavaScript library ${eps[i].type}: ${e}\n${e.stack}`);
+			}
+		}
+	},
+	
+	require: function (module) {
+		return this.modules[module];
+	},
+
+	type: 'JSLibs'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-28 15:45:57&lt;/sys_created_on&gt;&lt;sys_id&gt;74b4a0db83c656100971c810feaad334&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_name&gt;JSLibs&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_74b4a0db83c656100971c810feaad334&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-28 15:45:57&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;74b4a0db83c656100971c810feaad334&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-28 15:45:56&lt;/sys_created_on&gt;&lt;sys_id&gt;56e4e09f83c656100971c810feaad39d&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-28 15:45:56&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-943481323</payload_hash>
+        <record_name>JSLibs</record_name>
+        <reverted_from/>
+        <source>505bff84937fc210e02873718bba10ab</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-28 15:45:57</sys_created_on>
+        <sys_id>eee428df83c656100971c810feaad389</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>193737350bd0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-28 15:45:57</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>e2e428dfd4c656102398d72f86b03389</update_guid>
+        <update_guid_history>e2e428dfd4c656102398d72f86b03389:-943481323</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-01-31 15:41:21</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>0cc4eed12af044a080bae3aceb0ce640</sys_id>
+        <sys_metadata>74b4a0db83c656100971c810feaad334</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>JSLibs</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_74b4a0db83c656100971c810feaad334</sys_update_name>
+        <sys_update_version display_value="sys_script_include_74b4a0db83c656100971c810feaad334">eee428df83c656100971c810feaad389</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-01-31 15:41:21</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

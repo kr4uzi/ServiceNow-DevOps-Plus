@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_instance">
+    <sys_extension_instance action="DELETE">
+        <active>true</active>
+        <order>100</order>
+        <point>x_424426_devops.JSLibFactory</point>
+        <script_include/>
+        <sys_class_name>sys_extension_instance</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-28 15:41:07</sys_created_on>
+        <sys_id>abc3281783c656100971c810feaad31d</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.JSLibFactory</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_extension_instance_abc3281783c656100971c810feaad31d</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-28 15:41:07</sys_updated_on>
+    </sys_extension_instance>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>092f4577db2e3d9405ef1729139619fc</instance_id>
+        <instance_name>dev222234</instance_name>
+        <name>sys_extension_instance_abc3281783c656100971c810feaad31d</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_instance"><sys_extension_instance action="INSERT_OR_UPDATE"><active>true</active><order>100</order><point>x_424426_devops.JSLibFactory</point><script_include/><sys_class_name>sys_extension_instance</sys_class_name><sys_created_by>markus.kraus</sys_created_by><sys_created_on>2024-11-28 15:41:07</sys_created_on><sys_id>abc3281783c656100971c810feaad31d</sys_id><sys_mod_count>0</sys_mod_count><sys_name>x_424426_devops.JSLibFactory</sys_name><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_extension_instance_abc3281783c656100971c810feaad31d</sys_update_name><sys_updated_by>markus.kraus</sys_updated_by><sys_updated_on>2024-11-28 15:41:07</sys_updated_on></sys_extension_instance></record_update>]]></payload>
+        <payload_hash>-371797941</payload_hash>
+        <record_name>x_424426_devops.JSLibFactory</record_name>
+        <reverted_from/>
+        <source>0ef01a2f838a52100971c810feaad376</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-01-31 15:07:13</sys_created_on>
+        <sys_id>07c14a77831352100971c810feaad351</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>194bce6d9f10000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-01-31 15:07:13</sys_updated_on>
+        <type>Extension Instance</type>
+        <update_guid>cfc14a771a1352106cbab970aea69350</update_guid>
+        <update_guid_history>cfc14a771a1352106cbab970aea69350:0,abc3281733c656100acae608f371231f:-1347641315</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-01-31 15:41:41</sys_created_on>
+        <sys_db_object display_value="" name="sys_extension_instance">sys_extension_instance</sys_db_object>
+        <sys_id>0793e528077b45a084f594ffc9caa040</sys_id>
+        <sys_metadata>abc3281783c656100971c810feaad31d</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.JSLibFactory</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_extension_instance_abc3281783c656100971c810feaad31d</sys_update_name>
+        <sys_update_version display_value="sys_extension_instance_abc3281783c656100971c810feaad31d">07c14a77831352100971c810feaad351</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-01-31 15:41:41</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
