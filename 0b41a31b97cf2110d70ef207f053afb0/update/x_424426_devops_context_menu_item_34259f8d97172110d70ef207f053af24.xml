@@ -10,7 +10,7 @@
 	getNormalizedVariableName(table, function (variableName) {
 		variableName += 'Gr';
 		
-		const bgs = window.open('sys.scripts.do', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+		const bgs = window.open('sys.scripts.do?noredirect=true', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
 		bgs.addEventListener('DOMContentLoaded', function () {
 			bgs.document.getElementById('runscript').value =
 				'var ' + variableName + ' = new GlideRecord(\'' + g_form.getTableName() + '\');'
@@ -69,15 +69,26 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:43:47</sys_created_on>
         <sys_id>34259f8d97172110d70ef207f053af24</sys_id>
-        <sys_mod_count>24</sys_mod_count>
+        <sys_mod_count>25</sys_mod_count>
         <sys_name>sys.scripts</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_34259f8d97172110d70ef207f053af24</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-11-14 12:31:02</sys_updated_on>
+        <sys_updated_on>2025-02-12 09:24:07</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>34259f8d97172110d70ef207f053af24</id>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-02-12 09:24:05</sys_created_on>
+        <sys_id>bd562e6f83231210f6ed55e0deaad38e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-02-12 09:24:05</sys_updated_on>
+        <table>x_424426_devops_context_menu_item</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
 </record_update>
