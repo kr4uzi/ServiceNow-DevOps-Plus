@@ -73,13 +73,15 @@ It is used to directly assign devops_admin role directly to users - while direct
 			return adminUsers;
 		})(selectedUsers);
 
-		const isAdminInherited = (function () {
+		const inheritedAdminRoleSysID = (function () {
 			const userRoleGr = new GlideRecordSecure('sys_user_role_contains');
 			userRoleGr.addQuery('role.name', 'admin');
 			userRoleGr.addQuery('contains.name', 'x_424426_devops.devops_admin');
 			userRoleGr.setLimit(1);
 			userRoleGr.query();
-			return userRoleGr.hasNext();
+			if (userRoleGr.next()) {
+				return userRoleGr.getUniqueValue();
+			}
 		})();
 	</g2:evaluate>
 	<script>
@@ -89,8 +91,9 @@ It is used to directly assign devops_admin role directly to users - while direct
 		};
 	</script>
 	<h4 style="padding: 10px 15px 0px; font-weight: bold;">Select users who should be assigned to the 'DevOps+ Admin' role</h4>
-	<j2:if test="$[isAdminInherited]">
-		<p><strong>Note:</strong>$[SP]The DevOps+ Admin role is currently inherited by the admin role.</p>
+	<j2:if test="$[!!inheritedAdminRoleSysID]">
+		<p><strong>Note:</strong>$[SP]The DevOps+ Admin role is currently <a href="/sys_user_role_contains.do?sys_id=$[inheritedAdminRoleSysID]">inherited by the admin role</a>.</p>
+		<p>It is recommended to directly assign the DevOps+ Admin role to your platform super admins and remove this inheritance.</p>
 	</j2:if>
 	<br></br>
 	<div style="display: inline-block;min-width: 500px;">
@@ -208,13 +211,13 @@ It is used to directly assign devops_admin role directly to users - while direct
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-09 20:57:44</sys_created_on>
         <sys_id>00f483c2971f2110d70ef207f053af24</sys_id>
-        <sys_mod_count>70</sys_mod_count>
+        <sys_mod_count>76</sys_mod_count>
         <sys_name>admins</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_00f483c2971f2110d70ef207f053af24</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-08-19 18:34:23</sys_updated_on>
+        <sys_updated_on>2025-08-19 19:30:20</sys_updated_on>
     </sys_ui_page>
 </record_update>
