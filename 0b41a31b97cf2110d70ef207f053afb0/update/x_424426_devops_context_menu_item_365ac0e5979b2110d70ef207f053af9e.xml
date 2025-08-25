@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, prompt, g_form */
+        <client_script><![CDATA[/* global $context, GlideModal, g_form */
 /* eslint no-undef: "error" */
 (function () {
-	
-	var value = prompt(
-		'Enter a value for field "' + $context.FIELD + '"',
-		g_form.getValue($context.FIELD)
-	);
-	if (value != null) {
+
+	const gm = new GlideModal('x_424426_devops_input_dialog');
+	gm.setTitle('Set Value (Client Side)');
+	gm.setPreference('label', 'Enter a value for field "' + $context.FIELD + '":');
+	gm.setPreference('value', g_form.getValue($context.FIELD));
+	gm.setPreference('onPromptComplete', function (value) {
 		g_form.setValue($context.FIELD, value);
-	}
+	});
+	gm.render();
 	
 })();]]></client_script>
         <condition_script/>
@@ -22,14 +23,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 18:05:33</sys_created_on>
         <sys_id>365ac0e5979b2110d70ef207f053af9e</sys_id>
-        <sys_mod_count>6</sys_mod_count>
+        <sys_mod_count>12</sys_mod_count>
         <sys_name>set</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_365ac0e5979b2110d70ef207f053af9e</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2023-10-28 14:47:44</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-25 10:41:37</sys_updated_on>
         <type>field</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>

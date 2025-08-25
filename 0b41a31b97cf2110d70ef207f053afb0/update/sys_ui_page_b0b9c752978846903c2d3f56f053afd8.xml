@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
     <sys_ui_page action="INSERT_OR_UPDATE">
         <category>general</category>
-        <client_script><![CDATA[addLoadEvent(function () {
-	var gm = GlideModal.get();
-	gel('input').value = gm.getPreference('value');
+        <client_script><![CDATA[/* global addLoadEvent, GlideModal, Event, gel, window */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {
+	const isMac = window.navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+	const gm = GlideModal.get();
+	const input = gel('input');
+	input.value = gm.getPreference('value');
+	input.addEventListener('keydown', function (e) {
+		if (e.key === "Enter" && ((isMac && e.metaKey) || (!isMac && e.ctrlKey))) {
+			e.preventDefault(); // prevent newline from being added to input
+			gel('ok_button').focus();
+		}
+	});
+	input.focus();
 });
 
 function onOK() {
@@ -49,7 +60,7 @@ function onOK() {
 		</div>
 		<div class="row">
 			<div class="col-xs-12 form-group">
-				<j:if test="${label}">
+				<j:if test="${!!label}">
 					<label class="control-label" for="input">${label}</label>
 				</j:if>
 				<textarea id="input" class="form-field input_controls form-control" onkeyup="$j(this).height(48);$j(this).height($j(this).prop('scrollHeight'))" />
@@ -62,7 +73,7 @@ function onOK() {
 		</div>
 		<div class="row">
 			<div class="col-xs-12">
-				<g:dialog_buttons_ok_cancel ok="return onOK();" />
+				<g:dialog_buttons_ok_cancel ok_id="ok_button" ok="return onOK();" />
 			</div>
 		</div>
 	</div>
@@ -73,13 +84,13 @@ function onOK() {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-01 18:55:42</sys_created_on>
         <sys_id>b0b9c752978846903c2d3f56f053afd8</sys_id>
-        <sys_mod_count>16</sys_mod_count>
+        <sys_mod_count>21</sys_mod_count>
         <sys_name>input_dialog</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_b0b9c752978846903c2d3f56f053afd8</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-07 17:37:01</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-25 11:08:00</sys_updated_on>
     </sys_ui_page>
 </record_update>

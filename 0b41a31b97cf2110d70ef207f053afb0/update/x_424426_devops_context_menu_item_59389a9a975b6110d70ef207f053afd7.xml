@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, prompt, GlideList2 */
+        <client_script><![CDATA[/* global $context, GlideModal, GlideList2 */
 /* eslint no-undef: "error" */
 (function ($context) {
-	
-	var result = prompt('Set new filter', $context.FILTER);
-	if (result != null) {
+
+	const gm = new GlideModal('x_424426_devops_input_dialog');
+	gm.setTitle('Set List Filter');
+	gm.setPreference('label', 'Enter an encoded query:');
+	gm.setPreference('value', $context.FILTER);
+	gm.setPreference('onPromptComplete', function (value) {
 		var list = GlideList2.get($context.LISTID);
-		list.setFilter(result, true, true);
+		list.setFilter(value, true, true);
 		list.refresh();
-	}
+	});
+	gm.render();
 	
 })($context);]]></client_script>
         <condition_script/>
@@ -21,14 +25,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-10 12:20:46</sys_created_on>
         <sys_id>59389a9a975b6110d70ef207f053afd7</sys_id>
-        <sys_mod_count>8</sys_mod_count>
+        <sys_mod_count>9</sys_mod_count>
         <sys_name>setFilter</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_59389a9a975b6110d70ef207f053afd7</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-09-07 14:48:42</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-25 10:49:57</sys_updated_on>
         <type>breadcrumb</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>
