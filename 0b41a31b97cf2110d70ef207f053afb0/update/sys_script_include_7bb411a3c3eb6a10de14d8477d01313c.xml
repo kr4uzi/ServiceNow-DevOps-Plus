@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_424426_devops.DecryptUtil</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>DecryptUtil</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global global, Class, GlideRecord */
+/* eslint no-undef: "error" */
+var DecryptUtil = Class.create();
+DecryptUtil.prototype = {
+	initialize: function (progressID) {
+		if (progressID) {
+			this.progress_id = progressID;
+		} else {
+			this.progress_id = new global.AJAXExecutionTracker().getLastRunning();
+		}
+
+		const scriptGr = new GlideRecord('clone_cleanup_script');
+		scriptGr.addQuery('sys_scope', 'global');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('No infuseable record found');
+		}
+	},
+
+	_hasRecord: function (table, query) {
+		this.scriptGr.script = `(function (table, query) {
+			var anyGr = new GlideRecord(table);
+			anyGr.addEncodedQuery(query);
+			anyGr.setLimit(1);
+			anyGr.setWorkflow(false);
+			anyGr.query();
+			return anyGr.hasNext();
+		})(table, query);`
+		const gse = new GlideScopedEvaluator();
+		gse.putVariable('table', table);
+		gse.putVariable('query', query);
+		return gse.evaluateScript(this.scriptGr, 'script');
+	},
+
+	decrypt: function (table, sysId, field) {
+		try {
+			this._decrypt(table, sysId, field);
+		} catch (e) {
+			this._trackerFail('Failed to decrypt: ' + e.message + '\n' + e.stack);
+		}
+	},
+
+	_decrypt: function (table, sysId, field) {
+		const starts = 'sys_id=' + sysId + '^' + field + 'STARTSWITH';
+		const c = 'abcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'()*+,-./:;<=>?@[\\]^_{|}~\t\n\r"` ';
+		const l = c.length;
+		let m = '';
+		let mc = [];
+		while (!this._trackerIsCancelled()) {
+			let i = 0;
+			const a = m.length;
+			while (i < l) {
+				let s = c[i];
+				if (s == '^') s = '^^';
+				const found = this._hasRecord(table, starts + m + s);
+				/*new global.GlideQuery(table)
+					.where('sys_id', sysId)
+					.where(field, 'STARTSWITH', m + c[i])
+					.selectOne()
+					.isPresent();*/
+				if (found) {
+					const back = m.slice(-100);
+					if (back.length == 100 && !back.trim()) {
+						i = l;
+						m = m.trim();
+						break;
+					}
+
+					m += s;
+					for (const x of s) mc.push(x.charCodeAt(0));
+					i = 0;
+					this._trackerUpdateMessage(`decrypted ${m.length} bytes`);
+				} else {
+					i++;
+				}
+			}
+			
+			if (i == l) {
+				if (!m) this._trackerFail('script include did not start with any known character or with more than 100 whitespaces');
+				else this._trackerSuccess('bruteforce complete', { script: m });
+				break;
+			}
+		}
+	},
+
+	_trackerUpdateMessage: function (message) {
+		const globalTracker = new global.AJAXExecutionTracker();
+		const objs = {
+			sysparm_tracker_id: this.worker_id,
+			sysparm_message: message
+		};
+		globalTracker.getParameter = function (n) { return objs[n]; };
+		globalTracker.updateMessage();
+	},
+	
+	_trackerIsCancelled: function () {
+		const state = {
+			PENDING: 0,
+			RUNNING: 1,
+			SUCCESSFULL: 2,
+			FAILED: 3,
+			CANCELLED: 4
+		};
+		
+		const trackerGr = new GlideRecord('sys_execution_tracker');
+		trackerGr.addQuery('sys_id', this.worker_id);
+		trackerGr.addQuery('state', state.CANCELLED);
+		trackerGr.setLimit(1);
+		trackerGr.query();
+		return trackerGr.hasNext();
+	},
+	
+	_trackerUpdatePercentComplete: function (percentage) {
+		const globalTracker = new global.AJAXExecutionTracker();
+		const objs = {
+			sysparm_tracker_id: this.worker_id,
+			sysparm_percent_complete: percentage
+		};
+		globalTracker.getParameter = function (n) { return objs[n]; };
+		globalTracker.updatePercentComplete();
+	},
+	
+	_trackerSuccess: function (message, result) {		
+		this._updateResult(result);
+		
+		const globalTracker = new global.AJAXExecutionTracker();
+		const objs = {
+			sysparm_tracker_id: this.worker_id,
+			sysparm_message: message
+		};
+		globalTracker.getParameter = function (n) { return objs[n]; };
+		globalTracker.success();
+	},
+
+	_trackerFail: function (message, result) {
+		this._updateResult(result);
+		
+		const globalTracker = new global.AJAXExecutionTracker();
+		const objs = {
+			sysparm_tracker_id: this.worker_id,
+			sysparm_message: message
+		};
+		globalTracker.getParameter = function (n) { return objs[n]; };
+		globalTracker.fail();
+	},
+
+	_updateResult: function (result) {
+		if (result) {
+			const globalTracker = new global.AJAXExecutionTracker();
+			const tracker = globalTracker._getTracker(this.worker_id);
+			tracker.updateResult(result);
+		}
+	},
+
+	type: 'DecryptUtil'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-08-29 23:51:13</sys_created_on>
+        <sys_id>7bb411a3c3eb6a10de14d8477d01313c</sys_id>
+        <sys_mod_count>18</sys_mod_count>
+        <sys_name>DecryptUtil</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_7bb411a3c3eb6a10de14d8477d01313c</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-30 02:18:06</sys_updated_on>
+    </sys_script_include>
+</record_update>
