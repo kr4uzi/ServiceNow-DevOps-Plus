@@ -58,7 +58,8 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
 	 */
 	search: function (table, term, options) {
 		// an exact sys_id query can increase performance for sys_id queries
-		var query = 'sys_id=' + term;
+		var escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+		var query = 'sys_id=' + escapedTerm;
 		var fields = (options && options.fields) ? options.fields : this.getFields(table);
 		for (var field in fields) {
 			var operator = 'LIKE';
@@ -66,7 +67,7 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
 				operator = '=';
 			}
 
-			query += '^OR' + field + (fields[field].operator || operator) + term;
+			query += '^OR' + field + (fields[field].operator || operator) + escapedTerm;
 		}
 
 		var anyGr = new GlideRecordSecure(table);
@@ -126,14 +127,14 @@ CodeSearchHandler.prototype = Object.extendsObject(x_424426_devops.CodeSearchHan
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 05:14:50</sys_created_on>
         <sys_id>c27f336893b242101f07f5f08bba10d5</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>CodeSearchHandler</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_extension_point_c27f336893b242101f07f5f08bba10d5</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-07 13:02:50</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-31 19:47:11</sys_updated_on>
     </sys_extension_point>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>c27f336893b242101f07f5f08bba10d5</id>

@@ -34,6 +34,7 @@ CodeSearchHandlerForm.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
 	 */
 	search: function (table, term, options) {
+		const escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
 		const fields = options?.field || this.getFields(table);
 		let query = [];
 		if (options?.additional_filter)
@@ -51,7 +52,7 @@ CodeSearchHandlerForm.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 
 		const fieldQuery = [];
 		for (const field in fields) {
-			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + term);
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + escapedTerm);
 		}
 
 		if (fieldQuery.length) {
@@ -125,14 +126,14 @@ CodeSearchHandlerForm.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 21:53:28</sys_created_on>
         <sys_id>a654ab3493b282101f07f5f08bba1094</sys_id>
-        <sys_mod_count>18</sys_mod_count>
+        <sys_mod_count>19</sys_mod_count>
         <sys_name>CodeSearchHandlerForm</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_a654ab3493b282101f07f5f08bba1094</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-07 11:59:42</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-31 19:48:04</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>a654ab3493b282101f07f5f08bba1094</id>

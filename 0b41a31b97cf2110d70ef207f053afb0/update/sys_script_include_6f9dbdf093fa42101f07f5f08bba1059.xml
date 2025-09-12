@@ -42,29 +42,61 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	 * @return {boolean}
 	 */
 	handlesTable: function (tableName) {
+		// the general scope handler can handle all tables:
 		const dbObjectGr = new GlideRecord('sys_db_object');
-		dbObjectGr.addQuery('sys_scope.scope', 'global');
-		dbObjectGr.addQuery('name', tableName);
-		dbObjectGr.addEncodedQuery('^NQaccess=^ORaccess=public');
-		dbObjectGr.addQuery('read_access', true);
 		dbObjectGr.addQuery('name', tableName);
 		dbObjectGr.setLimit(1);
 		dbObjectGr.query();
-		return dbObjectGr.hasNext();
+		if (dbObjectGr.next()) {
+			// - that are in global scope (infused search script runs in global scope)
+			if (dbObjectGr.sys_scope == 'global' || dbObjectGr.sys_scope.scope == 'global') {
+				return true;
+			}
+
+			if (dbObjectGr.access == 'package_private' || !dbObjectGr.read_access) {
+				return false;
+			}
+			
+			// - that are in scoped, but allow global read access
+			const callerAccess = dbObjectGr.caller_access;
+			if (!callerAccess || callerAccess == 1) {
+				// caller tracking (will grant automatic access)
+				return true;
+			}
+
+			// can only search this table if the access has been granted for global scope
+			const accessGr = new GlideRecord('sys_restricted_caller_access');
+			accessGr.addQuery('source_scope', 'global');
+			accessGr.addQuery('operation', 'read');
+			accessGr.addQuery('target', dbObjectGr.sys_id);
+			accessGr.addQuery('status', '2'); // Allowed
+			accessGr.setLimit(1);
+			accessGr.query();
+			return accessGr.hasNext();
+		}
+		
+		return false;
 	},
 
 	/**
 	 * search in the supplied table using the (fixed) context
 	 * @param {string} table
 	 * @param {string} term
-	 * @param {{fields: Object<string, {type: string}>?, exact: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @param {object} [options]
+	 * @param {Object<string, {type: string}>} [options.fields]
+	 * @param {boolean} [options.exact]
+	 * @param {string} [options.additional_filter]
+	 * @param {string} [options.scope]
+	 * @param {number} [options.limit]
+	 * @param {boolean} [options.match_table]
 	 * @return {CodeSearchResult}
 	 */
 	search: function (table, term, options) {
 		this.scriptGr.script = `
 			(function (table, term, options) {
 		// an exact sys_id query can increase performance for sys_id queries
-		var query = 'sys_id=' + term;
+		var escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+		var query = 'sys_id=' + escapedTerm;
 		var fields = (options && options.fields) ? options.fields : this.getFields(table);
 		for (var field in fields) {
 			var operator = 'LIKE';
@@ -72,7 +104,7 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 				operator = '=';
 			}
 			
-			query += '^OR' + field + (fields[field].operator || operator) + term;
+			query += '^OR' + field + (fields[field].operator || operator) + escapedTerm;
 		}
 
 		var anyGr = new GlideRecordSecure(table);
@@ -138,14 +170,14 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 14:24:37</sys_created_on>
         <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
-        <sys_mod_count>26</sys_mod_count>
+        <sys_mod_count>34</sys_mod_count>
         <sys_name>CodeSearchHandlerGeneral</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-26 21:30:29</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-09-06 19:02:47</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>6f9dbdf093fa42101f07f5f08bba1059</id>

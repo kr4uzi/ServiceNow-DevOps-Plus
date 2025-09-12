@@ -13,7 +13,7 @@
         <name>CodeSearchUtilClient</name>
         <sandbox_callable>true</sandbox_callable>
         <script><![CDATA[/* global global, gs, sn_scoped_cache, x_424426_devops */
-/* global Class, GlideRecordSecure, GlideAggregate, GlideStringUtil, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
+/* global Class, GlideRecordSecure, GlideAggregate, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
 CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
@@ -223,7 +223,7 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 	},
 
 	_handleTableSearch: function (table, context) {
-		const dbObjectGr = new GlideRecord('sys_db_object');
+		const dbObjectGr = new GlideRecordSecure('sys_db_object');
 		dbObjectGr.addQuery('name', table);
 		dbObjectGr.setLimit(1);
 		dbObjectGr.query();
@@ -235,28 +235,25 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 		}
 
 		const scopeName = dbObjectGr.sys_scope.scope.toString();
-		const searchHandlers = new GlideScriptedExtensionPoint().getExtensions('CodeSearchHandler');
-
-		for (let i = 0; i < searchHandlers.length; i++) {
+		for (const handler of new GlideScriptedExtensionPoint().getExtensions('CodeSearchHandler')) {
 			try {
-				searchHandlers[i].initialize();
-				if (searchHandlers[i].handlesScope(scopeName) && searchHandlers[i].handlesTable(table)) {
+				handler.initialize();
+				if (handler.handlesScope(scopeName) && handler.handlesTable(table)) {
 					return {
 						status: 'success',
-						search_result: searchHandlers[i].search(table, context.term, context)
+						search_result: handler.search(table, context.term, context)
 					};
 				}
 			} catch (e) {
 				return {
 					status: 'error',
-					message: `SearchHandler ${i} failed (${e}): ${this._getLogLink()}\n${e.stack}`
+					message: `SearchHandler ${handler.type} failed (${e}): ${this._getLogLink()}\n${e.stack}`
 				};
 			}
 		}
 
 		return {
 			status: 'error',
-			missingHandlerMessage: 'Missing Implementation of CodeSearchHandler for Scope ' + scopeName,
 			message: `No Search Handler found to handle ${scopeName}::${table}`
 		};
 	},
@@ -314,14 +311,14 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>162</sys_mod_count>
+        <sys_mod_count>165</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2024-11-27 14:27:37</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-08-31 19:44:15</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>35fdd6d597d32110d70ef207f053afcd</id>
