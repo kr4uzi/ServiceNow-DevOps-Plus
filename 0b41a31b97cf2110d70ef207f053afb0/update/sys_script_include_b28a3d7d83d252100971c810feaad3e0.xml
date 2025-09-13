@@ -25,6 +25,36 @@ DevOpsExt.prototype = {
 		}
 	},
 
+	unzip: function (base64Data) {
+		this.scriptGr.script = `(function (base64Data) {
+			var inf = null, bos = null, ios = null;
+			try {
+				// gzip header has a fixed length of 10
+				var bytes = GlideStringUtil.base64DecodeAsBytes(base64Data);
+				var gzipped = bytes.length >= 2
+					&& (bytes[0] & 0xFF) == 0x1F
+					&& (bytes[1] & 0xFF) == 0x8B;
+				var offset = gzipped ? 10 : 0;
+				inf = new Packages.java.util.zip.Inflater(gzipped);
+				bos = new Packages.java.io.ByteArrayOutputStream();
+				ios = new Packages.java.util.zip.InflaterOutputStream(bos, inf);
+				ios.write(bytes, offset, bytes.length - offset);
+				return bos.toString();
+			} catch (e) {
+				gs.error('failed to decompress: ' + e + '\\n' + e.stack);
+			} finally {
+				if (ios) ios.close();
+				if (bos) bos.close();
+				if (inf) inf.end();
+			}
+			
+			return '';
+		})(base64Data);`;
+		return new GlideScopedEvaluator().evaluateScript(this.scriptGr, 'script', {
+			base64Data: base64Data
+		});
+	},
+
 	getRecord: function (tableName, sysId) {
 		this.scriptGr.script = `(function (tableName, sysId) {
 			var recordGr = new GlideRecordSecure(tableName);
@@ -42,53 +72,20 @@ DevOpsExt.prototype = {
 		});
 	},
 
-	getZIPEntries: function (attSysID, options) {
-		this.scriptGr.script = `(function (attSysID, options) {
-			var zis = new Packages.java.util.zip.ZipInputStream(new GlideSysAttachmentInputStream(attSysID));
-			var entry;
-
-			var results = [];
-			while ((entry = zis.getNextEntry()) !== null) {
-				var fileEntry = {
-					name: entry.getName(),
-					directory: entry.isDirectory()
-				};
-
-				if (!fileEntry.directory && options && options.withContent) {
-					var bis = new Packages.java.io.BufferedInputStream(zis, 1024);
-					var b = -1;
-					fileEntry.bytes = [];
-					while ((b = bis.read()) != -1) {
-						fileEntry.bytes.push(b);
-					}
-				}
-
-				zis.closeEntry();
-				results.push(fileEntry);
-			}
-
-			return results;
-		})(attSysID, JSON.parse(options));`;
-		return new GlideScopedEvaluator().evaluateScript(this.scriptGr, 'script', {
-			attSysID: attSysID,
-			options: JSON.stringify(options || {})
-		});
-	},
-
 	type: 'DevOpsExt'
 };]]></script>
         <sys_class_name>sys_script_include</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-12-06 16:24:53</sys_created_on>
         <sys_id>b28a3d7d83d252100971c810feaad3e0</sys_id>
-        <sys_mod_count>6</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>DevOpsExt</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b28a3d7d83d252100971c810feaad3e0</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-08-20 10:18:30</sys_updated_on>
+        <sys_updated_on>2025-09-13 18:09:20</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>b28a3d7d83d252100971c810feaad3e0</id>

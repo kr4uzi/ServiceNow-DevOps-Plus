@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.NPM</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>How to add npm packages:&#13;
+1.) Open https://registry.npmjs.org/&lt;package-name&gt;/latest&#13;
+2.) Download the .dist. tarball link&#13;
+3.) Convert to zip: tar -xvzf &lt;downloaded&gt;.tgz &amp;&amp; zip -r &lt;downloaded&gt;.zip package/&#13;
+4.) Upload zip file to this application's sys_app record</description>
+        <mobile_callable>false</mobile_callable>
+        <name>NPM</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global global, gs, sn_scoped_cache */
+/* global Class, GlideRecord, GlideScriptedExtensionPoint, GlideScopedEvaluator */
+/* eslint no-undef: "error" */
+var NPM = Class.create();
+NPM.CACHE_NAME = 'devops_npm_packages';
+NPM.flush = function () {
+	const packages = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, 'packages');
+	packages.forEach(attSysID => sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, attSysID));
+	sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, 'packages');
+};
+NPM.prototype = {
+	initialize: function (options) {
+		// use a NOW Sync infusable record (this runs with modern JS support)
+		const scriptGr = new GlideRecord('sys_rte_eb_script_operation');
+		scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('Cannot run without a script');
+		}
+
+		const eps = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
+		if (eps.length) {
+			eps[0].initialize();
+			this.ext = eps[0];
+		} else {
+			throw new Error(`${this.type} requires a SyncExt implementation`);
+		}
+
+		this.modules = {};
+		const packages = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, 'packages');
+		if (packages && packages != '[]') {
+			this.packages = JSON.parse(packages);
+		} else {
+			this.packages = [];
+
+			const attGr = new GlideRecord('sys_attachment');
+			attGr.addQuery('table_name', 'sys_app');
+			attGr.addQuery('table_sys_id', '0b41a31b97cf2110d70ef207f053afb0');
+			attGr.addQuery('content_type', 'application/zip');
+			attGr.query();
+
+			while (attGr.next()) {
+				const attSysID = attGr.getUniqueValue();
+				this.packages.push(attSysID);
+			}
+		}
+
+		const pkgOrder = [];
+		this.packages = this.packages.filter(attSysID => {
+			try {
+				const pkg = this._parsePackage(attSysID);
+				for (const dep in pkg.dependencies) {
+					// note: version resolution is currently not done
+					pkgOrder.push(dep);
+				}
+				pkgOrder.push(pkg.name);
+				this.modules[pkg.name] = pkg;
+				return true;
+			} catch (e) {
+				const attGr = new GlideRecord('sys_attachment');
+				attGr.addQuery('sys_id', attSysID);
+				attGr.setLimit(1);
+				attGr.query();
+				if (attGr.next()) {
+					gs.error(`Failed to parse NPM package '${attGr.file_name}': ${e}${(e.stack ? '\n' + e.stack : '')}`);
+				} else {
+					// remove non existing package silently
+				}
+
+				return false;
+			}
+		});
+
+		pkgOrder.forEach(pkgName => {
+			const pkg = this.modules[pkgName];
+			if (!pkg) {
+				gs.error(`Expected NPM package ${pkgName}`);
+				return;
+			}
+
+			if (pkg.module) {
+				// already initialized
+				return;
+			}
+
+			pkg.module = this._importFile(pkg.files, ['package'], pkg.main);
+		});
+
+		sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+	},
+
+	require: function (moduleName) {
+		const module = this.modules[moduleName];
+		if (module?.module) {
+			return module?.module;
+		}
+
+		gs.error('Unknown module: ' + moduleName);
+	},
+
+	_importFile: function (files, root, _filePath) {
+		let file = [root];
+		_filePath.split('/').forEach(f => {
+			if (f == '..') {
+				file.pop();
+			} else if (f != '.') {
+				file.push(f);
+			}
+		});
+
+		file = file.join('/');
+		if (file in files) {
+			const module = files[file];
+			if (module.inst) {
+				return module.inst;
+			}
+
+			this.scriptGr.script = module.text;
+			const gse = new GlideScopedEvaluator();
+			const emptyObject = new Object();
+			const moduleExport = {
+				exports: emptyObject
+			};
+			const globalExport = {};
+			const self = this;
+			gse.putVariable('require', function (subFile) {
+				return self.modules[subFile]?.module || self._importFile(files, file.split('/').slice(0, -1).join('/'), subFile);
+			});
+			gse.putVariable('global', globalExport);
+			gse.putVariable('module', moduleExport);
+			gse.putVariable('exports', moduleExport.exports);
+			const res = gse.evaluateScript(this.scriptGr, 'script');
+
+			if (Object.keys(moduleExport.exports).length || moduleExport.exports != emptyObject) {
+				return moduleExport.exports;
+			} else if (Object.keys(globalExport).length == 1) {
+				return globalExport[Object.keys(globalExport)[0]];
+			}
+			
+			throw new Error('Unknown NPM module initialization');
+		}
+		
+		throw new Error('Unknown File: ' + file);
+	},
+
+	_parsePackage: function (attSysID) {
+		let module = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, attSysID);
+		if (module) {
+			module = JSON.parse(module);
+		} else {
+			const zipEntries = this.ext.getZIPEntries(attSysID, { withContent: true });
+			if (zipEntries.length == 0 || zipEntries[0].name != 'package/') {
+				throw new Error('Invalid NPM package');
+			}
+
+			const files = {};
+			zipEntries.forEach(e => {
+				if (!e.directory) {
+					files[e.name] = String.fromCharCode(...e.bytes);
+				}
+			});
+			
+			const config = JSON.parse(files['package/package.json'] || null);
+			if (!config) {
+				gs.info(JSON.stringify(files, null, 2));
+				throw new Error ('Invalid NPM package: package.json is missing');
+			}
+
+			if (!config.name) {
+				gs.info(JSON.stringify(files, null, 2));
+				throw new Error('Invalid NPM package: name missing');
+			}
+
+			module = {
+				files: files,
+				main: config.main || 'index.js',
+				name: config.name,
+				dependencies: config.dependencies
+			};
+			sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, attSysID, JSON.stringify(module));
+		}
+
+		for (const file in module.files) {
+			module.files[file] = {
+				text: module.files[file],
+				inst: null
+			};
+		}
+
+		return module;
+	},
+
+	addPackage: function (attSysID) {
+		try {
+			const module = this._parsePackage(attSysID);
+			this.modules[module.name] = module;
+			this.packages.push(attSysID);
+			sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+		} catch (e) {
+			const attGr = new GlideRecord('sys_attachment');
+			attGr.addQuery('sys_id', attSysID);
+			attGr.setLimit(1);
+			attGr.query();
+			if (attGr.next()) {
+				gs.error(`Failed to add NPM module '${attGr.file_name}': e${(e.stack ? '\n' + e.stack : '')}`);
+			}
+		}
+	},
+
+	removePackage: function (attSysID) {
+		sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, attSysID);
+
+		this.packages = this.packages.filter(p => p != attSysID);
+		sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+	},
+
+	type: 'NPM'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-01-31 13:03:10</sys_created_on>
+        <sys_id>c0f3a133839712100971c810feaad3a3</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_name>NPM</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_c0f3a133839712100971c810feaad3a3</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-01-31 15:29:21</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>c0f3a133839712100971c810feaad3a3</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-01-31 13:03:09</sys_created_on>
+        <sys_id>f16521f3839712100971c810feaad352</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-01-31 13:03:09</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+<sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_script_include_c0f3a133839712100971c810feaad3a3</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;
+    &lt;sys_script_include action="INSERT_OR_UPDATE"&gt;
+        &lt;access&gt;package_private&lt;/access&gt;
+        &lt;active&gt;true&lt;/active&gt;
+        &lt;api_name&gt;x_424426_devops.NPM&lt;/api_name&gt;
+        &lt;caller_access/&gt;
+        &lt;client_callable&gt;false&lt;/client_callable&gt;
+        &lt;description&gt;How to add npm packages:&amp;#13;
+1.) Open https://registry.npmjs.org/&amp;lt;package-name&amp;gt;/latest&amp;#13;
+2.) Download the .dist. tarball link&amp;#13;
+3.) Convert to zip: tar -xvzf &amp;lt;downloaded&amp;gt;.tgz &amp;amp;&amp;amp; zip -r &amp;lt;downloaded&amp;gt;.zip package/&amp;#13;
+4.) Upload zip file to this application's sys_app record&lt;/description&gt;
+        &lt;mobile_callable&gt;false&lt;/mobile_callable&gt;
+        &lt;name&gt;NPM&lt;/name&gt;
+        &lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;
+        &lt;script&gt;&lt;![CDATA[/* global global, gs, sn_scoped_cache */
+/* global Class, GlideRecord, GlideScriptedExtensionPoint, GlideScopedEvaluator */
+/* eslint no-undef: "error" */
+var NPM = Class.create();
+NPM.CACHE_NAME = 'devops_npm_packages';
+NPM.flush = function () {
+	const packages = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, 'packages');
+	packages.forEach(attSysID =&gt; sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, attSysID));
+	sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, 'packages');
+};
+NPM.prototype = {
+	initialize: function (options) {
+		// use a NOW Sync infusable record (this runs with modern JS support)
+		const scriptGr = new GlideRecord('sys_rte_eb_script_operation');
+		scriptGr.addQuery('sys_id', '97fdb21397db71103c2d3f56f053af8c');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('Cannot run without a script');
+		}
+
+		const eps = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
+		if (eps.length) {
+			eps[0].initialize();
+			this.ext = eps[0];
+		} else {
+			throw new Error(`${this.type} requires a SyncExt implementation`);
+		}
+
+		this.modules = {};
+		const packages = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, 'packages');
+		if (packages &amp;&amp; packages != '[]') {
+			this.packages = JSON.parse(packages);
+		} else {
+			this.packages = [];
+
+			const attGr = new GlideRecord('sys_attachment');
+			attGr.addQuery('table_name', 'sys_app');
+			attGr.addQuery('table_sys_id', '0b41a31b97cf2110d70ef207f053afb0');
+			attGr.addQuery('content_type', 'application/zip');
+			attGr.query();
+
+			while (attGr.next()) {
+				const attSysID = attGr.getUniqueValue();
+				this.packages.push(attSysID);
+			}
+		}
+
+		const pkgOrder = [];
+		this.packages = this.packages.filter(attSysID =&gt; {
+			try {
+				const pkg = this._parsePackage(attSysID);
+				for (const dep in pkg.dependencies) {
+					// note: version resolution is currently not done
+					pkgOrder.push(dep);
+				}
+				pkgOrder.push(pkg.name);
+				this.modules[pkg.name] = pkg;
+				return true;
+			} catch (e) {
+				const attGr = new GlideRecord('sys_attachment');
+				attGr.addQuery('sys_id', attSysID);
+				attGr.setLimit(1);
+				attGr.query();
+				if (attGr.next()) {
+					gs.error(`Failed to parse NPM package '${attGr.file_name}': ${e}${(e.stack ? '\n' + e.stack : '')}`);
+				} else {
+					// remove non existing package silently
+				}
+
+				return false;
+			}
+		});
+
+		pkgOrder.forEach(pkgName =&gt; {
+			const pkg = this.modules[pkgName];
+			if (!pkg) {
+				gs.error(`Expected NPM package ${pkgName}`);
+				return;
+			}
+
+			if (pkg.module) {
+				// already initialized
+				return;
+			}
+
+			pkg.module = this._importFile(pkg.files, ['package'], pkg.main);
+		});
+
+		sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+	},
+
+	require: function (moduleName) {
+		const module = this.modules[moduleName];
+		if (module?.module) {
+			return module?.module;
+		}
+
+		gs.error('Unknown module: ' + moduleName);
+	},
+
+	_importFile: function (files, root, _filePath) {
+		let file = [root];
+		_filePath.split('/').forEach(f =&gt; {
+			if (f == '..') {
+				file.pop();
+			} else if (f != '.') {
+				file.push(f);
+			}
+		});
+
+		file = file.join('/');
+		if (file in files) {
+			const module = files[file];
+			if (module.inst) {
+				return module.inst;
+			}
+
+			this.scriptGr.script = module.text;
+			const gse = new GlideScopedEvaluator();
+			const emptyObject = new Object();
+			const moduleExport = {
+				exports: emptyObject
+			};
+			const globalExport = {};
+			const self = this;
+			gse.putVariable('require', function (subFile) {
+				return self.modules[subFile]?.module || self._importFile(files, file.split('/').slice(0, -1).join('/'), subFile);
+			});
+			gse.putVariable('global', globalExport);
+			gse.putVariable('module', moduleExport);
+			gse.putVariable('exports', moduleExport.exports);
+			const res = gse.evaluateScript(this.scriptGr, 'script');
+
+			if (Object.keys(moduleExport.exports).length || moduleExport.exports != emptyObject) {
+				return moduleExport.exports;
+			} else if (Object.keys(globalExport).length == 1) {
+				return globalExport[Object.keys(globalExport)[0]];
+			}
+			
+			throw new Error('Unknown NPM module initialization');
+		}
+		
+		throw new Error('Unknown File: ' + file);
+	},
+
+	_parsePackage: function (attSysID) {
+		let module = sn_scoped_cache.ScopedCacheManager.get(NPM.CACHE_NAME, attSysID);
+		if (module) {
+			module = JSON.parse(module);
+		} else {
+			const zipEntries = this.ext.getZIPEntries(attSysID, { withContent: true });
+			if (zipEntries.length == 0 || zipEntries[0].name != 'package/') {
+				throw new Error('Invalid NPM package');
+			}
+
+			const files = {};
+			zipEntries.forEach(e =&gt; {
+				if (!e.directory) {
+					files[e.name] = String.fromCharCode(...e.bytes);
+				}
+			});
+			
+			const config = JSON.parse(files['package/package.json'] || null);
+			if (!config) {
+				gs.info(JSON.stringify(files, null, 2));
+				throw new Error ('Invalid NPM package: package.json is missing');
+			}
+
+			if (!config.name) {
+				gs.info(JSON.stringify(files, null, 2));
+				throw new Error('Invalid NPM package: name missing');
+			}
+
+			module = {
+				files: files,
+				main: config.main || 'index.js',
+				name: config.name,
+				dependencies: config.dependencies
+			};
+			sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, attSysID, JSON.stringify(module));
+		}
+
+		for (const file in module.files) {
+			module.files[file] = {
+				text: module.files[file],
+				inst: null
+			};
+		}
+
+		return module;
+	},
+
+	addPackage: function (attSysID) {
+		try {
+			const module = this._parsePackage(attSysID);
+			this.modules[module.name] = module;
+			this.packages.push(attSysID);
+			sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+		} catch (e) {
+			const attGr = new GlideRecord('sys_attachment');
+			attGr.addQuery('sys_id', attSysID);
+			attGr.setLimit(1);
+			attGr.query();
+			if (attGr.next()) {
+				gs.error(`Failed to add NPM module '${attGr.file_name}': e${(e.stack ? '\n' + e.stack : '')}`);
+			}
+		}
+	},
+
+	removePackage: function (attSysID) {
+		sn_scoped_cache.ScopedCacheManager.flushScopedCache(NPM.CACHE_NAME, attSysID);
+
+		this.packages = this.packages.filter(p =&gt; p != attSysID);
+		sn_scoped_cache.ScopedCacheManager.put(NPM.CACHE_NAME, 'packages', JSON.stringify(this.packages));
+	},
+
+	type: 'NPM'
+};]]&gt;&lt;/script&gt;
+        &lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;
+        &lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;
+        &lt;sys_created_on&gt;2025-01-31 13:03:10&lt;/sys_created_on&gt;
+        &lt;sys_id&gt;c0f3a133839712100971c810feaad3a3&lt;/sys_id&gt;
+        &lt;sys_mod_count&gt;10&lt;/sys_mod_count&gt;
+        &lt;sys_name&gt;NPM&lt;/sys_name&gt;
+        &lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;
+        &lt;sys_policy/&gt;
+        &lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;
+        &lt;sys_update_name&gt;sys_script_include_c0f3a133839712100971c810feaad3a3&lt;/sys_update_name&gt;
+        &lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;
+        &lt;sys_updated_on&gt;2025-01-31 15:29:21&lt;/sys_updated_on&gt;
+    &lt;/sys_script_include&gt;
+    &lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;
+        &lt;id&gt;c0f3a133839712100971c810feaad3a3&lt;/id&gt;
+        &lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;
+        &lt;sys_created_on&gt;2025-01-31 13:03:09&lt;/sys_created_on&gt;
+        &lt;sys_id&gt;f16521f3839712100971c810feaad352&lt;/sys_id&gt;
+        &lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;
+        &lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;
+        &lt;sys_updated_on&gt;2025-01-31 13:03:09&lt;/sys_updated_on&gt;
+        &lt;table&gt;sys_script_include&lt;/table&gt;
+        &lt;use_es_latest&gt;true&lt;/use_es_latest&gt;
+    &lt;/sys_es_latest_script&gt;
+&lt;/record_update&gt;</payload>
+        <payload_hash>1991320174</payload_hash>
+        <record_name>NPM</record_name>
+        <reverted_from/>
+        <source>6286d09bc36a6210de14d8477d01314c</source>
+        <source_table>sys_upgrade_history</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-07-10 07:25:52</sys_created_on>
+        <sys_id>8996d49bc36a6210de14d8477d013110</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>197f339fa730000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-07-10 07:25:52</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>4996d49b216a6210f231cdb82f4a3c10</update_guid>
+        <update_guid_history>4996d49b216a6210f231cdb82f4a3c10:1991320174</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2025-09-13 18:02:43</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>16c1082271a74d8986e33a68dccc5b81</sys_id>
+        <sys_metadata>c0f3a133839712100971c810feaad3a3</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>NPM</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_c0f3a133839712100971c810feaad3a3</sys_update_name>
+        <sys_update_version display_value="sys_script_include_c0f3a133839712100971c810feaad3a3">8996d49bc36a6210de14d8477d013110</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2025-09-13 18:02:43</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

@@ -7,7 +7,7 @@
         <ignore_in_now_experience>false</ignore_in_now_experience>
         <name>x_424426_devops.hotkeys</name>
         <script><![CDATA[(function ($window, $config) {
-
+	
 	if (!$config.preferences.hotkeys_enabled) {
 		// the text capture feature is only use to help with code search on read-only lists (e.g. syslog)
 		// as here the selection of multiline text will instantly move away the focus
@@ -17,6 +17,26 @@
 	const textCapture = {
 		text: '',
 		type: 'hotkeys'
+	};
+
+	const openCodeSearch = function (text, global) {
+		const gm = new GlideModal('devops_codesearch', false, 'modal-95');
+		gm.setTitle('Code Search');
+		gm.setPreference('search', encodeURIComponent(textCapture.text));
+		let iFrameURL = 'x_424426_devops_code_search.do?sysparm_is_dialog_form=true';
+		text = text || textCapture.text || '';
+
+		if (text) {
+			iFrameURL += '&search=' + encodeURIComponent(text);
+		}
+
+		if (global) {
+			iFrameURL += '&global=true';
+		}
+
+		gm.renderIframe(iFrameURL, function () {
+			gm.maximizeHeight();
+		});
 	};
 	
 	$window.document.addEventListener('click', function () {
@@ -35,18 +55,7 @@
 			}
 			
 			event.preventDefault();
-
-			const gm = new GlideModal('devops_codesearch', false, 'modal-95');
-			gm.setTitle('Code Search');
-			gm.setPreference('search', encodeURIComponent(textCapture.text));
-			let iFrameURL = 'x_424426_devops_code_search.do?sysparm_is_dialog_form=true';
-			if (textCapture.text) {
-				iFrameURL += '&search=' + encodeURIComponent(textCapture.text);
-			}
-
-			gm.renderIframe(iFrameURL, function () {
-				gm.maximizeHeight();
-			});
+			openCodeSearch();			
 		}
 	});
 
@@ -57,16 +66,49 @@
 				return;
 			}
 			
-			const match = textCapture.text?.match(/([^.]+)\.([a-z0-9]{32})/);
+			const match = textCapture.text?.match(/\s*([^.\s]+)\.(.+)/);
 			if (match) {
 				event.preventDefault();
 
+				var sysId = match[2].match(/^[a-z0-9]{32}/);
 				if (event.shiftKey) {
-					window.open(match[1] + '.do?sys_id=' + match[2]);
+					window.open(match[1] + '.do?' + (sysId ? ('sys_id=' + sysId[0]) : 'sysparm_query=' + encodeURIComponent(match[2])));
 				} else {
 					const gm = new GlideModalForm(match[1], match[1]);
-					gm.setSysID(match[2]);
+					if (sysId) {
+						gm.setSysID(sysId[0]);
+					} else {
+						gm.addParm('sysparm_query', match[2]);
+					}
 					gm.render();
+				}
+			} else {
+				const match = textCapture.text?.match(/[a-z0-9]{32}/);
+				if (match) {
+					event.preventDefault();
+					(async function () {
+						for (const table of ['sys_metadata', 'task']) {
+							debugger;
+							const response = await fetch(`/api/now/table/${table}/${match[0]}?sysparm_fields=sys_id,sys_class_name`, {
+								headers: {
+									'X-UserToken': g_ck
+								}
+							});
+							if (response.ok) {
+								const json = await response.json();
+								if (event.shiftKey) {
+									window.open(json.result.sys_class_name + '.do?sys_id=' + match[0]);
+								} else {
+									const gm = new GlideModalForm(json.result.sys_class_name, json.result.sys_class_name);
+									gm.setSysID(match[0]);
+									gm.render();
+								}
+								return true;
+							}
+						}
+
+						openCodeSearch(match[0], true);
+					})();
 				}
 			}
 		}
@@ -96,14 +138,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 20:25:41</sys_created_on>
         <sys_id>da4f174997572110d70ef207f053afb5</sys_id>
-        <sys_mod_count>41</sys_mod_count>
+        <sys_mod_count>54</sys_mod_count>
         <sys_name>x_424426_devops.hotkeys</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_script_da4f174997572110d70ef207f053afb5</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-11 22:37:59</sys_updated_on>
+        <sys_updated_on>2025-09-13 18:55:13</sys_updated_on>
         <ui_type>0</ui_type>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>

@@ -10,7 +10,7 @@
         <name>CodeSearchHandlerFlow</name>
         <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
-/* global Class, GlideRecord, GlideStringUtil, Uint8Array */
+/* global Class, GlideScriptedExtensionPoint, GlideRecord, GlideStringUtil, Uint8Array */
 /* eslint no-undef: "error" */
 var CodeSearchHandlerFlow = Class.create();
 CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
@@ -30,8 +30,8 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 			}
 		};
 
-		//this.jsLibs = new x_424426_devops.JSLibs();
-		this.npm = new x_424426_devops.NPM();
+		this.ext = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt')[0];
+		this.ext.initialize();
     },
 
     handlesScope: function (scopeName) {
@@ -94,11 +94,6 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 			hits: []
 		};
 
-		//const Base64 = this.jsLibs.require('Base64');
-		//const gzip = this.jsLibs.require('gzip');
-		const Base64 = this.npm.require('js-base64');
-		const gzip = this.npm.require('gzip-js');
-
 		while (hubGr.next()) {
 			const hit = {
 				name: hubGr.getDisplayValue() || hubGr.getUniqueValue(),
@@ -133,11 +128,7 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 					instGr.orderBy('order');
 					instGr.query();
 					while (instGr.next()) {
-						const data = Base64.atob(instGr.values.toString()).split('').map(x => x.charCodeAt(0));
-						const bytes = new Uint8Array(data);
-						const decompressed = new Uint8Array(gzip.unzip(bytes));
-						const valueBase64 = Base64.fromUint8Array(decompressed);
-						let valueDecoded = gs.base64Decode(valueBase64);
+						let valueDecoded = this.ext.unzip(instGr.values.toString());
 						try {
 							// those appear to be single line JSON strings => make them more readable
 							valueDecoded = JSON.stringify(JSON.parse(valueDecoded), null, 2);
@@ -209,14 +200,14 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:30:28</sys_created_on>
         <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
-        <sys_mod_count>33</sys_mod_count>
+        <sys_mod_count>34</sys_mod_count>
         <sys_name>CodeSearchHandlerFlow</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-08-31 19:48:27</sys_updated_on>
+        <sys_updated_on>2025-09-13 18:11:28</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>b4046f8993f2c2101f07f5f08bba10f8</id>
