@@ -2,7 +2,7 @@
     <sys_extension_point action="INSERT_OR_UPDATE">
         <api_name>x_424426_devops.DevOpsExt</api_name>
         <description/>
-        <example><![CDATA[/* global Class, GlideStringUtil, gs, GlideRecordSecure, Packages, GlideSysAttachmentInputStream */
+        <example><![CDATA[/* global Class, GlideStringUtil, GlideCompressionUtil, GlideRecord */
 /* eslint no-undef: "error" */
 var DevOpsExt = Class.create();
 DevOpsExt.prototype = {
@@ -11,32 +11,12 @@ DevOpsExt.prototype = {
 	},
 
 	unzip: function (base64Data) {
-		var inf = null, bos = null, ios = null;
-		try {
-			// gzip header has a fixed length of 10
-			var bytes = GlideStringUtil.base64DecodeAsBytes(base64Data);
-			var gzipped = bytes.length >= 2
-				&& (bytes[0] & 0xFF) == 0x1F
-				&& (bytes[1] & 0xFF) == 0x8B;
-			var offset = gzipped ? 10 : 0;
-			inf = new Packages.java.util.zip.Inflater(gzipped);
-			bos = new Packages.java.io.ByteArrayOutputStream();
-			ios = new Packages.java.util.zip.InflaterOutputStream(bos, inf);
-			ios.write(bytes, offset, bytes.length - offset);
-			return bos.toString();
-		} catch (e) {
-			gs.error('failed to decompress: ' + e + '\n' + e.stack);
-		} finally {
-			if (ios) ios.close();
-			if (bos) bos.close();
-			if (inf) inf.end();
-		}
-		
-		return '';
+		var bytes = GlideStringUtil.base64DecodeAsBytes(base64Data);
+		return String(GlideCompressionUtil.expandToString(bytes));
 	},
 
 	getRecord: function (tableName, sysId) {
-		var recordGr = new GlideRecordSecure(tableName);
+		var recordGr = new GlideRecord(tableName);
 		recordGr.addQuery('sys_id', sysId);
 		recordGr.query();
 		if (recordGr.next()) {
@@ -44,33 +24,6 @@ DevOpsExt.prototype = {
 		}
 
 		return recordGr;
-	},
-
-	getZIPEntries: function (attSysID, options) {
-		var zis = new Packages.java.util.zip.ZipInputStream(new GlideSysAttachmentInputStream(attSysID));
-		var entry;
-
-		var results = [];
-		while ((entry = zis.getNextEntry()) !== null) {
-			var fileEntry = {
-				name: entry.getName(),
-				directory: entry.isDirectory()
-			};
-
-			if (!fileEntry.directory && options && options.withContent) {
-				var bis = new Packages.java.io.BufferedInputStream(zis, 1024);
-				var b = -1;
-				fileEntry.bytes = [];
-				while ((b = bis.read()) != -1) {
-					fileEntry.bytes.push(b);
-				}
-			}
-
-			zis.closeEntry();
-			results.push(fileEntry);
-		}
-
-		return results;
 	},
 
 	type: 'DevOpsExt'
@@ -81,14 +34,14 @@ DevOpsExt.prototype = {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-12-06 16:24:48</sys_created_on>
         <sys_id>3f1ab135831652100971c810feaad328</sys_id>
-        <sys_mod_count>5</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>DevOpsExt</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_extension_point_3f1ab135831652100971c810feaad328</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-13 18:06:40</sys_updated_on>
+        <sys_updated_on>2025-09-20 07:08:11</sys_updated_on>
     </sys_extension_point>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>3f1ab135831652100971c810feaad328</id>

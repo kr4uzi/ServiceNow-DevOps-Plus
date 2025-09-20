@@ -21,12 +21,25 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 			sys_hub_flow: {
 				field: 'flow',
 				order: 'order',
-				tables: ['sys_hub_trigger_instance', 'sys_hub_trigger_instance_v2', 'sys_hub_action_instance']
+				tables: ['sys_hub_trigger_instance', 'sys_hub_action_instance'],
+
 			},
 			sys_hub_action_type_definition: {
 				field: 'action',
 				order: 'order',
 				tables: ['sys_hub_step_instance', 'sys_hub_action_type_definition', 'sys_hub_input_scripts']
+			}
+		};
+
+		this.flowRelations = {
+			sys_hub_trigger_instance_v2: {
+				related: 'flow',
+				label: (triggerGr) => 'Trigger'
+			},
+			sys_hub_action_instance_v2: {
+				orderBy: 'order',
+				related: 'flow',
+				label: (instGr) => `Step ${instGr.order} - ${instGr.getDisplayValue('action_type')}`
 			}
 		};
 
@@ -122,30 +135,38 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 				});
 
 				if (relConfig.field == 'flow') {
-					const instGr = new GlideRecord('sys_hub_action_instance_v2');
-					instGr.addQuery('flow', hubGr.sys_id);
-					instGr.addNotNullQuery('values');
-					instGr.orderBy('order');
-					instGr.query();
-					while (instGr.next()) {
-						let valueDecoded = this.ext.unzip(instGr.values.toString());
-						try {
-							// those appear to be single line JSON strings => make them more readable
-							valueDecoded = JSON.stringify(JSON.parse(valueDecoded), null, 2);
-						} catch (e) {}
-						const match = {
-							fieldLabel: 'Value',
-							lineMatches: this.getMatchingLines(valueDecoded, term)
-						};
+					for (const [table, config] of Object.entries(this.flowRelations)) {
+						const flowRelGr = new GlideRecord(table);
+						flowRelGr.addQuery(config.related, hubGr.sys_id);
+						if (config.orderBy) flowRelGr.orderBy(config.orderBy);
+						flowRelGr.addNotNullQuery('values');
+						flowRelGr.query();
+						while (flowRelGr.next()) {
+							try {
+								const label = config.label(flowRelGr);
+								// those appear to be single line JSON strings => make them more readable
+								JSON.parse(this.ext.inflate(flowRelGr.values.toString())).forEach(field => {
+									const value = field.scriptActive ? field.script[field.name].script : field.value;
+									if (!value) return;
+									
+									const match = {
+										fieldLabel: field.parameter.label + ' (' + label + ')',
+										lineMatches: this.getMatchingLines(value, term)
+									};
 
-						match.lineMatches.forEach(lineMatch => {
-							if (lineMatch.context.length > this.max_context_length) {
-								lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+									match.lineMatches.forEach(lineMatch => {
+										if (lineMatch.context.length > this.max_context_length) {
+											lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+										}
+									});
+
+									if (match.lineMatches.length) {
+										hit.matches.push(match);
+									}
+								});
+							} catch (e) {
+								continue;
 							}
-						});
-
-						if (match.lineMatches.length) {
-							hit.matches.push(match);
 						}
 					}
 				} else if (relConfig.field == 'action') {
@@ -200,14 +221,14 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:30:28</sys_created_on>
         <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
-        <sys_mod_count>34</sys_mod_count>
+        <sys_mod_count>38</sys_mod_count>
         <sys_name>CodeSearchHandlerFlow</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-13 18:11:28</sys_updated_on>
+        <sys_updated_on>2025-09-20 17:46:19</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>b4046f8993f2c2101f07f5f08bba10f8</id>
