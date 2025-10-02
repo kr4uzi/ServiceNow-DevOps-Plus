@@ -34,12 +34,14 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 		this.flowRelations = {
 			sys_hub_trigger_instance_v2: {
 				related: 'flow',
-				label: (triggerGr) => 'Trigger'
+				label: (triggerGr) => 'Trigger',
+				field: 'trigger_inputs'
 			},
 			sys_hub_action_instance_v2: {
 				orderBy: 'order',
 				related: 'flow',
-				label: (instGr) => `Step ${instGr.order} - ${instGr.getDisplayValue('action_type')}`
+				label: (instGr) => `Step ${instGr.order} - ${instGr.getDisplayValue('action_type')}`,
+				field: 'values'
 			}
 		};
 
@@ -143,9 +145,11 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 						flowRelGr.query();
 						while (flowRelGr.next()) {
 							try {
+								const value = flowRelGr.getValue(config.field);
+								if (!value) continue;
 								const label = config.label(flowRelGr);
 								// those appear to be single line JSON strings => make them more readable
-								JSON.parse(this.ext.inflate(flowRelGr.values.toString())).forEach(field => {
+								JSON.parse(this.ext.inflate(value)).forEach(field => {
 									const value = field.scriptActive ? field.script[field.name].script : field.value;
 									if (!value) return;
 									
@@ -221,14 +225,14 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:30:28</sys_created_on>
         <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
-        <sys_mod_count>38</sys_mod_count>
+        <sys_mod_count>39</sys_mod_count>
         <sys_name>CodeSearchHandlerFlow</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-20 17:46:19</sys_updated_on>
+        <sys_updated_on>2025-10-01 19:23:08</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>b4046f8993f2c2101f07f5f08bba10f8</id>
