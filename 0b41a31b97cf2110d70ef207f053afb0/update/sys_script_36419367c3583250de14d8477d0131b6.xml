@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>false</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>sys_db_object</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition table="sys_db_object">super_classISNOTEMPTY^EQ<item endquery="false" field="super_class" goto="false" newquery="false" operator="ISNOTEMPTY" or="false" value=""/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>DevOps+ Table - Check Audit Config</name>
+        <order>100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous /*null when async*/) {
+
+	if (hasAuditEnabled(current.super_class.name)) {
+		const dictGr = new GlideRecord('sys_dictionary');
+		dictGr.addQuery('internal_type', 'collection');
+		dictGr.addQuery('name', current.name);
+		dictGr.addQuery('audit', false);
+		dictGr.setLimit(1);
+		dictGr.query();
+		if (dictGr.next()) {
+			gs.addInfoMessage(`Audit enabled on base, but not on this table. Click <a target="_blank" href="/nav_to.do?uri=%2Fsys_dictionary.do%3Fsys_id%3D${dictGr.sys_id}">here</a> to enable it`);
+		}
+	}
+	
+	function hasAuditEnabled(klass) {
+		const dictGr = new GlideRecord('sys_dictionary');
+		dictGr.addQuery('internal_type', 'collection');
+		dictGr.addQuery('name', klass);
+		dictGr.addQuery('audit', true);
+		dictGr.setLimit(1);
+		dictGr.query();
+		return dictGr.hasNext();
+	}
+
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-10-06 19:37:17</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>36419367c3583250de14d8477d0131b6</sys_id>
+        <sys_mod_count>4</sys_mod_count>
+        <sys_name>DevOps+ Table - Check Audit Config</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_36419367c3583250de14d8477d0131b6</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-10-06 19:38:38</sys_updated_on>
+        <template/>
+        <when>before_display</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=36419367c3583250de14d8477d0131b6"/>
+</record_update>
