@@ -122,6 +122,47 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				}
 			} else
 				result.message = 'Invalid Search Script';
+		} else if (params.group) {
+			const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+			searchGroupGr.addQuery('sys_id', params.group);
+			searchGroupGr.setLimit(1);
+			searchGroupGr.query();
+			if (searchGroupGr.next()) {
+				result.tables = [];
+				result.context = {
+					term: params.term,
+					match_table: true,
+					scope: params.scope,
+					limit: 500,
+					all_fields: !!searchGroupGr.extended_matching
+				};
+
+				const MAX_SEARCH_TABLES = 1000;
+				const searchTableGr = new GlideRecordSecure('sn_codesearch_table');
+				searchTableGr.addQuery('search_group', searchGroupGr.sys_id);
+				searchTableGr.orderByDesc('sys_updated_on');
+				searchTableGr.setLimit(MAX_SEARCH_TABLES);
+				searchTableGr.query();
+				while (searchTableGr.next()) {
+					const fields = searchTableGr.search_fields.toString()
+						.split(',')
+						.map(f => f.trim())
+						.filter(f => !!f);
+						
+					result.tables.push({
+						name: searchTableGr.table.toString(),
+						fields: fields.length && !result.context.all_fields ? fields.reduce((fields, f) => { fields[f] = {}; return fields; }, {}) : null,
+						additional_filter: searchTableGr.additional_filter.toString()
+					});
+				}
+
+				if (result.tables.length >= MAX_SEARCH_TABLES) {
+					gs.warn('Search Group contains more tables than expected, please increase "MAX_SEARCH_TABLES" in CdoeSearchUtilClient');
+				}
+				result.status = 'success';
+			} else {
+				result.message = 'Invalid Code Search Group (not found)';
+			}
 		} else if (params.table && gs.tableExists(params.table)) {
 			result.tables = [];
 			result.context = {
@@ -311,14 +352,14 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>166</sys_mod_count>
+        <sys_mod_count>173</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-30 11:55:37</sys_updated_on>
+        <sys_updated_on>2025-10-08 15:22:47</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>35fdd6d597d32110d70ef207f053afcd</id>

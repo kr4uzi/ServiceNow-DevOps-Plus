@@ -81,10 +81,10 @@ addLoadEvent(function () {
 			if (!allScopes && scope)
 				configParams.scope = scope;
 
-			if (config == 'sys_metadata' || config == 'task')
-				configParams.table = config;
-			else
-				configParams.script = config;
+			// table:task     => configParams.table
+			// group:<sys_id> => configParams.group = <sys_id>
+			var typeAndConfig = config.split(':');
+			configParams[typeAndConfig[0]] = typeAndConfig.slice(1).join(':');
 
 			gel('searchDetail').innerHTML = '(aquire config)';
 			getSearchConfig(configParams, function (config) {
@@ -269,10 +269,19 @@ function getSearchConfig(params, onSuccess, onError) {
 	});
 }
 
-function searchTable(table, context, onSuccess, onError) {
+function searchTable(tableConfig, sharedContext, onSuccess, onError) {
+	let table = null;
+	let context = null;
+	if (typeof tableConfig == 'object') {
+		table = tableConfig.name;
+		context = { ...sharedContext, ...tableConfig };
+	} else {
+		table = tableConfig;
+		context = { ...sharedContext };
+	}
 	gel('searchDetail').innerHTML = '(searching: ' + table + ')';
 
-	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	const ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
 	ga.addParam('sysparm_name', 'searchTerm');
 	ga.addParam('table', table);
 	ga.addParam('context', JSON.stringify(context));
@@ -338,6 +347,18 @@ function searchTable(table, context, onSuccess, onError) {
 				value: prefGr.getUniqueValue()
 			});
 		}
+
+		const searchGroups = [];
+		const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+		searchGroupGr.orderByDesc('sys_updated_on');
+		searchGroupGr.setLimit(100);
+		searchGroupGr.query();
+		while (searchGroupGr.next()) {
+			searchGroups.push({
+				label: searchGroupGr.name.toString(),
+				value: searchGroupGr.getUniqueValue()
+			});
+		}
 	</g:evaluate>
 	<g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" />
 	<g:evaluate var="jvar_search_global" expression="RP.getParameterValue('global') == 'true' ? 'on' : ''" />
@@ -366,10 +387,13 @@ function searchTable(table, context, onSuccess, onError) {
 					<div class="row">
 						<label id="search-config-label" for="search-config" class="checkbox-label mousetrap">Search Config</label>
 						<select id="search-config" class="form-control mousetrap" name="config" title="Select a search configuration">
-							<option value="sys_metadata">Application Files</option>
-							<option value="task">Tasks</option>
+							<option value="table:sys_metadata">Application Files</option>
+							<option value="table:task">Tasks</option>
 							<j:forEach var="jvar_script" items="${searchScripts}">
-								<option value="${jvar_script.value}">${jvar_script.label}</option>
+								<option value="script:${jvar_script.value}">${jvar_script.label}</option>
+							</j:forEach>
+							<j:forEach var="jvar_group" items="${searchGroups}">
+								<option value="group:${jvar_group.value}">${jvar_group.label}</option>
 							</j:forEach>
 						</select>
 					</div>
@@ -420,14 +444,14 @@ function searchTable(table, context, onSuccess, onError) {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:10:53</sys_created_on>
         <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
-        <sys_mod_count>90</sys_mod_count>
+        <sys_mod_count>93</sys_mod_count>
         <sys_name>code_search</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-30 12:17:21</sys_updated_on>
+        <sys_updated_on>2025-10-08 15:12:13</sys_updated_on>
     </sys_ui_page>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>067dd61197d32110d70ef207f053af83</id>

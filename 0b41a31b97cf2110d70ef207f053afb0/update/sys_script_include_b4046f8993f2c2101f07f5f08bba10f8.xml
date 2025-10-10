@@ -27,7 +27,7 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
 			sys_hub_action_type_definition: {
 				field: 'action',
 				order: 'order',
-				tables: ['sys_hub_step_instance', 'sys_hub_action_type_definition', 'sys_hub_input_scripts']
+				tables: ['sys_hub_step_instance', 'sys_hub_input_scripts']
 			}
 		};
 
@@ -225,14 +225,14 @@ CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearc
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:30:28</sys_created_on>
         <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
-        <sys_mod_count>39</sys_mod_count>
+        <sys_mod_count>40</sys_mod_count>
         <sys_name>CodeSearchHandlerFlow</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-10-01 19:23:08</sys_updated_on>
+        <sys_updated_on>2025-10-03 09:41:05</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>b4046f8993f2c2101f07f5f08bba10f8</id>

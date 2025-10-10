@@ -7,7 +7,7 @@
 
 }]]></client_script_v2>
         <comments/>
-        <condition>gs.hasRole('x_424426_devops.devops_user') &amp;&amp; current.sys_policy == 'protected'</condition>
+        <condition>current.scriptable_table</condition>
         <form_action>true</form_action>
         <form_button>false</form_button>
         <form_button_v2>false</form_button_v2>
@@ -17,7 +17,7 @@
         <form_style/>
         <format_for_configurable_workspace>false</format_for_configurable_workspace>
         <hint/>
-        <isolate_script>true</isolate_script>
+        <isolate_script>false</isolate_script>
         <list_action>false</list_action>
         <list_banner_button>false</list_banner_button>
         <list_button>false</list_button>
@@ -27,26 +27,37 @@
         <list_save_with_form_button>false</list_save_with_form_button>
         <list_style/>
         <messages/>
-        <name>Decrypt</name>
-        <onclick>decryptDialog()</onclick>
+        <name>Open Definition</name>
+        <onclick>devops_plus_OpenRemoteTableScript()</onclick>
         <order>100</order>
-        <script><![CDATA[function decryptDialog() {
-	const field = prompt('Enter the encrypted field name:');
-	if (!field) return;
-
-	const table = g_form.getTableName();
-	const sysId = g_form.getUniqueValue();
-	fetch(`/api/now/stats/${table}?sysparm_max_fields=${field}&sysparm_query=sys_id=${sysId}&sysparm__fields=${field}`, {
-			headers: {
-				'X-UserToken': g_ck
-			}
-		})
-		.then(response => response.json())
-		.then(json => {
-			g_form.addInfoMessage(`${field}:<br /><pre></pre>`, `decrypt_${table}${field}`);
-			const target = g_form.getFormElement().ownerDocument.querySelector(`#decrypt_${table}${field} pre`);
-			target.innerHTML = json.result.stats.max[field];
+        <script><![CDATA[function devops_plus_OpenRemoteTableScript() {
+	const scripts = g_scratchpad.devops_plus_remote_table_scripts;
+	if (scripts.length == 0) {
+		var gmf = new GlideModalForm('Remote Table Script', 'sys_script_vtable', function () {
+			g_navigation.reloadWindow();
 		});
+		gmf.addParm('table', g_form.getValue('name'));
+		gmf.setSysID('-1');
+		gmf.render();
+	} else if (scripts.length == 1) {
+		if (typeof isDevStudio != 'undefined' && isDevStudio) {
+			const key = {
+				type: 'form',
+				table: 'sys_script_vtable',
+				sysId: scripts[0],
+				recordType: 'Remote Table'
+			};
+			devStudioAPI.openStudioTab('sys_script_vtable.do?sys_id=' + scripts[0]);
+		} else {
+			g_navigation.openRecord('sys_script_vtable', scripts[0]);
+		}
+	} else {
+		var gmf = new GlideModalForm('Remote Table Scripts', 'sys_script_vtable_list', function () {
+			g_navigation.reloadWindow();
+		});
+		gmf.addParm('sysparm_query', 'table=' + g_form.getValue('name'));
+		gmf.render();
+	}
 }]]></script>
         <show_insert>false</show_insert>
         <show_multiple_update>false</show_multiple_update>
@@ -54,20 +65,20 @@
         <show_update>true</show_update>
         <sys_class_name>sys_ui_action</sys_class_name>
         <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
-        <sys_created_on>2025-08-30 00:01:27</sys_created_on>
+        <sys_created_on>2025-10-01 14:45:42</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
-        <sys_id>06a751a3c32f6a10de14d8477d013151</sys_id>
-        <sys_mod_count>19</sys_mod_count>
-        <sys_name>Decrypt</sys_name>
+        <sys_id>c2d4518ec3507610de14d8477d013154</sys_id>
+        <sys_mod_count>5</sys_mod_count>
+        <sys_name>Open Definition</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
-        <sys_update_name>sys_ui_action_06a751a3c32f6a10de14d8477d013151</sys_update_name>
+        <sys_update_name>sys_ui_action_c2d4518ec3507610de14d8477d013154</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-10-09 08:24:04</sys_updated_on>
-        <table>sys_metadata</table>
+        <sys_updated_on>2025-10-10 22:36:17</sys_updated_on>
+        <table>sys_db_object</table>
         <ui11_compatible>false</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>
     </sys_ui_action>
