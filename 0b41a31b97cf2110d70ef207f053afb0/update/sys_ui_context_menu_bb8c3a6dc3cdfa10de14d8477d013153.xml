@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_context_menu">
+    <sys_ui_context_menu action="INSERT_OR_UPDATE">
+        <action_script><![CDATA[/**
+ * Script executed on the Client for this menu action
+ *
+ * The following variables are available to the script:
+ *    'g_list' the GlideList2 that the script is running against (only valid for List context menus)
+ *    'g_fieldName' the name of the field that the context menu is running against (only valid for List context menus)
+ *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
+ *    'g_sysId' the sys_id of the row or form that the script is running against
+ *    'rowSysId' is also set to the sys_id of the row to support legacy actions, but g_sysId is preferred
+ */
+ /* global console, window, fetch, GlideAjax, g_list, g_fieldName, g_fieldValue, g_sysId */
+/* eslint no-undef: "error" */
+(function () {
+	var x = window.event.screenX - 500;
+	var y = window.event.screenY - 250;
+	// need to store the g_* values here because they are null-ed after this function
+	// (and are used in the fetch-case below)
+	var tableName = g_list.getTableName();
+	var sysId = g_sysId;
+	var fieldName = g_fieldName;
+	if (typeof g_fieldValue != 'undefined') {
+		runAction(tableName, g_sysId, g_fieldName, g_fieldValue);
+	} else {
+		fetch('/api/now/table/' + tableName + '/' + sysId + '?sysparm_exclude_reference_link=true&sysparm_fields=' + fieldName, {
+			headers: {
+				'X-UserToken': window.g_ck
+			}
+		}).then(function (response) {
+			return response.json();
+		}).then(function (json) {
+			runAction(tableName, sysId, fieldName, json.result[fieldName]);
+		});
+	}
+
+	function runAction(tableName, sysId, fieldName, fieldValue) {
+		getNormalizedVariableName(tableName, function (variableName) {
+			variableName += 'Gr';
+			
+			getChoiceValues(tableName, fieldName, function (choices) {
+				var bgs = window.open('sys.scripts.do?noredirect=true', 'DevOps+ Background Script', 'width=1000,height=550,top=' + y + ',left=' + x);
+				bgs.addEventListener('DOMContentLoaded', function () {
+					var script = 'var ' + variableName + ' = new GlideRecord(\'' + tableName + '\');'
+						+ '\n' + variableName + '.addQuery(\'sys_id\', \'' + sysId + '\');'
+						+ '\n' + variableName + '.setLimit(1);'
+						+ '\n' + variableName + '.query();'
+						+ '\nif (' + variableName + '.next()) {'
+						+ '\n  ' + variableName + '.' + fieldName + ' = \'' + JSON.stringify(fieldValue).slice(1, -1).replace(/'/g, '\\\'') + '\';'
+						+ (choices.length ? (' //' + choices.map(function (c) { return '[' + c.value + ']' + c.label; }).join(',')) : '')
+						+ '\n  ' + variableName + '.setWorkflow(false);'
+						+ '\n  ' + variableName + '.update();'
+						+ '\n}'
+					;
+
+					var cursorPos = script.indexOf(variableName + '.' + fieldName) + variableName.length + fieldName.length + 5;
+					var scriptInput = bgs.document.getElementById('runscript');
+					scriptInput.value = script;
+					scriptInput.setSelectionRange(cursorPos, cursorPos);	
+
+					bgs.setTimeout(function selectGlobalScope() {
+						var scopeSelector = bgs.document.querySelector('select[name="sys_scope"]');
+						var options = scopeSelector && scopeSelector.querySelectorAll('option');
+						for (var i = 0; options && i < options.length; i++) {
+							// PDIs have the global scope option with value global
+							// Customer Instances have global with SysID value
+							if (options[i].innerText == 'global' || options[i].value == 'global') {
+								scopeSelector.value = options[i].value;
+								return;
+							}
+						}
+
+						bgs.setTimeout(selectGlobalScope, 100);
+					});
+				});
+			});
+		});
+	}
+	
+	function getChoiceValues(table, field, cb) {
+		var ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getChoiceValues');
+		ga.addParam('table', table);
+		ga.addParam('field', field);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				cb(result.choices);
+			} else if (result.message) {
+				console.error(result.message);
+			}
+		});
+	}
+	
+	function getNormalizedVariableName(table, cb) {
+		var ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'normalizeVariable');
+		ga.addParam('table', table);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result.status == 'success') {
+				cb(result.variable_name);
+			} else if (result.message) {
+				console.error(result.message);
+			}
+		});
+	}
+})();
+]]></action_script>
+        <active>true</active>
+        <comments/>
+        <condition/>
+        <do_not_cache>false</do_not_cache>
+        <dynamic_actions_script><![CDATA[/** 
+ * This server-side script is used to dynamically create actions for the context menu, such as the list of available templates 
+ * 
+ * The following variables are available to the script: 
+ *    'g_tableName' the name of the current table 
+ *    'g_listId' the id of the list we are building the context menu for 
+ *    'g_itemName' the name of the UI Context Menu item we are building 
+ *    'g_itemOrder' the order defined in the UI Context Menu item we are building 
+ * 
+ * Add items to the context menu by calling: 
+ *    g_contextMenu.addAction(item_id, label, script_string, order); 
+ */ 
+]]></dynamic_actions_script>
+        <menu>list_row</menu>
+        <name>sys.scripts</name>
+        <on_show_script><![CDATA[/**
+ * This client-side script is used to dynamically change the context menu before it is displayed.
+ * It is called before showing the context menu if the Run onShow script flag is checked.
+ *
+ * The following variables are available to the script:
+ *    'g_menu' the context menu that is about to be shown
+ *    'g_item' the current context menu item
+ *    'g_list' the GlideList2 that the script is running against (only valid for List context menus)
+ *    'g_fieldName' the name of the field that the context menu is running against (only valid for List context menus)
+ *    'g_fieldLabel' the label of the field that the context menu is running against (only valid for List context menus)
+ *    'g_sysId' the sys_id of the row or form that the script is running against
+ */
+ 
+]]></on_show_script>
+        <order>1000</order>
+        <parent display_value="DevOps+">bd2cb62dc3cdfa10de14d8477d0131de</parent>
+        <run_on_show_script>false</run_on_show_script>
+        <sys_class_name>sys_ui_context_menu</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-11-06 16:02:22</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>bb8c3a6dc3cdfa10de14d8477d013153</sys_id>
+        <sys_mod_count>11</sys_mod_count>
+        <sys_name>sys.scripts</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_context_menu_bb8c3a6dc3cdfa10de14d8477d013153</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-11-06 16:28:46</sys_updated_on>
+        <table>global</table>
+        <track_selected>false</track_selected>
+        <type>action</type>
+    </sys_ui_context_menu>
+</record_update>
