@@ -24,6 +24,9 @@
 
 		const script = g_form.getValue('script');
 		const extendMatch = script.match(/Object\.extendsObject\((.+),/);
+		const gth = class {
+			getAllExtensions() { return []; }
+		};
 		if (extendMatch) {
 			// provide a minimal, yet functional implementation for "Object.extendsObject"
 			const object = {
@@ -43,9 +46,9 @@
 			// the extending object is most likely not in this file, so a dummy implementation (extend) is provided
 			const path = extendMatch[1].split('.');
 			path.slice(1).forEach(obj => lastExtendObj = (lastExtendObj[obj] = {}));
-			new Function(path[0], 'Class', 'Object', script)(extend, klass, object);
+			new Function(path[0], 'Class', 'GlideTableHierarchy', 'Object', script)(extend, klass, gth, object);
 		} else {
-			new Function('Class', g_form.getValue('script'))(klass);
+			new Function('Class', 'GlideTableHierarchy', g_form.getValue('script'))(klass, gth);
 		}
 
 		const instance = extensions.length ? extensions[0] : instances[0];
@@ -156,6 +159,11 @@
 				}
 			};
 
+			const gth = class {
+				constructor(table) {}
+				getAllExtensions() { return []; }
+			};
+
 			const script = g_form.getValue('script');
 			const extendMatch = script.match(/Object\.extendsObject\((.+),/);
 			if (extendMatch) {
@@ -175,9 +183,9 @@
 				let lastExtendObj = extend;
 				const path = extendMatch[1].split('.');
 				path.slice(1).forEach(obj => lastExtendObj = (lastExtendObj[obj] = {}));
-				new Function(path[0], 'Class', 'Object', script)(extend, klass, object);
+				new Function(path[0], 'Class', 'GlideTableHierarchy', 'Object', script)(extend, klass, gth, object);
 			} else {
-				new Function('Class', g_form.getValue('script'))(klass);
+				new Function('Class', 'GlideTableHierarchy', g_form.getValue('script'))(klass, gth);
 			}
 			
 			if (instances.length || extensions.length) {
@@ -204,14 +212,14 @@
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-07-05 21:49:57</sys_created_on>
         <sys_id>4b100ad093d382101f07f5f08bba10d3</sys_id>
-        <sys_mod_count>36</sys_mod_count>
+        <sys_mod_count>38</sys_mod_count>
         <sys_name>test</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_4b100ad093d382101f07f5f08bba10d3</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2025-02-12 09:51:02</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-15 15:32:42</sys_updated_on>
         <type>header</type>
         <use_condition>true</use_condition>
     </x_424426_devops_context_menu_item>

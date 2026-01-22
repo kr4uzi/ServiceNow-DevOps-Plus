@@ -31,12 +31,13 @@
         <onclick>devops_plus_OpenRemoteTableScript()</onclick>
         <order>100</order>
         <script><![CDATA[function devops_plus_OpenRemoteTableScript() {
+
 	const scripts = g_scratchpad.devops_plus_remote_table_scripts;
 	if (scripts.length == 0) {
 		var gmf = new GlideModalForm('Remote Table Script', 'sys_script_vtable', function () {
 			g_navigation.reloadWindow();
 		});
-		gmf.addParm('table', g_form.getValue('name'));
+		gmf.addParm('sysparm_query', 'table=' + g_form.getValue('name'));
 		gmf.setSysID('-1');
 		gmf.render();
 	} else if (scripts.length == 1) {
@@ -69,7 +70,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>c2d4518ec3507610de14d8477d013154</sys_id>
-        <sys_mod_count>5</sys_mod_count>
+        <sys_mod_count>6</sys_mod_count>
         <sys_name>Open Definition</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
@@ -77,7 +78,7 @@
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_action_c2d4518ec3507610de14d8477d013154</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-10-10 22:36:17</sys_updated_on>
+        <sys_updated_on>2025-11-27 19:58:10</sys_updated_on>
         <table>sys_db_object</table>
         <ui11_compatible>false</ui11_compatible>
         <ui16_compatible>false</ui16_compatible>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[/* global $context, navigator, g_form, GlideAjax, GlideModalForm, devStudioAPI, g_navigation */
+/* eslint no-undef: "error" */
+(function ($context) {
+	let gmf;
+	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.event.metaKey : $context.event.ctrlKey;
+	const table = ((element) => {
+		if (element) {
+			if (element.type == 'table_name') return element.getValue();
+			else if (element.type == 'glide_list') return element.reference;
+			else if (element.type == 'reference') return element.reference;
+		}
+	})(g_form.getGlideUIElement(g_form.getTableName() == 'ni' ? g_form.resolveNameMap($context.FIELD) : $context.FIELD));
+
+	if (table) {
+		var ga = new GlideAjax('ContextMenuUtilClient').setScope('x_424426_devops');
+		ga.addParam('sysparm_name', 'getTables');
+		ga.addParam('table', table);
+		ga.getXMLAnswer(function (result) {
+			result = JSON.parse(result);
+			if (result?.status != 'success') return;
+
+			if (openInWindow) {
+				g_navigation.openPopup('nav_to.do?uri=sys_db_object_list.do%3Fsysparm_query%3DnameIN' + result.tables);
+				return;
+			}
+
+			const gmf = new GlideModalForm(
+				'Hierarchy "' + table + '"',
+				'sys_db_object_list'
+			);
+			gmf.addParm('sysparm_query', 'nameIN' + result.tables);
+			// if in Studio, add the currently selected scoped so that
+			// the translations are created in the currently selected application
+			if (typeof devStudioAPI !== 'undefined') {
+				gmf.addParm('sysparm_transaction_scope', devStudioAPI.appMetadata.APP_ID);
+			}
+
+			gmf.render();
+		});
+	}
+	
+})($context);]]></client_script>
+        <condition_script><![CDATA[/* global $context, Promise, g_form, GlideAjax */
+/* eslint no-undef: "error" */
+(function ($context) {
+	const type = g_form.getGlideUIElement(
+		g_form.getTableName() == 'ni'
+		? g_form.resolveNameMap($context.FIELD)
+		: $context.FIELD
+	)?.type;
+	return type == 'table_name'
+		|| type == 'glide_list'
+		|| (type == 'reference' && g_form.getTableName() != 'ni')
+	;
+})($context);]]></condition_script>
+        <item_type>link</item_type>
+        <label>hierarchy</label>
+        <order>470</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-11-20 12:54:52</sys_created_on>
+        <sys_id>155d568ec31d7e10de14d8477d01318c</sys_id>
+        <sys_mod_count>8</sys_mod_count>
+        <sys_name>hierarchy</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_155d568ec31d7e10de14d8477d01318c</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-11-20 13:02:57</sys_updated_on>
+        <type>field</type>
+        <use_condition>true</use_condition>
+    </x_424426_devops_context_menu_item>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>155d568ec31d7e10de14d8477d01318c</id>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-11-20 12:54:52</sys_created_on>
+        <sys_id>9d5d568ec31d7e10de14d8477d013191</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-11-20 12:54:52</sys_updated_on>
+        <table>x_424426_devops_context_menu_item</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>
