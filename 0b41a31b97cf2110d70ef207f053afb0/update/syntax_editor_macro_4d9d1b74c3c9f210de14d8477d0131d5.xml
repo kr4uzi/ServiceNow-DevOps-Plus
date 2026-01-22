@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="syntax_editor_macro">
+    <syntax_editor_macro action="INSERT_OR_UPDATE">
+        <comments/>
+        <name>dev_glidemodal_info</name>
+        <sys_class_name>syntax_editor_macro</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2025-11-04 10:18:09</sys_created_on>
+        <sys_id>4d9d1b74c3c9f210de14d8477d0131d5</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>dev_glidemodal_info</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>syntax_editor_macro_4d9d1b74c3c9f210de14d8477d0131d5</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2025-11-04 10:37:13</sys_updated_on>
+        <text>var gm = new GlideModal('glide_info'); &#13;
+gm.setTitle('Popup Title');&#13;
+gm.setPreference('title', 'Info message');&#13;
+gm.setPreference('onPromptComplete', function () {&#13;
+    gm.dev_okPressed = true;&#13;
+});&#13;
+gm.on('closeconfirm', function() {&#13;
+    // must return false to prevent closing&#13;
+    // this effectively forces the user to close the modal via "OK"&#13;
+    // (the X-button will not have any effect)&#13;
+    return !!gm.dev_okPressed;&#13;
+});&#13;
+gm.render();</text>
+    </syntax_editor_macro>
+</record_update>
