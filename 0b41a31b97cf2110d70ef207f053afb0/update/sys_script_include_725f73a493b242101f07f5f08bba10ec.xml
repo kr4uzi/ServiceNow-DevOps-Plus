@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>public</access>
-        <active>true</active>
+        <active>false</active>
         <api_name>x_424426_devops.CodeSearchHandlerBase</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
-        <description/>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED</description>
         <mobile_callable>false</mobile_callable>
         <name>CodeSearchHandlerBase</name>
         <sandbox_callable>false</sandbox_callable>
@@ -13,7 +14,8 @@
 /* global Class, GlideRecord, GlideTableHierarchy */
 /* eslint no-undef: "error" */
 var CodeSearchHandlerBase = Class.create();
-CodeSearchHandlerBase.prototype = {	
+CodeSearchHandlerBase.prototype = {
+	/** @constructs CodeSearchHandlerBase */
 	initialize: function() {
 		this.max_context_length = 500;
 	},
@@ -22,32 +24,57 @@ CodeSearchHandlerBase.prototype = {
 	 * get all searchable fields for the given table
 	 * note: the result is cached
 	 * @param {string} table - the table name
-	 * @return {Object<string, {name: string, table: string, type: string, label: string, reference: string}>}
+	 * @returns {Array<{name: string, table: string, type: string, label: string, reference: string}>}
 	 */
 	getFields: function (table) {
 		let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
 		if (cachedFields) {
 			if (cachedFields.startsWith('{')) {
-				// DevOps+ > 1.2.3 stores the field info!
+				// DevOps+ > 1.2.3 stores the field info
 				// by checking for an actual object, we ensure that 1.2.3-caches get updated
-				return JSON.parse(cachedFields);
+				//return JSON.parse(cachedFields);
 			}
 		}
 		
-		const fields = {};
+		const fields = [];
 		const dictionaryGr = new GlideRecord('sys_dictionary');
 		dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+		dictionaryGr.addQuery('internal_type.scalar_type', 'string');
 		dictionaryGr.addNotNullQuery('element');
 		dictionaryGr.query();
 		while (dictionaryGr.next()) {
 			const name = dictionaryGr.element.toString();
-			fields[name] = {
+			const type = dictionaryGr.internal_type.name.toString();
+			const config = {
 				name: name,
 				table: dictionaryGr.name.toString(),
-				type: dictionaryGr.internal_type.name.toString(),
+				type: type,
 				reference: dictionaryGr.reference.toString(),
-				max_length: +dictionaryGr.max_length
+				max_length: +dictionaryGr.max_length,
+				related: [],
+				query_field: true
 			};
+
+			// querying the variables and glide_var fields does not work
+			// (it will even crash a call to addEncodedQuery)
+			if (type == 'variables') {
+				config.query_field = false;
+				config.related.push({
+					table: 'sc_item_option',
+					parent_field: 'request_item',
+					fields: ['sc_item_option.value']
+				});
+			} else if (type == 'glide_var') {
+				config.query_field = false;
+				config.related.push({
+					table: dictionaryGr.reference.toString() || 'sys_variable_value',
+					parent_field: 'document_key',
+					table_field: 'table',
+					fields: ['value']
+				});
+			}
+			
+			fields.push(config);
 		}
 		
 		sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
@@ -57,13 +84,13 @@ CodeSearchHandlerBase.prototype = {
 	/**
 	 * get all matches of the supplied search term
 	 * @param {GlideRecordGenerated} anyGr
-	 * @param {Object<string, {}} fields
+	 * @param {string[]} fields
 	 * @param {string} term
 	 * @return {{fieldLabel: string, lineMatches: {line: number, context: string}[]}[]}
 	 */
 	getMatches: function (anyGr, fields, term) {
 		const matches = [];
-		for (const field in fields) {
+		fields.forEach(field => {
 			const element = anyGr.getElement(field);
 			if (element) {
 				const match = {
@@ -81,7 +108,7 @@ CodeSearchHandlerBase.prototype = {
 					matches.push(match);
 				}
 			}
-		}
+		});
 
 		return matches;
 	},
@@ -122,14 +149,14 @@ CodeSearchHandlerBase.prototype = {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 05:14:02</sys_created_on>
         <sys_id>725f73a493b242101f07f5f08bba10ec</sys_id>
-        <sys_mod_count>27</sys_mod_count>
+        <sys_mod_count>36</sys_mod_count>
         <sys_name>CodeSearchHandlerBase</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_725f73a493b242101f07f5f08bba10ec</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-10-08 08:36:22</sys_updated_on>
+        <sys_updated_on>2026-01-22 08:42:01</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>725f73a493b242101f07f5f08bba10ec</id>

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>package_private</access>
-        <active>true</active>
+        <active>false</active>
         <api_name>x_424426_devops.CodeSearchHandlerWF</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
-        <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Implements extension point x_424426_devops.CodeSearchHandler</description>
         <mobile_callable>false</mobile_callable>
         <name>CodeSearchHandlerWF</name>
         <sandbox_callable>false</sandbox_callable>
@@ -137,14 +140,14 @@ CodeSearchHandlerWF.prototype = Object.extendsObject(x_424426_devops.CodeSearchH
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-13 16:09:28</sys_created_on>
         <sys_id>cd3f1f8593f2c2101f07f5f08bba1087</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>17</sys_mod_count>
         <sys_name>CodeSearchHandlerWF</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-08-31 19:45:37</sys_updated_on>
+        <sys_updated_on>2026-01-22 08:41:48</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>cd3f1f8593f2c2101f07f5f08bba1087</id>

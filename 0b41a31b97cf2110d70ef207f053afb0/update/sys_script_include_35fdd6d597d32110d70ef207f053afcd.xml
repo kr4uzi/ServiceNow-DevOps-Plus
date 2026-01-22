@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>package_private</access>
-        <active>true</active>
+        <active>false</active>
         <api_name>x_424426_devops.CodeSearchUtilClient</api_name>
         <caller_access/>
         <client_callable>true</client_callable>
-        <description>Entry point for handling:&#13;
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Entry point for handling:&#13;
 - "find references"&#13;
 - code search itself&#13;
 - code search config: generate config for {all|metadata|custom} search</description>
@@ -16,7 +19,8 @@
 /* global Class, GlideRecordSecure, GlideAggregate, GlideTableHierarchy, GlideScopedEvaluator, GlideScriptedExtensionPoint, GlideDateTime */
 /* eslint no-undef: "error" */
 var CodeSearchUtilClient = Class.create();
-CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, /** @lends CodeSearchUtilClient.prototype */ {
+	/** @constructs */
 	initialize: function () {
 		global.AbstractAjaxProcessor.prototype.initialize.apply(this, arguments);
 		this.startTime = new GlideDateTime();
@@ -177,7 +181,9 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 				result.context.search_related = true;
 			}
 
-			result.tables = getSortedTables(params.table, params.scope, 'sys_updated_on');
+			const sortedTables = getSortedTables(params.table, params.scope, 'sys_updated_on')
+			result.tables = sortedTables.tables;
+			result.counts = sortedTables.counts;
 			result.status = 'success';
 		} else {
 			result.message = 'Invalid parameters';
@@ -208,22 +214,28 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
 			}
 			
 			anyGa.groupBy('sys_class_name');
+			anyGa.addAggregate('COUNT', 'sys_class_name');
 			anyGa.query();
 
-			const sortedTables = [];
+			const result = {
+				tables: [],
+				counts: {}
+			};
 			while (anyGa.next()) {
 				const klass = anyGa.getValue('sys_class_name');
 				const pos = tables.indexOf(klass);
 				if (pos != -1) {
-					sortedTables.push(tables[pos]);
+					const table = tables[pos];
+					result.tables.push(table);
+					result.counts[table] = +anyGa.getAggregate('COUNT', 'sys_class_name');
 					tables.slice(pos, 1);
 				}
 			}
 
 			if (cacheKey)
-				sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_sorted_tables', cacheKey, JSON.stringify(sortedTables));
+				sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_sorted_tables', cacheKey, JSON.stringify(result));
 
-			return sortedTables;
+			return result;
 		}
 	},
 	
@@ -352,14 +364,14 @@ CodeSearchUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcess
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-07 10:12:54</sys_created_on>
         <sys_id>35fdd6d597d32110d70ef207f053afcd</sys_id>
-        <sys_mod_count>173</sys_mod_count>
+        <sys_mod_count>180</sys_mod_count>
         <sys_name>CodeSearchUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_35fdd6d597d32110d70ef207f053afcd</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-10-08 15:22:47</sys_updated_on>
+        <sys_updated_on>2026-01-22 08:40:52</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>35fdd6d597d32110d70ef207f053afcd</id>

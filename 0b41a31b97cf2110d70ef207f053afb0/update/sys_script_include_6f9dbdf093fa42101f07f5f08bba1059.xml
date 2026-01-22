@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
     <sys_script_include action="INSERT_OR_UPDATE">
         <access>package_private</access>
-        <active>true</active>
+        <active>false</active>
         <api_name>x_424426_devops.CodeSearchHandlerGeneral</api_name>
         <caller_access/>
         <client_callable>false</client_callable>
-        <description>Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Implements extension point x_424426_devops.CodeSearchHandler</description>
         <mobile_callable>false</mobile_callable>
         <name>CodeSearchHandlerGeneral</name>
         <sandbox_callable>false</sandbox_callable>
         <script><![CDATA[/* global global, gs, x_424426_devops */
-/* global Class, GlideRecord, GlideScopedEvaluator */
+/* global Class, GlideRecord, GlideScopedEvaluator, GlideTableHierarchy */
 /* eslint no-undef: "error" */
 var CodeSearchHandlerGeneral = Class.create();
 CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
@@ -83,7 +86,7 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	 * @param {string} table
 	 * @param {string} term
 	 * @param {object} [options]
-	 * @param {Object<string, {type: string}>} [options.fields]
+	 * @param {Array<{type: string}>} [options.fields]
 	 * @param {boolean} [options.exact]
 	 * @param {string} [options.additional_filter]
 	 * @param {string} [options.scope]
@@ -93,21 +96,27 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 	 */
 	search: function (table, term, options) {
 		this.scriptGr.script = `
-			(function (table, term, options) {
+			(function (table, tables, term, options) {
 		// an exact sys_id query can increase performance for sys_id queries
 		var escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
 		var query = 'sys_id=' + escapedTerm;
 		var fields = (options && options.fields) ? options.fields : this.getFields(table);
-		for (var field in fields) {
+		fields.forEach(function (field) {
+			// no need to search a field not able to store the search term
+			if (field.max_length < term.length) continue;
+
+			// field should not be queried (usually this indicates it stores a related search)
+			if (!field.query_field) continue;
+
 			var operator = 'LIKE';
 			if (options && options.exact) {
 				operator = '=';
 			}
 			
-			query += '^OR' + field + (fields[field].operator || operator) + escapedTerm;
-		}
+			query += '^OR' + field.name + (field.operator || operator) + escapedTerm;
+		});
 
-		var anyGr = new GlideRecordSecure(table);
+		var anyGr = new GlideRecord(table);
 		if (options && options.additional_filter) {
 			anyGr.addEncodedQuery(options.additional_filter);
 		}
@@ -134,6 +143,7 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 			anyGr.setLimit(options.limit);
 		}
 
+		anyGr.setWorkflow(false);
 		anyGr.query();
 
 		var result = {
@@ -141,23 +151,88 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
 			hits: []
 		};
 
+		var recordMatches = {};
+		var fieldNames = fields.map(function (field) { return field.name; });
 		while (anyGr.next()) {
-			var matches = this.getMatches(anyGr, fields, term);
+			var matches = this.getMatches(anyGr, fieldNames, term);
 			if (matches.length) {
+				var recordSysId = anyGr.getUniqueValue();
+
+				recordMatches[recordSysId] = matches;
 				result.hits.push({
-					name: anyGr.getDisplayValue() || anyGr.getUniqueValue(),
+					name: anyGr.getDisplayValue() || recordSysId,
 					className: anyGr.getRecordClassName(),
 					matches: matches,
-					sysId: anyGr.getUniqueValue()
+					sysId: recordSysId
 				});
 			}
 		}
 
+		fields.forEach(function (field) {
+			field.related.forEach(function (related) {
+				var anyGr = new GlideRecord(related.table);
+				if (related.table_field) {
+					if (options && options.match_table) {
+						anyGr.addQuery(related.table_field, table);
+					} else {
+						anyGr.addQuery(related.table_field, 'IN', tables);
+					}
+				}
+
+				anyGr.addEncodedQuery(
+					related.fields.map(function (field) {
+						return field + (option.exact ? '=' : 'LIKE') + escapedTerm;
+					}).join('^OR')
+				);
+
+				if (options && options.limit) {
+					anyGr.setLimit(options.limit);
+				}
+
+				anyGr.setWorkflow(false);
+				anyGr.query();
+				while (anyGr.next()) {
+					var relatedMatches = this.getMatches(anyGr, related.fields, term);
+					if (relatedMatches.length) {
+						var parentSysId = anyGr.getValue(related.parent_field);
+						if (!parentSysId) continue;
+						if (!(parentSysId in recordMatches)) {
+							var parentName = 'unknown / deleted';
+							var parentClassName = 'unknown / deleted';
+							var parentGr = new GlideRecord(table);
+							parentGr.addQuery('sys_id', parentSysId);
+							parentGr.setLimit(1);
+							parentGr.setWorkflow(false);
+							parentGr.query();
+							if (parentGr.next()) {
+								parentName = parentGr.getDisplayValue() || parentSysId;
+								parentClassName = parentGr.getRecordClassName();
+							} else {
+								parentName = parentSysId;
+							}
+
+							var matches = [];
+							result.hits.push({
+								name: parentName,
+								className: parentClassName,
+								matches: matches,
+								sysId: recordSysId
+							});
+							recordMatches[parentSysId] = matches;
+						}
+
+						Array.prototype.push.apply(recordMatches[parentSysId], relatedMatches);
+					}
+				}
+			});
+		});
+
 		return result;
-			}).call(self, table, term, JSON.parse(options));`;
+			}).call(self, table, tables, term, JSON.parse(options));`;
 
 		const gse = new GlideScopedEvaluator();
 		gse.putVariable('table', table);
+		gse.putVariable('tables', new GlideTableHierarchy(table).getTables());
 		gse.putVariable('term', term);
 		gse.putVariable('options', JSON.stringify(options || {}));
 		gse.putVariable('self', this);
@@ -170,14 +245,14 @@ CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSe
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-12 14:24:37</sys_created_on>
         <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
-        <sys_mod_count>34</sys_mod_count>
+        <sys_mod_count>46</sys_mod_count>
         <sys_name>CodeSearchHandlerGeneral</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-06 19:02:47</sys_updated_on>
+        <sys_updated_on>2026-01-22 08:41:45</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>6f9dbdf093fa42101f07f5f08bba1059</id>

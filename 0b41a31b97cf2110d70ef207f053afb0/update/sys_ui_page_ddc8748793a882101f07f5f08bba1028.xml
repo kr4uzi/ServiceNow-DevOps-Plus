@@ -134,7 +134,8 @@ function searchTable(tableConfig, sysID, callback) {
 		}
 	});
 }]]></client_script>
-        <description/>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED</description>
         <direct>false</direct>
         <endpoint>x_424426_devops_references.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
@@ -223,14 +224,14 @@ function searchTable(tableConfig, sysID, callback) {
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-02-28 12:48:52</sys_created_on>
         <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
-        <sys_mod_count>49</sys_mod_count>
+        <sys_mod_count>50</sys_mod_count>
         <sys_name>references</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-11-07 13:32:50</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:45:19</sys_updated_on>
     </sys_ui_page>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>ddc8748793a882101f07f5f08bba1028</id>
