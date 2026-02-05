@@ -1,0 +1,946 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="DELETE">
+        <category>general</category>
+        <client_script><![CDATA[/* global window, document, addLoadEvent, FormData, gel, GlideAjax, GlideUI */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {
+	var submitButton = document.querySelector('#search-form button[type="submit"]');
+	var searchInput = document.getElementById('adv-search-term');
+	searchInput.select();
+	searchInput.focus();
+	
+	updateButtonState(submitButton, searchInput.value);
+	
+	searchInput.addEventListener('keyup', function () {
+		updateButtonState(submitButton, this.value);
+	});
+	
+	var scopeInput = document.querySelector('#search-form #search-scope');
+	var currentApplicationOption = scopeInput.querySelector('option[value="$[JS:gs.getCurrentApplicationId()]"]');
+	if (currentApplicationOption) {
+		currentApplicationOption.setAttribute('selected', 'selected');
+	}
+	
+	var searchScope = document.querySelector('#search-form #search-scope');
+	var globalSearch = document.querySelector('#search-form #search-global');
+	globalSearch.addEventListener('change', function () {
+		searchScope.style.display = this.checked ? 'none' : '';
+	});
+
+	if (globalSearch.value == 'on') {
+		// ui page initialized with global-search = true
+		globalSearch.checked = true;
+		globalSearch.dispatchEvent(new Event('change'));
+	}
+	
+	var cancellationRequested = false;
+	//var canceled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		//canceled = true;
+		cancellationRequested = true;
+		cancelButton.setAttribute('disabled', '');
+		submitButton.setAttribute('disabled', '');
+		searchInput.setAttribute('disabled', '');
+	});
+	
+	document.addEventListener('keyup', function (event) {
+		if (event.key == 'Escape') {
+			//canceled = true;
+			cancellationRequested = true;
+		}
+	});
+	
+	document.getElementById('search-form').addEventListener('submit', function (event) {
+		event.preventDefault();
+		
+		var fd = new FormData(this);
+		var term = fd.get('term');
+		var scope = fd.get('scope');
+		var allScopes = fd.has('global');
+		var config = fd.get('config');
+		if (term && (allScopes || scope)) {
+			gel('search-results').innerHTML = '';
+			gel('progressPercentage').innerHTML = ' (0)';
+			gel('numResults').innerHTML = ' 0 ';
+			gel('searchTerm').innerHTML = ' "' + term.trim() + '" ';
+			gel('searchedScope').innerHTML = ' "' + (allScopes ? 'All Applications' : gel('search-scope').selectedOptions[0].label) + '" ';
+			var hits = 0;
+			var progressBar = gel('bcs-progress-bar');
+			progressBar.setAttribute('aria-valuenow', '0');
+			progressBar.style.width = '0%';
+			
+			gel('progress-container').style.display = '';
+			gel('progress-header').style.display = '';
+			
+			var configParams = {
+				term: term,
+				search_related: true
+			};
+
+			if (!allScopes && scope)
+				configParams.scope = scope;
+
+			// table:task     => configParams.table
+			// group:<sys_id> => configParams.group = <sys_id>
+			var typeAndConfig = config.split(':');
+			configParams[typeAndConfig[0]] = typeAndConfig.slice(1).join(':');
+
+			gel('searchDetail').innerHTML = '(aquire config)';
+			getSearchConfig(configParams, function (config) {
+				if (config.tables.length) {
+					var i = 0;
+					searchTable(config.tables[i++], config.context, function processTableResults(result) {
+						var percentageComplete = Math.floor(i / config.tables.length * 100);
+						gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+						progressBar.setAttribute('aria-valuenow', percentageComplete);
+						progressBar.style.width = percentageComplete + '%';
+						
+						if (result.hits && result.hits.length) {
+							hits += result.hits.length;							
+							gel('numResults').innerHTML = ' ' + hits + ' ';
+							
+							addTable(result.tableLabel, result.hits, true, term);
+						}
+
+						if (i < config.tables.length && !cancellationRequested) {
+							searchTable(config.tables[i++], config.context, processTableResults, onError);
+						} else {
+							gel('progress-container').style.display = 'none';
+							gel('searchDetail').style.display = 'none';
+
+							if (cancellationRequested) {
+								submitButton.removeAttribute('disabled');
+								cancelButton.removeAttribute('disabled');
+								searchInput.removeAttribute('disabled');
+								//canceled = true;
+								cancellationRequested = false;
+							}
+						}
+					}, onError);
+				}
+			}, onError);
+		}
+	});
+
+	function onError(error) {
+		GlideUI.get().addOutputMessage({ type: 'error', msg: error ? error : 'Unknown Error occurred' });
+		if (!error) {
+			try {
+				throw __DUMMY__;
+			} catch (e) {
+				console.error(e, e.stack);
+			}
+		}
+	}
+});
+
+function updateButtonState(buttonNode, searchTerm) {
+	if (searchTerm) {
+		buttonNode.removeAttribute('disabled');
+	} else {
+		buttonNode.setAttribute('disabled', 'disabled');
+	}
+}
+
+function addTable(tableName, hits, open, searchTerm) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	if (open) {
+		tableLi.setAttribute('aria-expanded', 'true');
+	} else {
+		tableLi.classList.add('collapsed');
+		tableLi.setAttribute('aria-expanded', false);
+	}
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '<span class="title"> ' + tableName + ' <span class="count">(' + hits.length + ')</span></span><i class="toggle-trigger icon icon-vcr-right"></i>';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i > 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		var hitToggleBarTitleCount = document.createElement('span');
+		hitToggleBarTitleCount.classList.add('count');
+		hitToggleBarTitleCount.innerHTML = '(' + hit.matches.length + ')';
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		hitToggleBarTitle.append(hitToggleBarTitleCount);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+		
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			
+			var matchCode = document.createElement('pre');
+			matchCode.classList.add('javascript', 'hljs');
+			
+			var lastLine = null;
+			match.lineMatches
+				.sort(function (a, b) { return a.line - b.line; })
+				.filter(function (match, pos, matches) { return matches.findIndex(m => m.line == match.line) == pos; })
+				.forEach(function (line) {
+				if (lastLine && (lastLine < (line.line - 1))) {
+					matchCode.append(document.createElement('br'));
+				}
+				
+				lastLine = line.line;
+				var lineSpan = document.createElement('span');
+				var numSpan = document.createElement('span');
+				numSpan.innerHTML = 'Line ' + line.line;
+				
+				var contentSpan = document.createElement('span');
+				contentSpan.innerHTML = line.context.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replaceAll(searchTerm, function (part) { return '<strong>' + part + '</strong>'; });
+				
+				lineSpan.append(numSpan, ': ', contentSpan, document.createElement('br'));
+				matchCode.append(lineSpan);
+			});
+			
+			matchLi.append(' ' + match.fieldLabel + ': ', matchCode);
+			matchUl.append(matchLi);
+		});
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function getSearchConfig(params, onSuccess, onError) {
+	// We do not use the OOTB api here because this app is shipped with tables that might not be present in this instance
+	// -> in this case the OOTB api will break
+	
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'getConfig');
+	ga.addParam('params', JSON.stringify(params));
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result);
+		} else if (result.message) {
+			onError(result.message);
+		} else {
+			onError();
+		}
+	});
+}
+
+function searchTable(tableConfig, sharedContext, onSuccess, onError) {
+	let table = null;
+	let context = null;
+	if (typeof tableConfig == 'object') {
+		table = tableConfig.name;
+		context = { ...sharedContext, ...tableConfig };
+	} else {
+		table = tableConfig;
+		context = { ...sharedContext };
+	}
+	gel('searchDetail').innerHTML = '(searching: ' + table + ')';
+
+	const ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchTerm');
+	ga.addParam('table', table);
+	ga.addParam('context', JSON.stringify(context));
+	ga.getXMLAnswer(function (result) {
+		if (!result) {
+			// a empty or null result indicates that the script include function crashed with in an unexpected error case
+			// this needs to be investigates so we show an error to the user
+			// those unexpected cases might happen due to invalid tables or ACL issues (instance specific)
+			// for this reason we continue with an "best effort" mode as code search is not business critical
+			if (!context.unexpectedSearchTableErrorOccurred) {
+				context.unexpectedSearchTableErrorOccurred = true;
+				GlideUI.get().addOutputMessage({ type: 'error', msg: 'searchTable returned null (check browser console log for affected tables)' });
+			}
+
+			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', table);
+			onSuccess({ tableLabel: table, hits: [] });
+			return;
+		}
+
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result.search_result);
+		} else if (result.missingHandlerMessage) {
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.missingHandlerMessage });
+			onSuccess({ tableLabel: table, hits: [] });
+		} else if (result.message) {
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.message });
+			onSuccess({ tableLabel: table, hits: [] });
+		} else {
+			onError();
+		}
+	});
+}]]></client_script>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED</description>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_code_search.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var scopes = [{ sys_id: 'global', display_value: 'Global' }];
+		var scopeGr = new GlideRecordSecure('sys_scope');
+		scopeGr.addQuery('sys_class_name', 'sys_app')
+			.addOrCondition('sys_class_name', 'sys_store_app');
+		scopeGr.orderByDesc('sys_created_on');
+		scopeGr.query();
+		while (scopeGr.next()) {
+			scopes.push({
+				sys_id: scopeGr.getUniqueValue(),
+				display_value: scopeGr.getDisplayValue()
+			});
+		}
+		
+		const searchScripts = [];
+		const prefGr = new GlideRecordSecure('sys_user_preference');
+		prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+		prefGr.addQuery('system', true).addOrCondition('user', gs.getUserID());
+		prefGr.addNotNullQuery('description');
+		prefGr.orderBy('name');
+		prefGr.query();
+		while (prefGr.next()) {
+			searchScripts.push({
+				label: prefGr.description.toString(),
+				value: prefGr.getUniqueValue()
+			});
+		}
+
+		const searchGroups = [];
+		const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+		searchGroupGr.orderByDesc('sys_updated_on');
+		searchGroupGr.setLimit(100);
+		searchGroupGr.query();
+		while (searchGroupGr.next()) {
+			searchGroups.push({
+				label: searchGroupGr.name.toString(),
+				value: searchGroupGr.getUniqueValue()
+			});
+		}
+	</g:evaluate>
+	<g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" />
+	<g:evaluate var="jvar_search_global" expression="RP.getParameterValue('global') == 'true' ? 'on' : ''" />
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.2.0" />
+	<form id="search-form">
+		<fieldset>
+			<div>
+				<div class="form-group">
+					<p>You are now on the Code Search dialog. Enter a search term to search files in any of your applications. You may optionally select a scope or search for files in all applications. 
+					</p>
+					<p>Tipp: If you know the Sys ID of a record, try using /sys_metadata.do?sys_id=SYSID or /task.do?sys_id=SYSID to open the record</p>
+					<div class="input-group-transparent">
+						<input id="adv-search-term" class="form-control mousetrap" type="text" name="term" placeholder="Search Term..." autocomplete="off" title="Search your application code here" value="${jvar_search_term}" />
+					</div>
+					<div class="row">
+						<div class="input-group-checkbox" id="global-search-group">
+							<input id="search-global" class="checkbox mousetrap" type="checkbox" name="global" value="${jvar_search_global}" /> 
+							<label for="search-global" class="checkbox-label mousetrap">Search in all applications</label>
+						</div>
+						<select id="search-scope" class="form-control mousetrap" name="scope" title="Select a scope to search">
+							<j:forEach var="jvar_scope" items="${scopes}">
+								<option value="${jvar_scope.sys_id}">${jvar_scope.display_value}</option>
+							</j:forEach>
+						</select>
+					</div>
+					<div class="row">
+						<label id="search-config-label" for="search-config" class="checkbox-label mousetrap">Search Config</label>
+						<select id="search-config" class="form-control mousetrap" name="config" title="Select a search configuration">
+							<option value="table:sys_metadata">Application Files</option>
+							<option value="table:task">Tasks</option>
+							<j:forEach var="jvar_script" items="${searchScripts}">
+								<option value="script:${jvar_script.value}">${jvar_script.label}</option>
+							</j:forEach>
+							<j:forEach var="jvar_group" items="${searchGroups}">
+								<option value="group:${jvar_group.value}">${jvar_group.label}</option>
+							</j:forEach>
+						</select>
+					</div>
+					<div class="row">
+						<div style="flex: 3;"></div>
+						<div class="action-buttons">
+							<button type="button" class="btn btn-default" style="display: none;" click="dismissResults()">Cancel</button>
+							<button type="submit" class="btn btn-primary" disabled="disabled">Search</button> 
+						</div>
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	</form>
+	<div class="search-pane">
+		<div id="progress-header" style="display: none;">
+			<div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline">
+				<strong id="numResults"></strong>results for<strong id="searchTerm"></strong>in<strong id="searchedScope"></strong>$[SP]<span id="searchDetail"></span>
+			</div>
+			<div id="progress-limit" style="display: none;">
+				<span class="error">
+					<strong>Search cancelled because too many results were found.</strong>
+				</span>
+			</div>
+			<div id="progress-container">
+				<div>In progress<span id="progressPercentage"></span></div>
+				<div id="progress-bar-container">
+					<div class="progress">
+						<div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						</div>
+					</div>
+				</div>
+				<div>
+					<a class="icon icon-error-circle"></a>
+				</div>
+			</div>
+		</div>
+		<div id="no-results" style="display: none;">
+			No Results Found
+		</div>
+		<ul id="search-results" role="tree" tree-navigator="true">
+		</ul>
+	</div>
+</j:jelly>]]></html>
+        <name>code_search</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-07 10:10:53</sys_created_on>
+        <sys_id>067dd61197d32110d70ef207f053af83</sys_id>
+        <sys_mod_count>94</sys_mod_count>
+        <sys_name>code_search</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:42:51</sys_updated_on>
+    </sys_ui_page>
+    <sys_es_latest_script action="DELETE">
+        <id>067dd61197d32110d70ef207f053af83</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-04 13:40:06</sys_created_on>
+        <sys_id>95f1acef836d5e100971c810feaad30f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-04 13:40:06</sys_updated_on>
+        <table>sys_ui_page</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_ui_page_067dd61197d32110d70ef207f053af83</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_page"&gt;&lt;sys_ui_page action="INSERT_OR_UPDATE"&gt;&lt;category&gt;general&lt;/category&gt;&lt;client_script&gt;&lt;![CDATA[/* global window, document, addLoadEvent, FormData, gel, GlideAjax, GlideUI */
+/* eslint no-undef: "error" */
+addLoadEvent(function () {
+	var submitButton = document.querySelector('#search-form button[type="submit"]');
+	var searchInput = document.getElementById('adv-search-term');
+	searchInput.select();
+	searchInput.focus();
+	
+	updateButtonState(submitButton, searchInput.value);
+	
+	searchInput.addEventListener('keyup', function () {
+		updateButtonState(submitButton, this.value);
+	});
+	
+	var scopeInput = document.querySelector('#search-form #search-scope');
+	var currentApplicationOption = scopeInput.querySelector('option[value="$[JS:gs.getCurrentApplicationId()]"]');
+	if (currentApplicationOption) {
+		currentApplicationOption.setAttribute('selected', 'selected');
+	}
+	
+	var searchScope = document.querySelector('#search-form #search-scope');
+	var globalSearch = document.querySelector('#search-form #search-global');
+	globalSearch.addEventListener('change', function () {
+		searchScope.style.display = this.checked ? 'none' : '';
+	});
+
+	if (globalSearch.value == 'on') {
+		// ui page initialized with global-search = true
+		globalSearch.checked = true;
+		globalSearch.dispatchEvent(new Event('change'));
+	}
+	
+	var cancellationRequested = false;
+	//var canceled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		//canceled = true;
+		cancellationRequested = true;
+		cancelButton.setAttribute('disabled', '');
+		submitButton.setAttribute('disabled', '');
+		searchInput.setAttribute('disabled', '');
+	});
+	
+	document.addEventListener('keyup', function (event) {
+		if (event.key == 'Escape') {
+			//canceled = true;
+			cancellationRequested = true;
+		}
+	});
+	
+	document.getElementById('search-form').addEventListener('submit', function (event) {
+		event.preventDefault();
+		
+		var fd = new FormData(this);
+		var term = fd.get('term');
+		var scope = fd.get('scope');
+		var allScopes = fd.has('global');
+		var config = fd.get('config');
+		if (term &amp;&amp; (allScopes || scope)) {
+			gel('search-results').innerHTML = '';
+			gel('progressPercentage').innerHTML = ' (0)';
+			gel('numResults').innerHTML = ' 0 ';
+			gel('searchTerm').innerHTML = ' "' + term.trim() + '" ';
+			gel('searchedScope').innerHTML = ' "' + (allScopes ? 'All Applications' : gel('search-scope').selectedOptions[0].label) + '" ';
+			var hits = 0;
+			var progressBar = gel('bcs-progress-bar');
+			progressBar.setAttribute('aria-valuenow', '0');
+			progressBar.style.width = '0%';
+			
+			gel('progress-container').style.display = '';
+			gel('progress-header').style.display = '';
+			
+			var configParams = {
+				term: term,
+				search_related: true
+			};
+
+			if (!allScopes &amp;&amp; scope)
+				configParams.scope = scope;
+
+			// table:task     =&gt; configParams.table
+			// group:&lt;sys_id&gt; =&gt; configParams.group = &lt;sys_id&gt;
+			var typeAndConfig = config.split(':');
+			configParams[typeAndConfig[0]] = typeAndConfig.slice(1).join(':');
+
+			gel('searchDetail').innerHTML = '(aquire config)';
+			getSearchConfig(configParams, function (config) {
+				if (config.tables.length) {
+					var i = 0;
+					searchTable(config.tables[i++], config.context, function processTableResults(result) {
+						var percentageComplete = Math.floor(i / config.tables.length * 100);
+						gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+						progressBar.setAttribute('aria-valuenow', percentageComplete);
+						progressBar.style.width = percentageComplete + '%';
+						
+						if (result.hits &amp;&amp; result.hits.length) {
+							hits += result.hits.length;							
+							gel('numResults').innerHTML = ' ' + hits + ' ';
+							
+							addTable(result.tableLabel, result.hits, true, term);
+						}
+
+						if (i &lt; config.tables.length &amp;&amp; !cancellationRequested) {
+							searchTable(config.tables[i++], config.context, processTableResults, onError);
+						} else {
+							gel('progress-container').style.display = 'none';
+							gel('searchDetail').style.display = 'none';
+
+							if (cancellationRequested) {
+								submitButton.removeAttribute('disabled');
+								cancelButton.removeAttribute('disabled');
+								searchInput.removeAttribute('disabled');
+								//canceled = true;
+								cancellationRequested = false;
+							}
+						}
+					}, onError);
+				}
+			}, onError);
+		}
+	});
+
+	function onError(error) {
+		GlideUI.get().addOutputMessage({ type: 'error', msg: error ? error : 'Unknown Error occurred' });
+		if (!error) {
+			try {
+				throw __DUMMY__;
+			} catch (e) {
+				console.error(e, e.stack);
+			}
+		}
+	}
+});
+
+function updateButtonState(buttonNode, searchTerm) {
+	if (searchTerm) {
+		buttonNode.removeAttribute('disabled');
+	} else {
+		buttonNode.setAttribute('disabled', 'disabled');
+	}
+}
+
+function addTable(tableName, hits, open, searchTerm) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	if (open) {
+		tableLi.setAttribute('aria-expanded', 'true');
+	} else {
+		tableLi.classList.add('collapsed');
+		tableLi.setAttribute('aria-expanded', false);
+	}
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '&lt;span class="title"&gt; ' + tableName + ' &lt;span class="count"&gt;(' + hits.length + ')&lt;/span&gt;&lt;/span&gt;&lt;i class="toggle-trigger icon icon-vcr-right"&gt;&lt;/i&gt;';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i &gt; 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		var hitToggleBarTitleCount = document.createElement('span');
+		hitToggleBarTitleCount.classList.add('count');
+		hitToggleBarTitleCount.innerHTML = '(' + hit.matches.length + ')';
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		hitToggleBarTitle.append(hitToggleBarTitleCount);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+		
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			
+			var matchCode = document.createElement('pre');
+			matchCode.classList.add('javascript', 'hljs');
+			
+			var lastLine = null;
+			match.lineMatches
+				.sort(function (a, b) { return a.line - b.line; })
+				.filter(function (match, pos, matches) { return matches.findIndex(m =&gt; m.line == match.line) == pos; })
+				.forEach(function (line) {
+				if (lastLine &amp;&amp; (lastLine &lt; (line.line - 1))) {
+					matchCode.append(document.createElement('br'));
+				}
+				
+				lastLine = line.line;
+				var lineSpan = document.createElement('span');
+				var numSpan = document.createElement('span');
+				numSpan.innerHTML = 'Line ' + line.line;
+				
+				var contentSpan = document.createElement('span');
+				contentSpan.innerHTML = line.context.replace(/&amp;/g, '&amp;amp;').replace(/&lt;/g, '&amp;lt;').replace(/&gt;/g, '&amp;gt;').replace(/"/g, '&amp;quot;').replace(/'/g, '&amp;#039;').replaceAll(searchTerm, function (part) { return '&lt;strong&gt;' + part + '&lt;/strong&gt;'; });
+				
+				lineSpan.append(numSpan, ': ', contentSpan, document.createElement('br'));
+				matchCode.append(lineSpan);
+			});
+			
+			matchLi.append(' ' + match.fieldLabel + ': ', matchCode);
+			matchUl.append(matchLi);
+		});
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function getSearchConfig(params, onSuccess, onError) {
+	// We do not use the OOTB api here because this app is shipped with tables that might not be present in this instance
+	// -&gt; in this case the OOTB api will break
+	
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'getConfig');
+	ga.addParam('params', JSON.stringify(params));
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result);
+		} else if (result.message) {
+			onError(result.message);
+		} else {
+			onError();
+		}
+	});
+}
+
+function searchTable(tableConfig, sharedContext, onSuccess, onError) {
+	let table = null;
+	let context = null;
+	if (typeof tableConfig == 'object') {
+		table = tableConfig.name;
+		context = { ...sharedContext, ...tableConfig };
+	} else {
+		table = tableConfig;
+		context = { ...sharedContext };
+	}
+	gel('searchDetail').innerHTML = '(searching: ' + table + ')';
+
+	const ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchTerm');
+	ga.addParam('table', table);
+	ga.addParam('context', JSON.stringify(context));
+	ga.getXMLAnswer(function (result) {
+		if (!result) {
+			// a empty or null result indicates that the script include function crashed with in an unexpected error case
+			// this needs to be investigates so we show an error to the user
+			// those unexpected cases might happen due to invalid tables or ACL issues (instance specific)
+			// for this reason we continue with an "best effort" mode as code search is not business critical
+			if (!context.unexpectedSearchTableErrorOccurred) {
+				context.unexpectedSearchTableErrorOccurred = true;
+				GlideUI.get().addOutputMessage({ type: 'error', msg: 'searchTable returned null (check browser console log for affected tables)' });
+			}
+
+			window.console.error('[DevOps+] CodeSearchUtilClient::searchTable failed for table', table);
+			onSuccess({ tableLabel: table, hits: [] });
+			return;
+		}
+
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			onSuccess(result.search_result);
+		} else if (result.missingHandlerMessage) {
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.missingHandlerMessage });
+			onSuccess({ tableLabel: table, hits: [] });
+		} else if (result.message) {
+			GlideUI.get().addOutputMessage({ type: 'error', msg: result.message });
+			onSuccess({ tableLabel: table, hits: [] });
+		} else {
+			onError();
+		}
+	});
+}]]&gt;&lt;/client_script&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&lt;/description&gt;&lt;direct&gt;false&lt;/direct&gt;&lt;endpoint&gt;x_424426_devops_code_search.do&lt;/endpoint&gt;&lt;html&gt;&lt;![CDATA[&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+	&lt;g:evaluate&gt;
+		var scopes = [{ sys_id: 'global', display_value: 'Global' }];
+		var scopeGr = new GlideRecordSecure('sys_scope');
+		scopeGr.addQuery('sys_class_name', 'sys_app')
+			.addOrCondition('sys_class_name', 'sys_store_app');
+		scopeGr.orderByDesc('sys_created_on');
+		scopeGr.query();
+		while (scopeGr.next()) {
+			scopes.push({
+				sys_id: scopeGr.getUniqueValue(),
+				display_value: scopeGr.getDisplayValue()
+			});
+		}
+		
+		const searchScripts = [];
+		const prefGr = new GlideRecordSecure('sys_user_preference');
+		prefGr.addQuery('name', 'STARTSWITH', 'devops_code_search_script');
+		prefGr.addQuery('system', true).addOrCondition('user', gs.getUserID());
+		prefGr.addNotNullQuery('description');
+		prefGr.orderBy('name');
+		prefGr.query();
+		while (prefGr.next()) {
+			searchScripts.push({
+				label: prefGr.description.toString(),
+				value: prefGr.getUniqueValue()
+			});
+		}
+
+		const searchGroups = [];
+		const searchGroupGr = new GlideRecordSecure('sn_codesearch_search_group');
+		searchGroupGr.orderByDesc('sys_updated_on');
+		searchGroupGr.setLimit(100);
+		searchGroupGr.query();
+		while (searchGroupGr.next()) {
+			searchGroups.push({
+				label: searchGroupGr.name.toString(),
+				value: searchGroupGr.getUniqueValue()
+			});
+		}
+	&lt;/g:evaluate&gt;
+	&lt;g:evaluate var="jvar_search_term" expression="RP.getParameterValue('search')" /&gt;
+	&lt;g:evaluate var="jvar_search_global" expression="RP.getParameterValue('global') == 'true' ? 'on' : ''" /&gt;
+	&lt;link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.2.0" /&gt;
+	&lt;form id="search-form"&gt;
+		&lt;fieldset&gt;
+			&lt;div&gt;
+				&lt;div class="form-group"&gt;
+					&lt;p&gt;You are now on the Code Search dialog. Enter a search term to search files in any of your applications. You may optionally select a scope or search for files in all applications. 
+					&lt;/p&gt;
+					&lt;p&gt;Tipp: If you know the Sys ID of a record, try using /sys_metadata.do?sys_id=SYSID or /task.do?sys_id=SYSID to open the record&lt;/p&gt;
+					&lt;div class="input-group-transparent"&gt;
+						&lt;input id="adv-search-term" class="form-control mousetrap" type="text" name="term" placeholder="Search Term..." autocomplete="off" title="Search your application code here" value="${jvar_search_term}" /&gt;
+					&lt;/div&gt;
+					&lt;div class="row"&gt;
+						&lt;div class="input-group-checkbox" id="global-search-group"&gt;
+							&lt;input id="search-global" class="checkbox mousetrap" type="checkbox" name="global" value="${jvar_search_global}" /&gt; 
+							&lt;label for="search-global" class="checkbox-label mousetrap"&gt;Search in all applications&lt;/label&gt;
+						&lt;/div&gt;
+						&lt;select id="search-scope" class="form-control mousetrap" name="scope" title="Select a scope to search"&gt;
+							&lt;j:forEach var="jvar_scope" items="${scopes}"&gt;
+								&lt;option value="${jvar_scope.sys_id}"&gt;${jvar_scope.display_value}&lt;/option&gt;
+							&lt;/j:forEach&gt;
+						&lt;/select&gt;
+					&lt;/div&gt;
+					&lt;div class="row"&gt;
+						&lt;label id="search-config-label" for="search-config" class="checkbox-label mousetrap"&gt;Search Config&lt;/label&gt;
+						&lt;select id="search-config" class="form-control mousetrap" name="config" title="Select a search configuration"&gt;
+							&lt;option value="table:sys_metadata"&gt;Application Files&lt;/option&gt;
+							&lt;option value="table:task"&gt;Tasks&lt;/option&gt;
+							&lt;j:forEach var="jvar_script" items="${searchScripts}"&gt;
+								&lt;option value="script:${jvar_script.value}"&gt;${jvar_script.label}&lt;/option&gt;
+							&lt;/j:forEach&gt;
+							&lt;j:forEach var="jvar_group" items="${searchGroups}"&gt;
+								&lt;option value="group:${jvar_group.value}"&gt;${jvar_group.label}&lt;/option&gt;
+							&lt;/j:forEach&gt;
+						&lt;/select&gt;
+					&lt;/div&gt;
+					&lt;div class="row"&gt;
+						&lt;div style="flex: 3;"&gt;&lt;/div&gt;
+						&lt;div class="action-buttons"&gt;
+							&lt;button type="button" class="btn btn-default" style="display: none;" click="dismissResults()"&gt;Cancel&lt;/button&gt;
+							&lt;button type="submit" class="btn btn-primary" disabled="disabled"&gt;Search&lt;/button&gt; 
+						&lt;/div&gt;
+					&lt;/div&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/fieldset&gt;
+	&lt;/form&gt;
+	&lt;div class="search-pane"&gt;
+		&lt;div id="progress-header" style="display: none;"&gt;
+			&lt;div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline"&gt;
+				&lt;strong id="numResults"&gt;&lt;/strong&gt;results for&lt;strong id="searchTerm"&gt;&lt;/strong&gt;in&lt;strong id="searchedScope"&gt;&lt;/strong&gt;$[SP]&lt;span id="searchDetail"&gt;&lt;/span&gt;
+			&lt;/div&gt;
+			&lt;div id="progress-limit" style="display: none;"&gt;
+				&lt;span class="error"&gt;
+					&lt;strong&gt;Search cancelled because too many results were found.&lt;/strong&gt;
+				&lt;/span&gt;
+			&lt;/div&gt;
+			&lt;div id="progress-container"&gt;
+				&lt;div&gt;In progress&lt;span id="progressPercentage"&gt;&lt;/span&gt;&lt;/div&gt;
+				&lt;div id="progress-bar-container"&gt;
+					&lt;div class="progress"&gt;
+						&lt;div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"&gt;
+						&lt;/div&gt;
+					&lt;/div&gt;
+				&lt;/div&gt;
+				&lt;div&gt;
+					&lt;a class="icon icon-error-circle"&gt;&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div id="no-results" style="display: none;"&gt;
+			No Results Found
+		&lt;/div&gt;
+		&lt;ul id="search-results" role="tree" tree-navigator="true"&gt;
+		&lt;/ul&gt;
+	&lt;/div&gt;
+&lt;/j:jelly&gt;]]&gt;&lt;/html&gt;&lt;name&gt;code_search&lt;/name&gt;&lt;processing_script/&gt;&lt;sys_class_name&gt;sys_ui_page&lt;/sys_class_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2023-06-07 10:10:53&lt;/sys_created_on&gt;&lt;sys_id&gt;067dd61197d32110d70ef207f053af83&lt;/sys_id&gt;&lt;sys_mod_count&gt;94&lt;/sys_mod_count&gt;&lt;sys_name&gt;code_search&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ui_page_067dd61197d32110d70ef207f053af83&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:42:51&lt;/sys_updated_on&gt;&lt;/sys_ui_page&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;067dd61197d32110d70ef207f053af83&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-04 13:40:06&lt;/sys_created_on&gt;&lt;sys_id&gt;95f1acef836d5e100971c810feaad30f&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-04 13:40:06&lt;/sys_updated_on&gt;&lt;table&gt;sys_ui_page&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>644569254</payload_hash>
+        <record_name>code_search</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:42:51</sys_created_on>
+        <sys_id>7bcf395ec3a23e50de14d8477d013192</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4dee5380000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:42:51</sys_updated_on>
+        <type>UI Page</type>
+        <update_guid>7bcf395e27a23e505e78555cb66f4091</update_guid>
+        <update_guid_history>7bcf395e27a23e505e78555cb66f4091:644569254,8a6029dc38207650cce7760eae1d9175:-206369286,6dfa0498ffe436507f896331b25a8181:-1980037951,ec9908186be436500588837f89fad101:-339963347,deab23a50d18b210bea5b72a2d632468:1780515021,17492b619f18b2109c3b5c85bb63dcf6:42502684,eef763ed9bd4b210506968a0e6ad2450:-21718469,a127e72d7154b2101dcd966bcfc76810:1036781952,14f52518b304f29018a8a20e46d0c063:-1075044280,83c5edd40d04f29055cdfc63cf8e1559:1452981270,08a4a5941704f2904a43e669b8ac7ef6:1583653445,92446194d104f290ac110acbbd81122d:-1985793723,4633e514c904f290a246841d810d88aa:-956324797,8e96189b346a6210e4871e28204a0f53:-1956326101</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 09:16:56</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_page">sys_ui_page</sys_db_object>
+        <sys_id>32c47c2ef6e44192a9100ee12db32889</sys_id>
+        <sys_metadata>067dd61197d32110d70ef207f053af83</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>code_search</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_page_067dd61197d32110d70ef207f053af83</sys_update_name>
+        <sys_update_version display_value="sys_ui_page_067dd61197d32110d70ef207f053af83">7bcf395ec3a23e50de14d8477d013192</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 09:16:56</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

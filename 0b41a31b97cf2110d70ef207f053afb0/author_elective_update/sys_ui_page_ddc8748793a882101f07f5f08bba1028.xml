@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="DELETE">
+        <category>general</category>
+        <client_script><![CDATA[/* global pageConfig, document, addLoadEvent, FormData, XMLHttpRequest, gel, window, GlideAjax */
+/* eslint no-undef: "error" */
+pageConfig = JSON.parse(pageConfig.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+
+addLoadEvent(function () {
+	pageConfig.cancelled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		pageConfig.cancelled = true;
+	});
+	
+	var progressBar = gel('bcs-progress-bar');
+	progressBar.setAttribute('aria-valuenow', '0');
+	progressBar.style.width = '0%';
+			
+	gel('progress-container').style.display = '';
+	gel('progress-header').style.display = '';
+	
+	var tables = pageConfig.tables;
+	if (tables.length) {
+		var i = 0;
+		searchTable(tables[i], pageConfig.record, function processTableResults(result) {
+			var percentageComplete = Math.floor(++i / tables.length * 100);
+			gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+			progressBar.setAttribute('aria-valuenow', percentageComplete);
+			progressBar.style.width = percentageComplete + '%';
+						
+			if (result.hits && result.hits.length) {							
+				addTable(result.tableLabel, result.hits);
+			}
+			
+			if (i < tables.length && !pageConfig.cancelled) {
+				searchTable(tables[i], pageConfig.record, processTableResults);
+			}
+		});
+	}
+});
+
+function addTable(tableName, hits) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	tableLi.classList.add('collapsed');
+	tableLi.setAttribute('aria-expanded', false);
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '<span class="title"> ' + tableName + ' <span class="count">(' + hits.length + ')</span></span><i class="toggle-trigger icon icon-vcr-right"></i>';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i > 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			matchLi.append(match.fieldLabel);
+			matchUl.append(matchLi);
+		});
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function searchTable(tableConfig, sysID, callback) {
+	document.getElementById('progress-text').innerText = 'Searching: ' + tableConfig.table;
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchReference');
+	ga.addParam('table', tableConfig.table);
+	ga.addParam('fields', JSON.stringify(tableConfig.fields));
+	ga.addParam('sys_id', sysID);
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			if (result.search_result) {
+				callback(result.search_result);
+			} else {
+				console.log("no search results: ", tableConfig, sysID);
+			}
+			
+		} else if (result.message) {
+			console.log('error searchTable: ', result.message, tableConfig);
+		}
+	});
+}]]></client_script>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED</description>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_references.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		const pageConfig = {};
+		const recordTable = RP.getParameterValue('record_table') || RP.getWindowProperties().record_table;
+		const recordSysID = RP.getParameterValue('record_sys_id') || RP.getWindowProperties().record_sys_id;
+		if (recordTable &amp;&amp; recordSysID) {
+			pageConfig.record = recordSysID;
+
+			const privateTables = getPrivateTables();
+
+			const refQueries = {};
+			new GlideTableHierarchy(recordTable).getTables().forEach(tableName => {
+				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+				dictionaryGr.addQuery('name', 'NOT IN', privateTables);
+				dictionaryGr.addQuery('internal_type', 'IN', ['reference', 'glide_list']);
+				dictionaryGr.addQuery('reference', tableName);
+				dictionaryGr.addQuery('sys_class_name', 'sys_dictionary');
+				dictionaryGr.query();
+				while (dictionaryGr.next()) {
+					const columnTable = dictionaryGr.getValue('name');
+					const columnName = dictionaryGr.getValue('element');
+					(refQueries[columnTable] ??= {})[columnName] = {
+						name: columnName,
+						table: columnTable,
+						reference: dictionaryGr.reference.toString(),
+						label: dictionaryGr.column_label.toString(),
+						operator: dictionaryGr.internal_type == 'reference' ? '=' : 'LIKE'
+					};
+				}
+			});
+		
+			pageConfig.tables = [];
+			for (let tableName in refQueries) {
+				pageConfig.tables.push({ table: tableName, fields: refQueries[tableName] });
+			}
+		} else {
+			pageConfig.errorMessage = 'Parameter "record_table" and "record_sys_id" are manatory!';
+		}
+
+		function getPrivateTables() {
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('access', 'package_private')
+				.addOrCondition('read_access', false);
+			dbObjectGr.query();
+
+			const tables = [];
+			while (dbObjectGr.next()) {
+				tables.push(dbObjectGr.getValue('name'));
+			}
+
+			return tables;
+		}
+	</g:evaluate>
+	<script>var pageConfig = '${JSON.stringify(pageConfig)}';</script>
+	<link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.0" />
+	<div class="search-pane">
+		<div id="progress-header" style="display: none;">
+			<div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline">
+			</div>
+			<div id="progress-container">
+				<div>In progress<span id="progressPercentage"></span></div>
+				<div id="progress-bar-container">
+					<div class="progress">
+						<div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						</div>
+					</div>
+				</div>
+				<div>
+					<a class="icon icon-error-circle"></a>
+				</div>
+			</div>
+		</div>
+		<div id="no-results" style="display: none;">
+			No Results Found
+		</div>
+		<ul id="search-results" role="tree" tree-navigator="true">
+		</ul>
+	</div>
+</j:jelly>]]></html>
+        <name>references</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-28 12:48:52</sys_created_on>
+        <sys_id>ddc8748793a882101f07f5f08bba1028</sys_id>
+        <sys_mod_count>50</sys_mod_count>
+        <sys_name>references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:45:19</sys_updated_on>
+    </sys_ui_page>
+    <sys_es_latest_script action="DELETE">
+        <id>ddc8748793a882101f07f5f08bba1028</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 12:20:51</sys_created_on>
+        <sys_id>e19ca39883f116900971c810feaad398</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 12:20:51</sys_updated_on>
+        <table>sys_ui_page</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_page"&gt;&lt;sys_ui_page action="INSERT_OR_UPDATE"&gt;&lt;category&gt;general&lt;/category&gt;&lt;client_script&gt;&lt;![CDATA[/* global pageConfig, document, addLoadEvent, FormData, XMLHttpRequest, gel, window, GlideAjax */
+/* eslint no-undef: "error" */
+pageConfig = JSON.parse(pageConfig.replace(/&amp;quot;/g, '"').replace(/&amp;lt;/g, '&lt;').replace(/&amp;gt;/g, '&gt;').replace(/&amp;amp;/g, '&amp;'));
+
+addLoadEvent(function () {
+	pageConfig.cancelled = false;
+	var cancelButton = document.querySelector('#progress-container a');
+	cancelButton.addEventListener('click', function () {
+		pageConfig.cancelled = true;
+	});
+	
+	var progressBar = gel('bcs-progress-bar');
+	progressBar.setAttribute('aria-valuenow', '0');
+	progressBar.style.width = '0%';
+			
+	gel('progress-container').style.display = '';
+	gel('progress-header').style.display = '';
+	
+	var tables = pageConfig.tables;
+	if (tables.length) {
+		var i = 0;
+		searchTable(tables[i], pageConfig.record, function processTableResults(result) {
+			var percentageComplete = Math.floor(++i / tables.length * 100);
+			gel('progressPercentage').innerHTML = ' (' + percentageComplete + ')';
+			progressBar.setAttribute('aria-valuenow', percentageComplete);
+			progressBar.style.width = percentageComplete + '%';
+						
+			if (result.hits &amp;&amp; result.hits.length) {							
+				addTable(result.tableLabel, result.hits);
+			}
+			
+			if (i &lt; tables.length &amp;&amp; !pageConfig.cancelled) {
+				searchTable(tables[i], pageConfig.record, processTableResults);
+			}
+		});
+	}
+});
+
+function addTable(tableName, hits) {
+	var tableLi = document.createElement('li');
+	tableLi.classList.add('nav-group', 'project-group');
+	tableLi.classList.add('collapsed');
+	tableLi.setAttribute('aria-expanded', false);
+	
+	var toggleBar = document.createElement('div');
+	toggleBar.classList.add('toggle-bar', 'default-focus-outline');
+	toggleBar.setAttribute('tabindex', '0');
+	toggleBar.setAttribute('role', 'treeitem');
+	toggleBar.addEventListener('click', function (e) {
+		e.stopPropagation();
+		tableLi.classList.toggle('collapsed');
+		tableLi.setAttribute('aria-expanded', String(tableLi.classList.contains('collapsed')));
+	});
+	toggleBar.setAttribute('aria-selected', 'false');
+	toggleBar.innerHTML = '&lt;span class="title"&gt; ' + tableName + ' &lt;span class="count"&gt;(' + hits.length + ')&lt;/span&gt;&lt;/span&gt;&lt;i class="toggle-trigger icon icon-vcr-right"&gt;&lt;/i&gt;';
+	
+	var hitsList = document.createElement('ul');
+	hitsList.classList.add('record-type-section');
+	hitsList.setAttribute('role', 'group');
+	
+	hits.forEach(function (hit, i) {
+		var hitLi = document.createElement('li');
+		hitLi.classList.add('nav-group', 'record-type-group');
+		if (i &gt; 0) {
+			hitLi.classList.add('collapsed');
+			hitLi.setAttribute('aria-expanded', 'true');
+		}
+		
+		var hitToggleBar = document.createElement('div');
+		hitToggleBar.classList.add('toggle-bar', 'default-focus-outline');
+		hitToggleBar.setAttribute('tabindex', '0');
+		hitToggleBar.setAttribute('role', 'treeitem');
+		hitToggleBar.addEventListener('click', function (e) {
+			e.stopPropagation();
+			hitLi.classList.toggle('collapsed');
+			hitLi.setAttribute('aria-expanded', String(hitLi.classList.contains('collapsed')));
+		});
+		var hitToggleBarTitle = document.createElement('span');
+		hitToggleBarTitle.classList.add('title');
+		var hitToggleBarTitleLink = document.createElement('a');
+		hitToggleBarTitleLink.classList.add('record-link');
+		hitToggleBarTitleLink.addEventListener('click', function (event) {
+			event.stopPropagation();
+			window.open('nav_to.do?uri=%2F' + hit.className + '.do?sys_id=' + hit.sysId, '_blank');
+		});
+		hitToggleBarTitleLink.innerHTML = hit.name;
+		hitToggleBarTitle.append(hitToggleBarTitleLink);
+		
+		var toggleTrigger = document.createElement('i');
+		toggleTrigger.classList.add('toggle-trigger', 'icon', 'icon-vcr-right');
+		hitToggleBar.append(hitToggleBarTitle);
+		hitToggleBar.append(toggleTrigger);
+		
+		var matchUl = document.createElement('ul');
+		matchUl.classList.add('file-section');
+		matchUl.setAttribute('role', 'group');
+
+		hit.matches.forEach(function (match) {
+			var matchLi = document.createElement('li');
+			matchLi.classList.add('result-line');
+			matchLi.append(match.fieldLabel);
+			matchUl.append(matchLi);
+		});
+		
+		hitLi.append(hitToggleBar, matchUl);
+		hitsList.append(hitLi);
+	});
+	
+	tableLi.append(toggleBar, hitsList);
+	document.getElementById('search-results').append(tableLi);
+}
+
+function searchTable(tableConfig, sysID, callback) {
+	document.getElementById('progress-text').innerText = 'Searching: ' + tableConfig.table;
+	var ga = new GlideAjax('x_424426_devops.CodeSearchUtilClient');
+	ga.addParam('sysparm_name', 'searchReference');
+	ga.addParam('table', tableConfig.table);
+	ga.addParam('fields', JSON.stringify(tableConfig.fields));
+	ga.addParam('sys_id', sysID);
+	ga.getXMLAnswer(function (result) {
+		result = JSON.parse(result);
+		if (result.status == 'success') {
+			if (result.search_result) {
+				callback(result.search_result);
+			} else {
+				console.log("no search results: ", tableConfig, sysID);
+			}
+			
+		} else if (result.message) {
+			console.log('error searchTable: ', result.message, tableConfig);
+		}
+	});
+}]]&gt;&lt;/client_script&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&lt;/description&gt;&lt;direct&gt;false&lt;/direct&gt;&lt;endpoint&gt;x_424426_devops_references.do&lt;/endpoint&gt;&lt;html&gt;&lt;![CDATA[&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"&gt;
+	&lt;g:evaluate&gt;
+		const pageConfig = {};
+		const recordTable = RP.getParameterValue('record_table') || RP.getWindowProperties().record_table;
+		const recordSysID = RP.getParameterValue('record_sys_id') || RP.getWindowProperties().record_sys_id;
+		if (recordTable &amp;amp;&amp;amp; recordSysID) {
+			pageConfig.record = recordSysID;
+
+			const privateTables = getPrivateTables();
+
+			const refQueries = {};
+			new GlideTableHierarchy(recordTable).getTables().forEach(tableName =&gt; {
+				const dictionaryGr = new GlideRecordSecure('sys_dictionary');
+				dictionaryGr.addQuery('name', 'NOT IN', privateTables);
+				dictionaryGr.addQuery('internal_type', 'IN', ['reference', 'glide_list']);
+				dictionaryGr.addQuery('reference', tableName);
+				dictionaryGr.addQuery('sys_class_name', 'sys_dictionary');
+				dictionaryGr.query();
+				while (dictionaryGr.next()) {
+					const columnTable = dictionaryGr.getValue('name');
+					const columnName = dictionaryGr.getValue('element');
+					(refQueries[columnTable] ??= {})[columnName] = {
+						name: columnName,
+						table: columnTable,
+						reference: dictionaryGr.reference.toString(),
+						label: dictionaryGr.column_label.toString(),
+						operator: dictionaryGr.internal_type == 'reference' ? '=' : 'LIKE'
+					};
+				}
+			});
+		
+			pageConfig.tables = [];
+			for (let tableName in refQueries) {
+				pageConfig.tables.push({ table: tableName, fields: refQueries[tableName] });
+			}
+		} else {
+			pageConfig.errorMessage = 'Parameter "record_table" and "record_sys_id" are manatory!';
+		}
+
+		function getPrivateTables() {
+			const dbObjectGr = new GlideRecordSecure('sys_db_object');
+			dbObjectGr.addQuery('access', 'package_private')
+				.addOrCondition('read_access', false);
+			dbObjectGr.query();
+
+			const tables = [];
+			while (dbObjectGr.next()) {
+				tables.push(dbObjectGr.getValue('name'));
+			}
+
+			return tables;
+		}
+	&lt;/g:evaluate&gt;
+	&lt;script&gt;var pageConfig = '${JSON.stringify(pageConfig)}';&lt;/script&gt;
+	&lt;link rel="stylesheet" href="562f961997d32110d70ef207f053af16.cssdbx?v=1.0.0" /&gt;
+	&lt;div class="search-pane"&gt;
+		&lt;div id="progress-header" style="display: none;"&gt;
+			&lt;div id="progress-text" tabindex="0" aria-describedby="progress-text" role="heading" class="default-focus-outline"&gt;
+			&lt;/div&gt;
+			&lt;div id="progress-container"&gt;
+				&lt;div&gt;In progress&lt;span id="progressPercentage"&gt;&lt;/span&gt;&lt;/div&gt;
+				&lt;div id="progress-bar-container"&gt;
+					&lt;div class="progress"&gt;
+						&lt;div id="bcs-progress-bar" class="progress-bar" role="progressbar" width="0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"&gt;
+						&lt;/div&gt;
+					&lt;/div&gt;
+				&lt;/div&gt;
+				&lt;div&gt;
+					&lt;a class="icon icon-error-circle"&gt;&lt;/a&gt;
+				&lt;/div&gt;
+			&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div id="no-results" style="display: none;"&gt;
+			No Results Found
+		&lt;/div&gt;
+		&lt;ul id="search-results" role="tree" tree-navigator="true"&gt;
+		&lt;/ul&gt;
+	&lt;/div&gt;
+&lt;/j:jelly&gt;]]&gt;&lt;/html&gt;&lt;name&gt;references&lt;/name&gt;&lt;processing_script/&gt;&lt;sys_class_name&gt;sys_ui_page&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-02-28 12:48:52&lt;/sys_created_on&gt;&lt;sys_id&gt;ddc8748793a882101f07f5f08bba1028&lt;/sys_id&gt;&lt;sys_mod_count&gt;50&lt;/sys_mod_count&gt;&lt;sys_name&gt;references&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_ui_page_ddc8748793a882101f07f5f08bba1028&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:45:19&lt;/sys_updated_on&gt;&lt;/sys_ui_page&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;ddc8748793a882101f07f5f08bba1028&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-07 12:20:51&lt;/sys_created_on&gt;&lt;sys_id&gt;e19ca39883f116900971c810feaad398&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-07 12:20:51&lt;/sys_updated_on&gt;&lt;table&gt;sys_ui_page&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>378225305</payload_hash>
+        <record_name>references</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:45:19</sys_created_on>
+        <sys_id>7f5086dec3a23e50de14d8477d01310b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4e1263a0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:45:19</sys_updated_on>
+        <type>UI Page</type>
+        <update_guid>7f5086dea7a23e50c56cbe1c2cb77c0a</update_guid>
+        <update_guid_history>7f5086dea7a23e50c56cbe1c2cb77c0a:378225305,4696189b1e6a621019f778f2b47a095f:-391976273</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 09:16:13</sys_created_on>
+        <sys_db_object display_value="" name="sys_ui_page">sys_ui_page</sys_db_object>
+        <sys_id>06d1917b91d3460a80716c632b44e884</sys_id>
+        <sys_metadata>ddc8748793a882101f07f5f08bba1028</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_ui_page_ddc8748793a882101f07f5f08bba1028</sys_update_name>
+        <sys_update_version display_value="sys_ui_page_ddc8748793a882101f07f5f08bba1028">7f5086dec3a23e50de14d8477d01310b</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 09:16:13</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

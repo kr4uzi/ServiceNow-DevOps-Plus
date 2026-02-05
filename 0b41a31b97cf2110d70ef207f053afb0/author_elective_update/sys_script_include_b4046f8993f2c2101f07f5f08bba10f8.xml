@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>false</active>
+        <api_name>x_424426_devops.CodeSearchHandlerFlow</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeSearchHandlerFlow</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideScriptedExtensionPoint, GlideRecord, GlideStringUtil, Uint8Array */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerFlow = Class.create();
+CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+
+		this.relationships = {
+			sys_hub_flow: {
+				field: 'flow',
+				order: 'order',
+				tables: ['sys_hub_trigger_instance', 'sys_hub_action_instance'],
+
+			},
+			sys_hub_action_type_definition: {
+				field: 'action',
+				order: 'order',
+				tables: ['sys_hub_step_instance', 'sys_hub_input_scripts']
+			}
+		};
+
+		this.flowRelations = {
+			sys_hub_trigger_instance_v2: {
+				related: 'flow',
+				label: (triggerGr) => 'Trigger',
+				field: 'trigger_inputs'
+			},
+			sys_hub_action_instance_v2: {
+				orderBy: 'order',
+				related: 'flow',
+				label: (instGr) => `Step ${instGr.order} - ${instGr.getDisplayValue('action_type')}`,
+				field: 'values'
+			}
+		};
+
+		this.ext = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt')[0];
+		this.ext.initialize();
+    },
+
+    handlesScope: function (scopeName) {
+		return scopeName == 'global';
+	},
+
+	handlesTable: function (tableName) {
+		return tableName in this.relationships;
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {{fields: Object<string, {type: string}>?, exact: boolean?, search_related: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
+	 */
+	search: function (table, term, options) {
+		const escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+        const fields = options?.fields || this.getFields(table);
+		let query = [];
+		if (options?.additional_filter)
+			query.push(options.additional_filter);
+
+		if (options?.scope)
+			query.push('sys_scope=' + options.scope);
+
+		if (options?.match_table)
+			query.push('sys_class_name=' + table);
+
+		const hubGr = new GlideRecord(table);
+		if (query.length)
+			hubGr.addEncodedQuery(query.join('^'));
+
+		const fieldQuery = [];
+		for (const field in fields) {
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + escapedTerm);
+		}
+
+		if (fieldQuery.length) {
+			hubGr.addEncodedQuery(fieldQuery.join('^OR'));
+		}
+		
+		// with related search active, any match in a related record counts as a match for the parent record
+		// => we also have to search the whole table unconditionally as well
+		if (options?.search_related && query.length)
+			hubGr.addEncodedQuery('^NQ' + query.join('^'));
+
+		hubGr.orderBy('sys_class_name');
+		hubGr.orderBy('sys_name');
+
+		if (options?.limit) {
+			hubGr.setLimit(options.limit);
+		}
+
+		hubGr.query();
+
+		const result = {
+			tableLabel: hubGr.getLabel(),
+			hits: []
+		};
+
+		while (hubGr.next()) {
+			const hit = {
+				name: hubGr.getDisplayValue() || hubGr.getUniqueValue(),
+				className: hubGr.getRecordClassName(),
+				matches: this.getMatches(hubGr, fields, term),
+				sysId: hubGr.getUniqueValue()
+			};
+
+			if (options?.search_related) {
+				const relConfig = this.relationships[table];
+				relConfig.tables.forEach(relatedTable => {
+					const relGr = new GlideRecord(relatedTable);
+					relGr.addQuery(relConfig.field, hubGr.sys_id);
+					relGr.orderBy(relConfig.order);
+					relGr.query();
+					while (relGr.next()) {
+						const variableGr = new GlideRecord('sys_variable_value');
+						variableGr.addQuery('document', relatedTable);
+						variableGr.addQuery('document_key', relGr.sys_id);
+						variableGr.addQuery('value', 'CONTAINS', term);
+						variableGr.query();
+						while (variableGr.next()) {
+							hit.matches.push(...this.getMatches(variableGr, { value: null }, term));
+						}
+					}
+				});
+
+				if (relConfig.field == 'flow') {
+					for (const [table, config] of Object.entries(this.flowRelations)) {
+						const flowRelGr = new GlideRecord(table);
+						flowRelGr.addQuery(config.related, hubGr.sys_id);
+						if (config.orderBy) flowRelGr.orderBy(config.orderBy);
+						flowRelGr.addNotNullQuery('values');
+						flowRelGr.query();
+						while (flowRelGr.next()) {
+							try {
+								const value = flowRelGr.getValue(config.field);
+								if (!value) continue;
+								const label = config.label(flowRelGr);
+								// those appear to be single line JSON strings => make them more readable
+								JSON.parse(this.ext.inflate(value)).forEach(field => {
+									const value = field.scriptActive ? field.script[field.name].script : field.value;
+									if (!value) return;
+									
+									const match = {
+										fieldLabel: field.parameter.label + ' (' + label + ')',
+										lineMatches: this.getMatchingLines(value, term)
+									};
+
+									match.lineMatches.forEach(lineMatch => {
+										if (lineMatch.context.length > this.max_context_length) {
+											lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+										}
+									});
+
+									if (match.lineMatches.length) {
+										hit.matches.push(match);
+									}
+								});
+							} catch (e) {
+								continue;
+							}
+						}
+					}
+				} else if (relConfig.field == 'action') {
+					const varGr = new GlideRecord('sys_variable_value');
+					varGr.addQuery('document', table);
+					varGr.addQuery('document_key', hubGr.sys_id);
+					varGr.addQuery('value', 'CONTAINS', term);
+					varGr.query();
+					while (varGr.next()) {
+						hit.matches.push(...this.getMatches(varGr, { value: null }, term));
+					}
+
+					var outputGr = new GlideRecord('sys_hub_action_output');
+					outputGr.addQuery('model', hubGr.sys_id);
+					outputGr.orderBy('order');
+					outputGr.query();
+					while (outputGr.next()) {
+						const scriptGr = new GlideRecord('sys_hub_input_scripts');
+						scriptGr.addQuery('active', true);
+						scriptGr.addQuery('instance', outputGr.sys_id);
+						scriptGr.addQuery('script', 'CONTAINS', term);
+						scriptGr.query();
+						while (scriptGr.next()) {
+							hit.matches.push(...this.getMatches(scriptGr, { script: null }, term));
+						}
+					}
+				}
+			}
+
+			if (!options?.search_related && hit.matches.length == 0) {
+				// getMatches sometimes isn't able to do text matches which have been detected by the query
+				hit.matches.push({
+					fieldLabel: '(Fallback)',
+					lineMatches: [{
+						line: 1,
+						context: term
+					}]
+				});
+			}
+
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandlerFlow'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-13 16:30:28</sys_created_on>
+        <sys_id>b4046f8993f2c2101f07f5f08bba10f8</sys_id>
+        <sys_mod_count>41</sys_mod_count>
+        <sys_name>CodeSearchHandlerFlow</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:55</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>b4046f8993f2c2101f07f5f08bba10f8</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 11:49:06</sys_created_on>
+        <sys_id>24556fd4837116900971c810feaad341</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 11:49:06</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;false&lt;/active&gt;&lt;api_name&gt;x_424426_devops.CodeSearchHandlerFlow&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&amp;#13;
+&amp;#13;
+Implements extension point x_424426_devops.CodeSearchHandler&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeSearchHandlerFlow&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideScriptedExtensionPoint, GlideRecord, GlideStringUtil, Uint8Array */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerFlow = Class.create();
+CodeSearchHandlerFlow.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+
+		this.relationships = {
+			sys_hub_flow: {
+				field: 'flow',
+				order: 'order',
+				tables: ['sys_hub_trigger_instance', 'sys_hub_action_instance'],
+
+			},
+			sys_hub_action_type_definition: {
+				field: 'action',
+				order: 'order',
+				tables: ['sys_hub_step_instance', 'sys_hub_input_scripts']
+			}
+		};
+
+		this.flowRelations = {
+			sys_hub_trigger_instance_v2: {
+				related: 'flow',
+				label: (triggerGr) =&gt; 'Trigger',
+				field: 'trigger_inputs'
+			},
+			sys_hub_action_instance_v2: {
+				orderBy: 'order',
+				related: 'flow',
+				label: (instGr) =&gt; `Step ${instGr.order} - ${instGr.getDisplayValue('action_type')}`,
+				field: 'values'
+			}
+		};
+
+		this.ext = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt')[0];
+		this.ext.initialize();
+    },
+
+    handlesScope: function (scopeName) {
+		return scopeName == 'global';
+	},
+
+	handlesTable: function (tableName) {
+		return tableName in this.relationships;
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {{fields: Object&lt;string, {type: string}&gt;?, exact: boolean?, search_related: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
+	 */
+	search: function (table, term, options) {
+		const escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+        const fields = options?.fields || this.getFields(table);
+		let query = [];
+		if (options?.additional_filter)
+			query.push(options.additional_filter);
+
+		if (options?.scope)
+			query.push('sys_scope=' + options.scope);
+
+		if (options?.match_table)
+			query.push('sys_class_name=' + table);
+
+		const hubGr = new GlideRecord(table);
+		if (query.length)
+			hubGr.addEncodedQuery(query.join('^'));
+
+		const fieldQuery = [];
+		for (const field in fields) {
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + escapedTerm);
+		}
+
+		if (fieldQuery.length) {
+			hubGr.addEncodedQuery(fieldQuery.join('^OR'));
+		}
+		
+		// with related search active, any match in a related record counts as a match for the parent record
+		// =&gt; we also have to search the whole table unconditionally as well
+		if (options?.search_related &amp;&amp; query.length)
+			hubGr.addEncodedQuery('^NQ' + query.join('^'));
+
+		hubGr.orderBy('sys_class_name');
+		hubGr.orderBy('sys_name');
+
+		if (options?.limit) {
+			hubGr.setLimit(options.limit);
+		}
+
+		hubGr.query();
+
+		const result = {
+			tableLabel: hubGr.getLabel(),
+			hits: []
+		};
+
+		while (hubGr.next()) {
+			const hit = {
+				name: hubGr.getDisplayValue() || hubGr.getUniqueValue(),
+				className: hubGr.getRecordClassName(),
+				matches: this.getMatches(hubGr, fields, term),
+				sysId: hubGr.getUniqueValue()
+			};
+
+			if (options?.search_related) {
+				const relConfig = this.relationships[table];
+				relConfig.tables.forEach(relatedTable =&gt; {
+					const relGr = new GlideRecord(relatedTable);
+					relGr.addQuery(relConfig.field, hubGr.sys_id);
+					relGr.orderBy(relConfig.order);
+					relGr.query();
+					while (relGr.next()) {
+						const variableGr = new GlideRecord('sys_variable_value');
+						variableGr.addQuery('document', relatedTable);
+						variableGr.addQuery('document_key', relGr.sys_id);
+						variableGr.addQuery('value', 'CONTAINS', term);
+						variableGr.query();
+						while (variableGr.next()) {
+							hit.matches.push(...this.getMatches(variableGr, { value: null }, term));
+						}
+					}
+				});
+
+				if (relConfig.field == 'flow') {
+					for (const [table, config] of Object.entries(this.flowRelations)) {
+						const flowRelGr = new GlideRecord(table);
+						flowRelGr.addQuery(config.related, hubGr.sys_id);
+						if (config.orderBy) flowRelGr.orderBy(config.orderBy);
+						flowRelGr.addNotNullQuery('values');
+						flowRelGr.query();
+						while (flowRelGr.next()) {
+							try {
+								const value = flowRelGr.getValue(config.field);
+								if (!value) continue;
+								const label = config.label(flowRelGr);
+								// those appear to be single line JSON strings =&gt; make them more readable
+								JSON.parse(this.ext.inflate(value)).forEach(field =&gt; {
+									const value = field.scriptActive ? field.script[field.name].script : field.value;
+									if (!value) return;
+									
+									const match = {
+										fieldLabel: field.parameter.label + ' (' + label + ')',
+										lineMatches: this.getMatchingLines(value, term)
+									};
+
+									match.lineMatches.forEach(lineMatch =&gt; {
+										if (lineMatch.context.length &gt; this.max_context_length) {
+											lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+										}
+									});
+
+									if (match.lineMatches.length) {
+										hit.matches.push(match);
+									}
+								});
+							} catch (e) {
+								continue;
+							}
+						}
+					}
+				} else if (relConfig.field == 'action') {
+					const varGr = new GlideRecord('sys_variable_value');
+					varGr.addQuery('document', table);
+					varGr.addQuery('document_key', hubGr.sys_id);
+					varGr.addQuery('value', 'CONTAINS', term);
+					varGr.query();
+					while (varGr.next()) {
+						hit.matches.push(...this.getMatches(varGr, { value: null }, term));
+					}
+
+					var outputGr = new GlideRecord('sys_hub_action_output');
+					outputGr.addQuery('model', hubGr.sys_id);
+					outputGr.orderBy('order');
+					outputGr.query();
+					while (outputGr.next()) {
+						const scriptGr = new GlideRecord('sys_hub_input_scripts');
+						scriptGr.addQuery('active', true);
+						scriptGr.addQuery('instance', outputGr.sys_id);
+						scriptGr.addQuery('script', 'CONTAINS', term);
+						scriptGr.query();
+						while (scriptGr.next()) {
+							hit.matches.push(...this.getMatches(scriptGr, { script: null }, term));
+						}
+					}
+				}
+			}
+
+			if (!options?.search_related &amp;&amp; hit.matches.length == 0) {
+				// getMatches sometimes isn't able to do text matches which have been detected by the query
+				hit.matches.push({
+					fieldLabel: '(Fallback)',
+					lineMatches: [{
+						line: 1,
+						context: term
+					}]
+				});
+			}
+
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandlerFlow'
+});]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-06-13 16:30:28&lt;/sys_created_on&gt;&lt;sys_id&gt;b4046f8993f2c2101f07f5f08bba10f8&lt;/sys_id&gt;&lt;sys_mod_count&gt;41&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeSearchHandlerFlow&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_b4046f8993f2c2101f07f5f08bba10f8&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:41:55&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;b4046f8993f2c2101f07f5f08bba10f8&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-07 11:49:06&lt;/sys_created_on&gt;&lt;sys_id&gt;24556fd4837116900971c810feaad341&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-07 11:49:06&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-2145932143</payload_hash>
+        <record_name>CodeSearchHandlerFlow</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:41:56</sys_created_on>
+        <sys_id>5a9ff51ec3a23e50de14d8477d0131b9</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4de0c940000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:56</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>5a9ff51e62a23e50501fb8a7a7ee33b8</update_guid>
+        <update_guid_history>5a9ff51e62a23e50501fb8a7a7ee33b8:-2145932143,e6a42a661b147a1085566dce9c894411:1968185924,91b69a46af5876101bcbf540215537d0:-42192435,f30719225204fe90f133afc82e6be6a0:-881987083,6d531dea09c0fe901a2e8aafacdfb655:-1260776188,6c1315eac4c0fe906750e16cc202ce84:14289729,b8140b12c808be907a44bfbf9037722f:13259602,c8b9d594e6c0f290eff6fe5ba7e855a8:-511996813,b533f2083b336e1098b21ed035623fd4:-1305815881,5e08cce8fb2bee5050fdd280f66277df:532087959,c996949bc26a621092c4eed6ca7b85fe:1951684182</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:56:58</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>14463d3985da4784905fefde5aa02364</sys_id>
+        <sys_metadata>b4046f8993f2c2101f07f5f08bba10f8</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeSearchHandlerFlow</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_b4046f8993f2c2101f07f5f08bba10f8</sys_update_name>
+        <sys_update_version display_value="sys_script_include_b4046f8993f2c2101f07f5f08bba10f8">5a9ff51ec3a23e50de14d8477d0131b9</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:56:58</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

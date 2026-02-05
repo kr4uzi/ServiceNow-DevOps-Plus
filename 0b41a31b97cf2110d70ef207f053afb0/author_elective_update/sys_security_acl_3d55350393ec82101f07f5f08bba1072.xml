@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl">
+    <sys_security_acl action="DELETE">
+        <active>true</active>
+        <admin_overrides>true</admin_overrides>
+        <advanced>false</advanced>
+        <condition/>
+        <description/>
+        <local_or_existing>Local</local_or_existing>
+        <name>x_424426_devops_references</name>
+        <operation display_value="read">read</operation>
+        <script/>
+        <security_attribute/>
+        <sys_class_name>sys_security_acl</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-28 17:13:56</sys_created_on>
+        <sys_id>3d55350393ec82101f07f5f08bba1072</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops_references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_security_acl_3d55350393ec82101f07f5f08bba1072</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-28 17:13:56</sys_updated_on>
+        <type display_value="ui_page">ui_page</type>
+    </sys_security_acl>
+<sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_security_acl_3d55350393ec82101f07f5f08bba1072</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl">
+    <sys_security_acl action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <admin_overrides>true</admin_overrides>
+        <advanced>false</advanced>
+        <condition/>
+        <description/>
+        <local_or_existing>Local</local_or_existing>
+        <name>x_424426_devops_references</name>
+        <operation display_value="read">read</operation>
+        <script/>
+        <security_attribute/>
+        <sys_class_name>sys_security_acl</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-28 17:13:56</sys_created_on>
+        <sys_id>3d55350393ec82101f07f5f08bba1072</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops_references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_security_acl_3d55350393ec82101f07f5f08bba1072</sys_update_name>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-02-28 17:13:56</sys_updated_on>
+        <type display_value="ui_page">ui_page</type>
+    </sys_security_acl>
+</record_update>]]></payload>
+        <payload_hash>-1537314462</payload_hash>
+        <record_name>x_424426_devops_references</record_name>
+        <reverted_from/>
+        <source>6286d09bc36a6210de14d8477d01314c</source>
+        <source_table>sys_upgrade_history</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-07-10 07:25:53</sys_created_on>
+        <sys_id>1596d49bc36a6210de14d8477d01312c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>197f339fdba0000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-07-10 07:25:53</sys_updated_on>
+        <type>Access Control</type>
+        <update_guid>d196d49b2b6a62108137a01d33313b2c</update_guid>
+        <update_guid_history>d196d49b2b6a62108137a01d33313b2c:-1537314462</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2026-01-22 08:59:24</sys_created_on>
+        <sys_db_object display_value="" name="sys_security_acl">sys_security_acl</sys_db_object>
+        <sys_id>92742521ff464b00a05f6fcdc563ac40</sys_id>
+        <sys_metadata>3d55350393ec82101f07f5f08bba1072</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops_references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_security_acl_3d55350393ec82101f07f5f08bba1072</sys_update_name>
+        <sys_update_version display_value="sys_security_acl_3d55350393ec82101f07f5f08bba1072">1596d49bc36a6210de14d8477d01312c</sys_update_version>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:59:24</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

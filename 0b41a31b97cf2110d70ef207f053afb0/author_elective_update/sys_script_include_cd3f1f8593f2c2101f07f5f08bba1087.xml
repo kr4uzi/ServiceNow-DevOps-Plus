@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>false</active>
+        <api_name>x_424426_devops.CodeSearchHandlerWF</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeSearchHandlerWF</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecordSecure, GlideStringUtil */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerWF = Class.create();
+CodeSearchHandlerWF.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+    },
+
+     handlesScope: function (scopeName) {
+		return scopeName == 'global';
+	},
+
+	handlesTable: function (tableName) {
+		return tableName == 'wf_workflow';
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {{fields: Object<string, {type: string}>?, exact: boolean?, search_related: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
+	 */
+	search: function (table, term, options) {
+		const escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+        const fields = options?.field || this.getFields(table);
+		let query = [];
+		if (options?.additional_filter)
+			query.push(options.additional_filter);
+
+		if (options?.scope)
+			query.push('sys_scope=' + options.scope);
+
+		if (options?.match_table)
+			query.push('sys_class_name=' + table);
+
+		const workflowGr = new GlideRecordSecure('wf_workflow');
+		if (query.length)
+			workflowGr.addEncodedQuery(query.join('^'));
+
+		const fieldQuery = [];
+		for (const field in fields) {
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + escapedTerm);
+		}
+
+		if (fieldQuery.length) {
+			workflowGr.addEncodedQuery(fieldQuery.join('^OR'));
+		}
+		
+		// related search must not contain the field conditions the term might be present in the fields but in the related records
+		if (options?.search_related && query.length)
+			workflowGr.addEncodedQuery('^NQ' + query.join('^'));
+
+		workflowGr.orderBy('sys_class_name');
+		workflowGr.orderBy('sys_name');
+
+		if (options?.limit) {
+			workflowGr.setLimit(options?.limit);
+		}
+
+		workflowGr.query();
+
+		const result = {
+			tableLabel: workflowGr.getLabel(),
+			hits: []
+		};
+
+		while (workflowGr.next()) {
+			const hit = {
+				name: workflowGr.getDisplayValue() || workflowGr.getUniqueValue(),
+				className: workflowGr.getRecordClassName(),
+				matches: this.getMatches(workflowGr, fields, term),
+				sysId: workflowGr.getUniqueValue()
+			};
+
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+
+			if (options?.search_related) {
+				const wfVersionGr = new GlideRecordSecure('wf_workflow_version');
+				wfVersionGr.addQuery('workflow', workflowGr.sys_id);
+				wfVersionGr.orderBy('order');
+				wfVersionGr.query();
+				while (wfVersionGr.next()) {
+					const wfName = wfVersionGr.getDisplayValue() || wfVersionGr.getUniqueValue();
+					const hit = {
+						name: wfName + (wfVersionGr.published ? ' (current version)' : ' (previous version)'),
+						className: wfVersionGr.getRecordClassName(),
+						matches: [] ,
+						sysId: wfVersionGr.getUniqueValue()
+					};
+
+					const wfActivityGr = new GlideRecordSecure('wf_activity');
+					wfActivityGr.addQuery('workflow_version', wfVersionGr.sys_id);
+					wfActivityGr.query();
+					while (wfActivityGr.next()) {
+						const activityName = 'Activity: ' + wfActivityGr.getDisplayValue() || wfActivityGr.getDisplayValue('activity_definition');
+						const variableGr = new GlideRecordSecure('sys_variable_value');
+						variableGr.addQuery('document', 'wf_activity');
+						variableGr.addQuery('document_key', wfActivityGr.sys_id);
+						variableGr.addQuery('value', 'CONTAINS', term);
+						variableGr.query();
+						while (variableGr.next()) {
+							this.getMatches(variableGr, ['value'], term).forEach(m => {
+								m.fieldLabel = activityName + ' > ' + variableGr.getDisplayValue('variable');
+								hit.matches.push(m);
+							});
+						}
+					}
+
+					if (hit.matches.length) {
+						result.hits.push(hit);
+					}
+				}
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandlerWF'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-13 16:09:28</sys_created_on>
+        <sys_id>cd3f1f8593f2c2101f07f5f08bba1087</sys_id>
+        <sys_mod_count>17</sys_mod_count>
+        <sys_name>CodeSearchHandlerWF</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:48</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>cd3f1f8593f2c2101f07f5f08bba1087</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-10-31 10:41:37</sys_created_on>
+        <sys_id>3fb2174a83a1de500971c810feaad36a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-10-31 10:41:37</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;false&lt;/active&gt;&lt;api_name&gt;x_424426_devops.CodeSearchHandlerWF&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&amp;#13;
+&amp;#13;
+Implements extension point x_424426_devops.CodeSearchHandler&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeSearchHandlerWF&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecordSecure, GlideStringUtil */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerWF = Class.create();
+CodeSearchHandlerWF.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+    initialize: function() {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+    },
+
+     handlesScope: function (scopeName) {
+		return scopeName == 'global';
+	},
+
+	handlesTable: function (tableName) {
+		return tableName == 'wf_workflow';
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {{fields: Object&lt;string, {type: string}&gt;?, exact: boolean?, search_related: boolean?, additional_filter: string?, scope: string?, limit: number?, match_table: boolean?, }} [options]
+	 * @return {{tableLabel: string, hits: {name: string, className: string, matches: {fieldLabel: string, lineMatches: {line: number, context: string}[]}[], sysId: string}}}
+	 */
+	search: function (table, term, options) {
+		const escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+        const fields = options?.field || this.getFields(table);
+		let query = [];
+		if (options?.additional_filter)
+			query.push(options.additional_filter);
+
+		if (options?.scope)
+			query.push('sys_scope=' + options.scope);
+
+		if (options?.match_table)
+			query.push('sys_class_name=' + table);
+
+		const workflowGr = new GlideRecordSecure('wf_workflow');
+		if (query.length)
+			workflowGr.addEncodedQuery(query.join('^'));
+
+		const fieldQuery = [];
+		for (const field in fields) {
+			fieldQuery.push(field + (options?.exact ? '=' : 'LIKE') + escapedTerm);
+		}
+
+		if (fieldQuery.length) {
+			workflowGr.addEncodedQuery(fieldQuery.join('^OR'));
+		}
+		
+		// related search must not contain the field conditions the term might be present in the fields but in the related records
+		if (options?.search_related &amp;&amp; query.length)
+			workflowGr.addEncodedQuery('^NQ' + query.join('^'));
+
+		workflowGr.orderBy('sys_class_name');
+		workflowGr.orderBy('sys_name');
+
+		if (options?.limit) {
+			workflowGr.setLimit(options?.limit);
+		}
+
+		workflowGr.query();
+
+		const result = {
+			tableLabel: workflowGr.getLabel(),
+			hits: []
+		};
+
+		while (workflowGr.next()) {
+			const hit = {
+				name: workflowGr.getDisplayValue() || workflowGr.getUniqueValue(),
+				className: workflowGr.getRecordClassName(),
+				matches: this.getMatches(workflowGr, fields, term),
+				sysId: workflowGr.getUniqueValue()
+			};
+
+			if (hit.matches.length) {
+				result.hits.push(hit);
+			}
+
+			if (options?.search_related) {
+				const wfVersionGr = new GlideRecordSecure('wf_workflow_version');
+				wfVersionGr.addQuery('workflow', workflowGr.sys_id);
+				wfVersionGr.orderBy('order');
+				wfVersionGr.query();
+				while (wfVersionGr.next()) {
+					const wfName = wfVersionGr.getDisplayValue() || wfVersionGr.getUniqueValue();
+					const hit = {
+						name: wfName + (wfVersionGr.published ? ' (current version)' : ' (previous version)'),
+						className: wfVersionGr.getRecordClassName(),
+						matches: [] ,
+						sysId: wfVersionGr.getUniqueValue()
+					};
+
+					const wfActivityGr = new GlideRecordSecure('wf_activity');
+					wfActivityGr.addQuery('workflow_version', wfVersionGr.sys_id);
+					wfActivityGr.query();
+					while (wfActivityGr.next()) {
+						const activityName = 'Activity: ' + wfActivityGr.getDisplayValue() || wfActivityGr.getDisplayValue('activity_definition');
+						const variableGr = new GlideRecordSecure('sys_variable_value');
+						variableGr.addQuery('document', 'wf_activity');
+						variableGr.addQuery('document_key', wfActivityGr.sys_id);
+						variableGr.addQuery('value', 'CONTAINS', term);
+						variableGr.query();
+						while (variableGr.next()) {
+							this.getMatches(variableGr, ['value'], term).forEach(m =&gt; {
+								m.fieldLabel = activityName + ' &gt; ' + variableGr.getDisplayValue('variable');
+								hit.matches.push(m);
+							});
+						}
+					}
+
+					if (hit.matches.length) {
+						result.hits.push(hit);
+					}
+				}
+			}
+		}
+
+		return result;
+    },
+
+    type: 'CodeSearchHandlerWF'
+});]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-06-13 16:09:28&lt;/sys_created_on&gt;&lt;sys_id&gt;cd3f1f8593f2c2101f07f5f08bba1087&lt;/sys_id&gt;&lt;sys_mod_count&gt;17&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeSearchHandlerWF&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:41:48&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;cd3f1f8593f2c2101f07f5f08bba1087&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-10-31 10:41:37&lt;/sys_created_on&gt;&lt;sys_id&gt;3fb2174a83a1de500971c810feaad36a&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-10-31 10:41:37&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>-964922711</payload_hash>
+        <record_name>CodeSearchHandlerWF</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:41:48</sys_created_on>
+        <sys_id>d09fb51ec3a23e50de14d8477d0131f9</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4ddee5d0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:48</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>109fb51ef8a23e50d5f735127c9432f8</update_guid>
+        <update_guid_history>109fb51ef8a23e50d5f735127c9432f8:-964922711,5f7f311e98a23e50e2767d6cce9bf58b:-1032824166,e092f28401336e10aa285957df95983c:1449343324,5196d49b746a6210f5b7e7f5589b5613:1279458652</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:56:47</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>003bb1d3b6574d2080032d652cafa210</sys_id>
+        <sys_metadata>cd3f1f8593f2c2101f07f5f08bba1087</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeSearchHandlerWF</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087</sys_update_name>
+        <sys_update_version display_value="sys_script_include_cd3f1f8593f2c2101f07f5f08bba1087">d09fb51ec3a23e50de14d8477d0131f9</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:56:47</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

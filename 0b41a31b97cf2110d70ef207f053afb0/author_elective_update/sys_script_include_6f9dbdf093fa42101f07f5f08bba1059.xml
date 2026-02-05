@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>package_private</access>
+        <active>false</active>
+        <api_name>x_424426_devops.CodeSearchHandlerGeneral</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED&#13;
+&#13;
+Implements extension point x_424426_devops.CodeSearchHandler</description>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeSearchHandlerGeneral</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecord, GlideScopedEvaluator, GlideTableHierarchy */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerGeneral = Class.create();
+CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+	initialize: function () {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+		const scriptGr = new GlideRecord('clone_cleanup_script');
+		scriptGr.addQuery('sys_scope', 'global');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('No infuseable record found');
+		}
+	},
+
+	/**
+	 * test if this extension point can handle the given scope
+	 * @param {string} scopeName
+	 * @return {boolean}
+	 */
+	handlesScope: function (scopeName) {
+		return true;
+	},
+
+	/**
+	 * test if this extensionpoint can handle the given table
+	 * @param {string} tableName
+	 * @return {boolean}
+	 */
+	handlesTable: function (tableName) {
+		// the general scope handler can handle all tables:
+		const dbObjectGr = new GlideRecord('sys_db_object');
+		dbObjectGr.addQuery('name', tableName);
+		dbObjectGr.setLimit(1);
+		dbObjectGr.query();
+		if (dbObjectGr.next()) {
+			// - that are in global scope (infused search script runs in global scope)
+			if (dbObjectGr.sys_scope == 'global' || dbObjectGr.sys_scope.scope == 'global') {
+				return true;
+			}
+
+			if (dbObjectGr.access == 'package_private' || !dbObjectGr.read_access) {
+				return false;
+			}
+			
+			// - that are in scoped, but allow global read access
+			const callerAccess = dbObjectGr.caller_access;
+			if (!callerAccess || callerAccess == 1) {
+				// caller tracking (will grant automatic access)
+				return true;
+			}
+
+			// can only search this table if the access has been granted for global scope
+			const accessGr = new GlideRecord('sys_restricted_caller_access');
+			accessGr.addQuery('source_scope', 'global');
+			accessGr.addQuery('operation', 'read');
+			accessGr.addQuery('target', dbObjectGr.sys_id);
+			accessGr.addQuery('status', '2'); // Allowed
+			accessGr.setLimit(1);
+			accessGr.query();
+			return accessGr.hasNext();
+		}
+		
+		return false;
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {object} [options]
+	 * @param {Array<{type: string}>} [options.fields]
+	 * @param {boolean} [options.exact]
+	 * @param {string} [options.additional_filter]
+	 * @param {string} [options.scope]
+	 * @param {number} [options.limit]
+	 * @param {boolean} [options.match_table]
+	 * @return {CodeSearchResult}
+	 */
+	search: function (table, term, options) {
+		this.scriptGr.script = `
+			(function (table, tables, term, options) {
+		// an exact sys_id query can increase performance for sys_id queries
+		var escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+		var query = 'sys_id=' + escapedTerm;
+		var fields = (options && options.fields) ? options.fields : this.getFields(table);
+		fields.forEach(function (field) {
+			// no need to search a field not able to store the search term
+			if (field.max_length < term.length) continue;
+
+			// field should not be queried (usually this indicates it stores a related search)
+			if (!field.query_field) continue;
+
+			var operator = 'LIKE';
+			if (options && options.exact) {
+				operator = '=';
+			}
+			
+			query += '^OR' + field.name + (field.operator || operator) + escapedTerm;
+		});
+
+		var anyGr = new GlideRecord(table);
+		if (options && options.additional_filter) {
+			anyGr.addEncodedQuery(options.additional_filter);
+		}
+		
+		anyGr.addEncodedQuery(query);
+
+		if (options && options.scope && anyGr.isValidField('sys_scope')) {
+			anyGr.addQuery('sys_scope', options.scope);
+		}
+
+		if (anyGr.isValidField('sys_class_name')) {
+			if (options && options.match_table) {
+				anyGr.addQuery('sys_class_name', table);
+			}
+
+			anyGr.orderBy('sys_class_name');
+		}
+
+		if (anyGr.isValidField('sys_name')) {
+			anyGr.orderBy('sys_name');
+		}
+
+		if (options && options.limit) {
+			anyGr.setLimit(options.limit);
+		}
+
+		anyGr.setWorkflow(false);
+		anyGr.query();
+
+		var result = {
+			tableLabel: anyGr.getLabel(),
+			hits: []
+		};
+
+		var recordMatches = {};
+		var fieldNames = fields.map(function (field) { return field.name; });
+		while (anyGr.next()) {
+			var matches = this.getMatches(anyGr, fieldNames, term);
+			if (matches.length) {
+				var recordSysId = anyGr.getUniqueValue();
+
+				recordMatches[recordSysId] = matches;
+				result.hits.push({
+					name: anyGr.getDisplayValue() || recordSysId,
+					className: anyGr.getRecordClassName(),
+					matches: matches,
+					sysId: recordSysId
+				});
+			}
+		}
+
+		fields.forEach(function (field) {
+			field.related.forEach(function (related) {
+				var anyGr = new GlideRecord(related.table);
+				if (related.table_field) {
+					if (options && options.match_table) {
+						anyGr.addQuery(related.table_field, table);
+					} else {
+						anyGr.addQuery(related.table_field, 'IN', tables);
+					}
+				}
+
+				anyGr.addEncodedQuery(
+					related.fields.map(function (field) {
+						return field + (option.exact ? '=' : 'LIKE') + escapedTerm;
+					}).join('^OR')
+				);
+
+				if (options && options.limit) {
+					anyGr.setLimit(options.limit);
+				}
+
+				anyGr.setWorkflow(false);
+				anyGr.query();
+				while (anyGr.next()) {
+					var relatedMatches = this.getMatches(anyGr, related.fields, term);
+					if (relatedMatches.length) {
+						var parentSysId = anyGr.getValue(related.parent_field);
+						if (!parentSysId) continue;
+						if (!(parentSysId in recordMatches)) {
+							var parentName = 'unknown / deleted';
+							var parentClassName = 'unknown / deleted';
+							var parentGr = new GlideRecord(table);
+							parentGr.addQuery('sys_id', parentSysId);
+							parentGr.setLimit(1);
+							parentGr.setWorkflow(false);
+							parentGr.query();
+							if (parentGr.next()) {
+								parentName = parentGr.getDisplayValue() || parentSysId;
+								parentClassName = parentGr.getRecordClassName();
+							} else {
+								parentName = parentSysId;
+							}
+
+							var matches = [];
+							result.hits.push({
+								name: parentName,
+								className: parentClassName,
+								matches: matches,
+								sysId: recordSysId
+							});
+							recordMatches[parentSysId] = matches;
+						}
+
+						Array.prototype.push.apply(recordMatches[parentSysId], relatedMatches);
+					}
+				}
+			});
+		});
+
+		return result;
+			}).call(self, table, tables, term, JSON.parse(options));`;
+
+		const gse = new GlideScopedEvaluator();
+		gse.putVariable('table', table);
+		gse.putVariable('tables', new GlideTableHierarchy(table).getTables());
+		gse.putVariable('term', term);
+		gse.putVariable('options', JSON.stringify(options || {}));
+		gse.putVariable('self', this);
+		return gse.evaluateScript(this.scriptGr, 'script');
+	},
+	
+	type: 'CodeSearchHandlerGeneral'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 14:24:37</sys_created_on>
+        <sys_id>6f9dbdf093fa42101f07f5f08bba1059</sys_id>
+        <sys_mod_count>46</sys_mod_count>
+        <sys_name>CodeSearchHandlerGeneral</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:45</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>6f9dbdf093fa42101f07f5f08bba1059</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-10-29 20:56:37</sys_created_on>
+        <sys_id>345cc76d83e5d2500971c810feaad39e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-10-29 20:56:37</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;false&lt;/active&gt;&lt;api_name&gt;x_424426_devops.CodeSearchHandlerGeneral&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&amp;#13;
+&amp;#13;
+Implements extension point x_424426_devops.CodeSearchHandler&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeSearchHandlerGeneral&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[/* global global, gs, x_424426_devops */
+/* global Class, GlideRecord, GlideScopedEvaluator, GlideTableHierarchy */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerGeneral = Class.create();
+CodeSearchHandlerGeneral.prototype = Object.extendsObject(x_424426_devops.CodeSearchHandlerBase, {
+	initialize: function () {
+		x_424426_devops.CodeSearchHandlerBase.prototype.initialize.apply(this, arguments);
+		const scriptGr = new GlideRecord('clone_cleanup_script');
+		scriptGr.addQuery('sys_scope', 'global');
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			this.scriptGr = scriptGr;
+		} else {
+			throw new Error('No infuseable record found');
+		}
+	},
+
+	/**
+	 * test if this extension point can handle the given scope
+	 * @param {string} scopeName
+	 * @return {boolean}
+	 */
+	handlesScope: function (scopeName) {
+		return true;
+	},
+
+	/**
+	 * test if this extensionpoint can handle the given table
+	 * @param {string} tableName
+	 * @return {boolean}
+	 */
+	handlesTable: function (tableName) {
+		// the general scope handler can handle all tables:
+		const dbObjectGr = new GlideRecord('sys_db_object');
+		dbObjectGr.addQuery('name', tableName);
+		dbObjectGr.setLimit(1);
+		dbObjectGr.query();
+		if (dbObjectGr.next()) {
+			// - that are in global scope (infused search script runs in global scope)
+			if (dbObjectGr.sys_scope == 'global' || dbObjectGr.sys_scope.scope == 'global') {
+				return true;
+			}
+
+			if (dbObjectGr.access == 'package_private' || !dbObjectGr.read_access) {
+				return false;
+			}
+			
+			// - that are in scoped, but allow global read access
+			const callerAccess = dbObjectGr.caller_access;
+			if (!callerAccess || callerAccess == 1) {
+				// caller tracking (will grant automatic access)
+				return true;
+			}
+
+			// can only search this table if the access has been granted for global scope
+			const accessGr = new GlideRecord('sys_restricted_caller_access');
+			accessGr.addQuery('source_scope', 'global');
+			accessGr.addQuery('operation', 'read');
+			accessGr.addQuery('target', dbObjectGr.sys_id);
+			accessGr.addQuery('status', '2'); // Allowed
+			accessGr.setLimit(1);
+			accessGr.query();
+			return accessGr.hasNext();
+		}
+		
+		return false;
+	},
+
+	/**
+	 * search in the supplied table using the (fixed) context
+	 * @param {string} table
+	 * @param {string} term
+	 * @param {object} [options]
+	 * @param {Array&lt;{type: string}&gt;} [options.fields]
+	 * @param {boolean} [options.exact]
+	 * @param {string} [options.additional_filter]
+	 * @param {string} [options.scope]
+	 * @param {number} [options.limit]
+	 * @param {boolean} [options.match_table]
+	 * @return {CodeSearchResult}
+	 */
+	search: function (table, term, options) {
+		this.scriptGr.script = `
+			(function (table, tables, term, options) {
+		// an exact sys_id query can increase performance for sys_id queries
+		var escapedTerm = GlideStringUtil.escapeQueryTermSeparator(term);
+		var query = 'sys_id=' + escapedTerm;
+		var fields = (options &amp;&amp; options.fields) ? options.fields : this.getFields(table);
+		fields.forEach(function (field) {
+			// no need to search a field not able to store the search term
+			if (field.max_length &lt; term.length) continue;
+
+			// field should not be queried (usually this indicates it stores a related search)
+			if (!field.query_field) continue;
+
+			var operator = 'LIKE';
+			if (options &amp;&amp; options.exact) {
+				operator = '=';
+			}
+			
+			query += '^OR' + field.name + (field.operator || operator) + escapedTerm;
+		});
+
+		var anyGr = new GlideRecord(table);
+		if (options &amp;&amp; options.additional_filter) {
+			anyGr.addEncodedQuery(options.additional_filter);
+		}
+		
+		anyGr.addEncodedQuery(query);
+
+		if (options &amp;&amp; options.scope &amp;&amp; anyGr.isValidField('sys_scope')) {
+			anyGr.addQuery('sys_scope', options.scope);
+		}
+
+		if (anyGr.isValidField('sys_class_name')) {
+			if (options &amp;&amp; options.match_table) {
+				anyGr.addQuery('sys_class_name', table);
+			}
+
+			anyGr.orderBy('sys_class_name');
+		}
+
+		if (anyGr.isValidField('sys_name')) {
+			anyGr.orderBy('sys_name');
+		}
+
+		if (options &amp;&amp; options.limit) {
+			anyGr.setLimit(options.limit);
+		}
+
+		anyGr.setWorkflow(false);
+		anyGr.query();
+
+		var result = {
+			tableLabel: anyGr.getLabel(),
+			hits: []
+		};
+
+		var recordMatches = {};
+		var fieldNames = fields.map(function (field) { return field.name; });
+		while (anyGr.next()) {
+			var matches = this.getMatches(anyGr, fieldNames, term);
+			if (matches.length) {
+				var recordSysId = anyGr.getUniqueValue();
+
+				recordMatches[recordSysId] = matches;
+				result.hits.push({
+					name: anyGr.getDisplayValue() || recordSysId,
+					className: anyGr.getRecordClassName(),
+					matches: matches,
+					sysId: recordSysId
+				});
+			}
+		}
+
+		fields.forEach(function (field) {
+			field.related.forEach(function (related) {
+				var anyGr = new GlideRecord(related.table);
+				if (related.table_field) {
+					if (options &amp;&amp; options.match_table) {
+						anyGr.addQuery(related.table_field, table);
+					} else {
+						anyGr.addQuery(related.table_field, 'IN', tables);
+					}
+				}
+
+				anyGr.addEncodedQuery(
+					related.fields.map(function (field) {
+						return field + (option.exact ? '=' : 'LIKE') + escapedTerm;
+					}).join('^OR')
+				);
+
+				if (options &amp;&amp; options.limit) {
+					anyGr.setLimit(options.limit);
+				}
+
+				anyGr.setWorkflow(false);
+				anyGr.query();
+				while (anyGr.next()) {
+					var relatedMatches = this.getMatches(anyGr, related.fields, term);
+					if (relatedMatches.length) {
+						var parentSysId = anyGr.getValue(related.parent_field);
+						if (!parentSysId) continue;
+						if (!(parentSysId in recordMatches)) {
+							var parentName = 'unknown / deleted';
+							var parentClassName = 'unknown / deleted';
+							var parentGr = new GlideRecord(table);
+							parentGr.addQuery('sys_id', parentSysId);
+							parentGr.setLimit(1);
+							parentGr.setWorkflow(false);
+							parentGr.query();
+							if (parentGr.next()) {
+								parentName = parentGr.getDisplayValue() || parentSysId;
+								parentClassName = parentGr.getRecordClassName();
+							} else {
+								parentName = parentSysId;
+							}
+
+							var matches = [];
+							result.hits.push({
+								name: parentName,
+								className: parentClassName,
+								matches: matches,
+								sysId: recordSysId
+							});
+							recordMatches[parentSysId] = matches;
+						}
+
+						Array.prototype.push.apply(recordMatches[parentSysId], relatedMatches);
+					}
+				}
+			});
+		});
+
+		return result;
+			}).call(self, table, tables, term, JSON.parse(options));`;
+
+		const gse = new GlideScopedEvaluator();
+		gse.putVariable('table', table);
+		gse.putVariable('tables', new GlideTableHierarchy(table).getTables());
+		gse.putVariable('term', term);
+		gse.putVariable('options', JSON.stringify(options || {}));
+		gse.putVariable('self', this);
+		return gse.evaluateScript(this.scriptGr, 'script');
+	},
+	
+	type: 'CodeSearchHandlerGeneral'
+});]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-06-12 14:24:37&lt;/sys_created_on&gt;&lt;sys_id&gt;6f9dbdf093fa42101f07f5f08bba1059&lt;/sys_id&gt;&lt;sys_mod_count&gt;46&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeSearchHandlerGeneral&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_6f9dbdf093fa42101f07f5f08bba1059&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:41:45&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;6f9dbdf093fa42101f07f5f08bba1059&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-10-29 20:56:37&lt;/sys_created_on&gt;&lt;sys_id&gt;345cc76d83e5d2500971c810feaad39e&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-10-29 20:56:37&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>1492305047</payload_hash>
+        <record_name>CodeSearchHandlerGeneral</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:41:46</sys_created_on>
+        <sys_id>049fb51ec3a23e50de14d8477d013105</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4dde7b40000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:41:46</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>409fb51e23a23e50aa790cbd8fc21304</update_guid>
+        <update_guid_history>409fb51e23a23e50aa790cbd8fc21304:1492305047,b08ff11e30a23e50213fb1fdee8f1ab9:329407944,5a9ce661c74dfa1064de175d8a74fd4a:-1852448506,be080a60334532108a774903b54c6d36:1624521152,0db7c220e94532106fff8a62b3068bea:-1318262019,2e774220b64532107ebb77188bc57510:-1439273640,f21702ec6205321046ca3ba9ca643a44:-304763153,c924ca640605321013c4db91ce9fbc3d:-2078080408,cac30664e80532106d17338348df7934:-288134364,a6228220a7053210e819bdea0b9a157a:235096717,fff18eec5bc1321096bba82bc2cb9f40:164699632,d791ceace9c1321039c765472e993c9a:1733067038,6e8f1576e6a03210b8483b59f7975a80:0,5c8ed11cab207650bd4e00809cec9f8f:-919146046,74b71410556836505a8d67d26b9c8aba:441192632,6b42214e58f3e650406388018c4e69e3:-919146046,21037ec464336e10379bdabdc7d037db:279937930,929626c49fff2e109cc2215b34558bce:1193403029,1585ce48bf3f2e10667bf1a056b61b4d:-1398270940,b13402c46e3f2e1072cd518738cd929f:1288310132,e8930284eb3f2e1077690a6359ce4b86:-549110598,4b738e44b53f2e10279735e7e8a0f820:1216966553,e2308640923f2e104c92a5effb924868:-737451855,8d96949bf36a621047363a142be4abe5:-1619843800</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:56:50</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>02e52d81aa9a4f5c98f64b09823e3b51</sys_id>
+        <sys_metadata>6f9dbdf093fa42101f07f5f08bba1059</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeSearchHandlerGeneral</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_6f9dbdf093fa42101f07f5f08bba1059</sys_update_name>
+        <sys_update_version display_value="sys_script_include_6f9dbdf093fa42101f07f5f08bba1059">049fb51ec3a23e50de14d8477d013105</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:56:50</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

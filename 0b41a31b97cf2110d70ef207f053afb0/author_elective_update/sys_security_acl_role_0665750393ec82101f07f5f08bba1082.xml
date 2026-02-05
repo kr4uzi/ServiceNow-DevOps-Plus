@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl_role">
+    <sys_security_acl_role action="DELETE">
+        <sys_class_name>sys_security_acl_role</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-02-28 17:13:56</sys_created_on>
+        <sys_id>0665750393ec82101f07f5f08bba1082</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>x_424426_devops_references.nobody</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_security_acl display_value="x_424426_devops_references">3d55350393ec82101f07f5f08bba1072</sys_security_acl>
+        <sys_update_name>sys_security_acl_role_0665750393ec82101f07f5f08bba1082</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:46:14</sys_updated_on>
+        <sys_user_role display_value="nobody" name="nobody">b05940500a0a0aa70090a4893f6ff35d</sys_user_role>
+    </sys_security_acl_role>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_security_acl_role_0665750393ec82101f07f5f08bba1082</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_security_acl_role"><sys_security_acl_role action="INSERT_OR_UPDATE"><sys_class_name>sys_security_acl_role</sys_class_name><sys_created_by>markus.kraus</sys_created_by><sys_created_on>2024-02-28 17:13:56</sys_created_on><sys_id>0665750393ec82101f07f5f08bba1082</sys_id><sys_mod_count>1</sys_mod_count><sys_name>x_424426_devops_references.nobody</sys_name><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_security_acl display_value="x_424426_devops_references">3d55350393ec82101f07f5f08bba1072</sys_security_acl><sys_update_name>sys_security_acl_role_0665750393ec82101f07f5f08bba1082</sys_update_name><sys_updated_by>markus.kraus@intrux.ch</sys_updated_by><sys_updated_on>2026-01-22 08:46:14</sys_updated_on><sys_user_role display_value="nobody" name="nobody">b05940500a0a0aa70090a4893f6ff35d</sys_user_role></sys_security_acl_role></record_update>]]></payload>
+        <payload_hash>-538783702</payload_hash>
+        <record_name>x_424426_devops_references.nobody</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:46:14</sys_created_on>
+        <sys_id>95900212c3e23e50de14d8477d01318f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4e1fdbc0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:46:14</sys_updated_on>
+        <type>Access Roles</type>
+        <update_guid>959002128ce23e50ee66e62f85c89b8e</update_guid>
+        <update_guid_history>959002128ce23e50ee66e62f85c89b8e:-538783702,6d96d49b086a621024d0ddb7938ad095:-352981188</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete display_value="x_424426_devops_references.nobody">ce93025ac3e23e50de14d8477d0131b2</sys_audit_delete>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:59:24</sys_created_on>
+        <sys_db_object display_value="" name="sys_security_acl_role">sys_security_acl_role</sys_db_object>
+        <sys_id>18b542fa7660496c939034adc5cf6d51</sys_id>
+        <sys_metadata>0665750393ec82101f07f5f08bba1082</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops_references.nobody</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_security_acl_role_0665750393ec82101f07f5f08bba1082</sys_update_name>
+        <sys_update_version display_value="sys_security_acl_role_0665750393ec82101f07f5f08bba1082">95900212c3e23e50de14d8477d01318f</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:59:24</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

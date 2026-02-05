@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_app_module">
+    <sys_app_module action="DELETE">
+        <active>false</active>
+        <application display_value="DevOps+">ae7ed61997d32110d70ef207f053af89</application>
+        <assessment/>
+        <device_type/>
+        <filter/>
+        <hint>2025-01-22 deactivated: The Intrux Code Search Application is its replacement</hint>
+        <homepage/>
+        <image/>
+        <link_type>DIRECT</link_type>
+        <map_page/>
+        <mobile_title>Code Search</mobile_title>
+        <mobile_view_name>Mobile</mobile_view_name>
+        <name/>
+        <order>100</order>
+        <override_menu_roles>false</override_menu_roles>
+        <query>x_424426_devops_code_search.do</query>
+        <report/>
+        <require_confirmation>false</require_confirmation>
+        <roles/>
+        <sys_class_name>sys_app_module</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-06-07 10:15:02</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>636e961997d32110d70ef207f053af6e</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>Code Search</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_app_module_636e961997d32110d70ef207f053af6e</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:35:47</sys_updated_on>
+        <timeline_page/>
+        <title>Code Search</title>
+        <uncancelable>false</uncancelable>
+        <view_name/>
+        <window_name/>
+    </sys_app_module>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_app_module_636e961997d32110d70ef207f053af6e</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_app_module"><sys_app_module action="INSERT_OR_UPDATE"><active>false</active><application display_value="DevOps+">ae7ed61997d32110d70ef207f053af89</application><assessment/><device_type/><filter/><hint>2025-01-22 deactivated: The Intrux Code Search Application is its replacement</hint><homepage/><image/><link_type>DIRECT</link_type><map_page/><mobile_title>Code Search</mobile_title><mobile_view_name>Mobile</mobile_view_name><name/><order>100</order><override_menu_roles>false</override_menu_roles><query>x_424426_devops_code_search.do</query><report/><require_confirmation>false</require_confirmation><roles/><sys_class_name>sys_app_module</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2023-06-07 10:15:02</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>636e961997d32110d70ef207f053af6e</sys_id><sys_mod_count>1</sys_mod_count><sys_name>Code Search</sys_name><sys_overrides/><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_app_module_636e961997d32110d70ef207f053af6e</sys_update_name><sys_updated_by>markus.kraus@intrux.ch</sys_updated_by><sys_updated_on>2026-01-22 08:35:47</sys_updated_on><timeline_page/><title>Code Search</title><uncancelable>false</uncancelable><view_name/><window_name/></sys_app_module></record_update>]]></payload>
+        <payload_hash>409012899</payload_hash>
+        <record_name>Code Search</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:35:47</sys_created_on>
+        <sys_id>983e751ac3a23e50de14d8477d01310f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4d86c710000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:35:47</sys_updated_on>
+        <type>Module</type>
+        <update_guid>983e751a2ba23e50e380b3491d935c0e</update_guid>
+        <update_guid_history>983e751a2ba23e50e380b3491d935c0e:409012899,0096549bdf6a621066cab33a5aefe252:-1333379241</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete display_value="Code Search">b7380e56c3263e50de14d8477d01319c</sys_audit_delete>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 09:19:43</sys_created_on>
+        <sys_db_object display_value="" name="sys_app_module">sys_app_module</sys_db_object>
+        <sys_id>44f00a218bfe41bb9a3f7e8a86ff80e1</sys_id>
+        <sys_metadata>636e961997d32110d70ef207f053af6e</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Code Search</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_app_module_636e961997d32110d70ef207f053af6e</sys_update_name>
+        <sys_update_version display_value="sys_app_module_636e961997d32110d70ef207f053af6e">983e751ac3a23e50de14d8477d01310f</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 09:19:43</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

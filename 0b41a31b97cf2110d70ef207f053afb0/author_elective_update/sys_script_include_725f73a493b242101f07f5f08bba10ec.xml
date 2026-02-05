@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="DELETE">
+        <access>public</access>
+        <active>false</active>
+        <api_name>x_424426_devops.CodeSearchHandlerBase</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&#13;
+THIS FILE WILL SOON BE DELETED</description>
+        <mobile_callable>false</mobile_callable>
+        <name>CodeSearchHandlerBase</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global sn_scoped_cache */
+/* global Class, GlideRecord, GlideTableHierarchy */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerBase = Class.create();
+CodeSearchHandlerBase.prototype = {
+	/** @constructs CodeSearchHandlerBase */
+	initialize: function() {
+		this.max_context_length = 500;
+	},
+
+	/**
+	 * get all searchable fields for the given table
+	 * note: the result is cached
+	 * @param {string} table - the table name
+	 * @returns {Array<{name: string, table: string, type: string, label: string, reference: string}>}
+	 */
+	getFields: function (table) {
+		let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
+		if (cachedFields) {
+			if (cachedFields.startsWith('{')) {
+				// DevOps+ > 1.2.3 stores the field info
+				// by checking for an actual object, we ensure that 1.2.3-caches get updated
+				//return JSON.parse(cachedFields);
+			}
+		}
+		
+		const fields = [];
+		const dictionaryGr = new GlideRecord('sys_dictionary');
+		dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+		dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+		dictionaryGr.addNotNullQuery('element');
+		dictionaryGr.query();
+		while (dictionaryGr.next()) {
+			const name = dictionaryGr.element.toString();
+			const type = dictionaryGr.internal_type.name.toString();
+			const config = {
+				name: name,
+				table: dictionaryGr.name.toString(),
+				type: type,
+				reference: dictionaryGr.reference.toString(),
+				max_length: +dictionaryGr.max_length,
+				related: [],
+				query_field: true
+			};
+
+			// querying the variables and glide_var fields does not work
+			// (it will even crash a call to addEncodedQuery)
+			if (type == 'variables') {
+				config.query_field = false;
+				config.related.push({
+					table: 'sc_item_option',
+					parent_field: 'request_item',
+					fields: ['sc_item_option.value']
+				});
+			} else if (type == 'glide_var') {
+				config.query_field = false;
+				config.related.push({
+					table: dictionaryGr.reference.toString() || 'sys_variable_value',
+					parent_field: 'document_key',
+					table_field: 'table',
+					fields: ['value']
+				});
+			}
+			
+			fields.push(config);
+		}
+		
+		sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
+		return fields;
+	},
+	
+	/**
+	 * get all matches of the supplied search term
+	 * @param {GlideRecordGenerated} anyGr
+	 * @param {string[]} fields
+	 * @param {string} term
+	 * @return {{fieldLabel: string, lineMatches: {line: number, context: string}[]}[]}
+	 */
+	getMatches: function (anyGr, fields, term) {
+		const matches = [];
+		fields.forEach(field => {
+			const element = anyGr.getElement(field);
+			if (element) {
+				const match = {
+					fieldLabel: element.getLabel(),
+					lineMatches: this.getMatchingLines(element.toString(), term)
+				};
+
+				match.lineMatches.forEach(lineMatch => {
+					if (lineMatch.context.length > this.max_context_length) {
+						lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+					}
+				});
+
+				if (match.lineMatches.length) {
+					matches.push(match);
+				}
+			}
+		});
+
+		return matches;
+	},
+	
+	/**
+	 * get matching lines of the supplied term within the supplied text
+	 * @param {string} text
+	 * @param {string} term
+	 * @return {{line: number, context: string}[]}
+	 */
+	getMatchingLines: function (text, term) {
+		const lineMatches = [];
+		let scanProgress = 0;
+		const lines = text.split(/\r\n|\r|\n/g);
+		for (let j = 0; j < lines.length; j++) {
+			const line = lines[j];
+			if (line.toLowerCase().includes(term.toLowerCase())) {
+				if (j > 0 && j > scanProgress + 1) {
+					lineMatches.push({line: (j), context: lines[j - 1]});
+				}
+
+				lineMatches.push({line: (j + 1), context: line});
+
+				if (j < lines.length - 1) {
+					lineMatches.push({line: (j + 2), context: lines[j + 1]});
+				}
+
+				scanProgress = j;
+			}
+		}
+
+		return lineMatches;
+	},
+
+	type: 'CodeSearchHandlerBase'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 05:14:02</sys_created_on>
+        <sys_id>725f73a493b242101f07f5f08bba10ec</sys_id>
+        <sys_mod_count>36</sys_mod_count>
+        <sys_name>CodeSearchHandlerBase</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_725f73a493b242101f07f5f08bba10ec</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:42:01</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="DELETE">
+        <id>725f73a493b242101f07f5f08bba10ec</id>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-11-07 11:30:34</sys_created_on>
+        <sys_id>81112b9483bdd2900971c810feaad3a8</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus</sys_updated_by>
+        <sys_updated_on>2024-11-07 11:30:34</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_script_include_725f73a493b242101f07f5f08bba10ec</name>
+        <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;active&gt;false&lt;/active&gt;&lt;api_name&gt;x_424426_devops.CodeSearchHandlerBase&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;2025-01-22 Code Search DEPRECATED: Replaced Intrux Code Search Application&amp;#13;
+THIS FILE WILL SOON BE DELETED&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;CodeSearchHandlerBase&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;&lt;![CDATA[/* global sn_scoped_cache */
+/* global Class, GlideRecord, GlideTableHierarchy */
+/* eslint no-undef: "error" */
+var CodeSearchHandlerBase = Class.create();
+CodeSearchHandlerBase.prototype = {
+	/** @constructs CodeSearchHandlerBase */
+	initialize: function() {
+		this.max_context_length = 500;
+	},
+
+	/**
+	 * get all searchable fields for the given table
+	 * note: the result is cached
+	 * @param {string} table - the table name
+	 * @returns {Array&lt;{name: string, table: string, type: string, label: string, reference: string}&gt;}
+	 */
+	getFields: function (table) {
+		let cachedFields = sn_scoped_cache.ScopedCacheManager.get('devops_plus_code_search_columns', table);
+		if (cachedFields) {
+			if (cachedFields.startsWith('{')) {
+				// DevOps+ &gt; 1.2.3 stores the field info
+				// by checking for an actual object, we ensure that 1.2.3-caches get updated
+				//return JSON.parse(cachedFields);
+			}
+		}
+		
+		const fields = [];
+		const dictionaryGr = new GlideRecord('sys_dictionary');
+		dictionaryGr.addQuery('name', 'IN', new GlideTableHierarchy(table).getTables());
+		dictionaryGr.addQuery('internal_type.scalar_type', 'string');
+		dictionaryGr.addNotNullQuery('element');
+		dictionaryGr.query();
+		while (dictionaryGr.next()) {
+			const name = dictionaryGr.element.toString();
+			const type = dictionaryGr.internal_type.name.toString();
+			const config = {
+				name: name,
+				table: dictionaryGr.name.toString(),
+				type: type,
+				reference: dictionaryGr.reference.toString(),
+				max_length: +dictionaryGr.max_length,
+				related: [],
+				query_field: true
+			};
+
+			// querying the variables and glide_var fields does not work
+			// (it will even crash a call to addEncodedQuery)
+			if (type == 'variables') {
+				config.query_field = false;
+				config.related.push({
+					table: 'sc_item_option',
+					parent_field: 'request_item',
+					fields: ['sc_item_option.value']
+				});
+			} else if (type == 'glide_var') {
+				config.query_field = false;
+				config.related.push({
+					table: dictionaryGr.reference.toString() || 'sys_variable_value',
+					parent_field: 'document_key',
+					table_field: 'table',
+					fields: ['value']
+				});
+			}
+			
+			fields.push(config);
+		}
+		
+		sn_scoped_cache.ScopedCacheManager.put('devops_plus_code_search_columns', table, JSON.stringify(fields));
+		return fields;
+	},
+	
+	/**
+	 * get all matches of the supplied search term
+	 * @param {GlideRecordGenerated} anyGr
+	 * @param {string[]} fields
+	 * @param {string} term
+	 * @return {{fieldLabel: string, lineMatches: {line: number, context: string}[]}[]}
+	 */
+	getMatches: function (anyGr, fields, term) {
+		const matches = [];
+		fields.forEach(field =&gt; {
+			const element = anyGr.getElement(field);
+			if (element) {
+				const match = {
+					fieldLabel: element.getLabel(),
+					lineMatches: this.getMatchingLines(element.toString(), term)
+				};
+
+				match.lineMatches.forEach(lineMatch =&gt; {
+					if (lineMatch.context.length &gt; this.max_context_length) {
+						lineMatch.context = lineMatch.context.substring(0, this.max_context_length) + '...';
+					}
+				});
+
+				if (match.lineMatches.length) {
+					matches.push(match);
+				}
+			}
+		});
+
+		return matches;
+	},
+	
+	/**
+	 * get matching lines of the supplied term within the supplied text
+	 * @param {string} text
+	 * @param {string} term
+	 * @return {{line: number, context: string}[]}
+	 */
+	getMatchingLines: function (text, term) {
+		const lineMatches = [];
+		let scanProgress = 0;
+		const lines = text.split(/\r\n|\r|\n/g);
+		for (let j = 0; j &lt; lines.length; j++) {
+			const line = lines[j];
+			if (line.toLowerCase().includes(term.toLowerCase())) {
+				if (j &gt; 0 &amp;&amp; j &gt; scanProgress + 1) {
+					lineMatches.push({line: (j), context: lines[j - 1]});
+				}
+
+				lineMatches.push({line: (j + 1), context: line});
+
+				if (j &lt; lines.length - 1) {
+					lineMatches.push({line: (j + 2), context: lines[j + 1]});
+				}
+
+				scanProgress = j;
+			}
+		}
+
+		return lineMatches;
+	},
+
+	type: 'CodeSearchHandlerBase'
+};]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-06-12 05:14:02&lt;/sys_created_on&gt;&lt;sys_id&gt;725f73a493b242101f07f5f08bba10ec&lt;/sys_id&gt;&lt;sys_mod_count&gt;36&lt;/sys_mod_count&gt;&lt;sys_name&gt;CodeSearchHandlerBase&lt;/sys_name&gt;&lt;sys_package display_value="DevOps+" source="x_424426_devops"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_package&gt;&lt;sys_policy/&gt;&lt;sys_scope display_value="DevOps+"&gt;0b41a31b97cf2110d70ef207f053afb0&lt;/sys_scope&gt;&lt;sys_update_name&gt;sys_script_include_725f73a493b242101f07f5f08bba10ec&lt;/sys_update_name&gt;&lt;sys_updated_by&gt;markus.kraus@intrux.ch&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-22 08:42:01&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;sys_es_latest_script action="INSERT_OR_UPDATE"&gt;&lt;id&gt;725f73a493b242101f07f5f08bba10ec&lt;/id&gt;&lt;sys_created_by&gt;markus.kraus&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2024-11-07 11:30:34&lt;/sys_created_on&gt;&lt;sys_id&gt;81112b9483bdd2900971c810feaad3a8&lt;/sys_id&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;markus.kraus&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2024-11-07 11:30:34&lt;/sys_updated_on&gt;&lt;table&gt;sys_script_include&lt;/table&gt;&lt;use_es_latest&gt;true&lt;/use_es_latest&gt;&lt;/sys_es_latest_script&gt;&lt;/record_update&gt;</payload>
+        <payload_hash>312134510</payload_hash>
+        <record_name>CodeSearchHandlerBase</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:42:01</sys_created_on>
+        <sys_id>279f791ec3a23e50de14d8477d013197</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4de22150000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:42:01</sys_updated_on>
+        <type>Script Include</type>
+        <update_guid>a39f791e37a23e507758e4a5d865e426</update_guid>
+        <update_guid_history>a39f791e37a23e507758e4a5d865e426:312134510,bc735995e811b2100b018298e02b9ed0:-202150677,3c5c8959289d7210d46b0d574da1d35e:116345391,ef592a29b30dfa10e29a07cc53ed8ad7:-1225929715,5ba8eaa5080dfa1064616ac2504e4e35:141179497,ff6422e96dc9fa10cde142f6f414edce:2072374655,f49a16214e89fa10b30a08456bc478b5:-887753245,6da886e0c845321040fe3d16b59cd211:-1597885743,038802e08e4532101f55cd73d91ac4ec:1109187569,e3c58c5002e436509aa1caa315dd39aa:1981606971,bd6bba6e38947a1058fbdc2a620aedb2:2021362288,0cfa722e8d947a1068fdb25a9e446f9a:-1826101174,38e796eec8907a1053a63c879ab40961:2021362288,0d96949b9b6a62105c8aa80759e40ef4:-167712861</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:57:01</sys_created_on>
+        <sys_db_object display_value="" name="sys_script_include">sys_script_include</sys_db_object>
+        <sys_id>d044382ad6e448ebac333efeeebd5841</sys_id>
+        <sys_metadata>725f73a493b242101f07f5f08bba10ec</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>CodeSearchHandlerBase</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_script_include_725f73a493b242101f07f5f08bba10ec</sys_update_name>
+        <sys_update_version display_value="sys_script_include_725f73a493b242101f07f5f08bba10ec">279f791ec3a23e50de14d8477d013197</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:57:01</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

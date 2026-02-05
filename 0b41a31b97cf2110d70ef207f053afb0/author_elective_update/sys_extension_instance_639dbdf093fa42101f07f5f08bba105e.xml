@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_instance">
+    <sys_extension_instance action="DELETE">
+        <active>false</active>
+        <order>999</order>
+        <point>x_424426_devops.CodeSearchHandler</point>
+        <script_include/>
+        <sys_class_name>sys_extension_instance</sys_class_name>
+        <sys_created_by>markus.kraus</sys_created_by>
+        <sys_created_on>2024-06-12 14:24:38</sys_created_on>
+        <sys_id>639dbdf093fa42101f07f5f08bba105e</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>x_424426_devops.CodeSearchHandler</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_extension_instance_639dbdf093fa42101f07f5f08bba105e</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:38:08</sys_updated_on>
+    </sys_extension_instance>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</application>
+        <file_path/>
+        <instance_id>848883c0dbda39d44162684e139619fd</instance_id>
+        <instance_name>dev198287</instance_name>
+        <name>sys_extension_instance_639dbdf093fa42101f07f5f08bba105e</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_extension_instance"><sys_extension_instance action="INSERT_OR_UPDATE"><active>false</active><order>999</order><point>x_424426_devops.CodeSearchHandler</point><script_include/><sys_class_name>sys_extension_instance</sys_class_name><sys_created_by>markus.kraus</sys_created_by><sys_created_on>2024-06-12 14:24:38</sys_created_on><sys_id>639dbdf093fa42101f07f5f08bba105e</sys_id><sys_mod_count>2</sys_mod_count><sys_name>x_424426_devops.CodeSearchHandler</sys_name><sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package><sys_policy/><sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope><sys_update_name>sys_extension_instance_639dbdf093fa42101f07f5f08bba105e</sys_update_name><sys_updated_by>markus.kraus@intrux.ch</sys_updated_by><sys_updated_on>2026-01-22 08:38:08</sys_updated_on></sys_extension_instance></record_update>]]></payload>
+        <payload_hash>1594613382</payload_hash>
+        <record_name>x_424426_devops.CodeSearchHandler</record_name>
+        <reverted_from/>
+        <source>229a6741c3b26210de14d8477d013168</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:56:50</sys_created_on>
+        <sys_id>340302d6c3e23e50de14d8477d013125</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19be4ebb32d0000001</sys_recorded_at>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:56:50</sys_updated_on>
+        <type>Extension Instance</type>
+        <update_guid>7c0302d665e23e501dbe985e20a95624</update_guid>
+        <update_guid_history>7c0302d665e23e501dbe985e20a95624:0,eabe7d5af8a23e505d15245a3f6b3c65:-1549374336,0096549bfa6a6210822fe0fc5d85dfaf:-668051789</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-01-22 08:57:43</sys_created_on>
+        <sys_db_object display_value="" name="sys_extension_instance">sys_extension_instance</sys_db_object>
+        <sys_id>69b8b77d84a7420896de8014e2e37f44</sys_id>
+        <sys_metadata>639dbdf093fa42101f07f5f08bba105e</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_424426_devops.CodeSearchHandler</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_scope_delete display_value="">13019d42a0194df0a6459d2c1b62b640</sys_scope_delete>
+        <sys_update_name>sys_extension_instance_639dbdf093fa42101f07f5f08bba105e</sys_update_name>
+        <sys_update_version display_value="sys_extension_instance_639dbdf093fa42101f07f5f08bba105e">340302d6c3e23e50de14d8477d013125</sys_update_version>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-01-22 08:57:43</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
