@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
     <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
         <active>true</active>
-        <client_script><![CDATA[/* global $context, g_ck, URLSearchParams, navigator, g_form, fetch */
+        <client_script><![CDATA[/* global $context, g_ck, URLSearchParams, navigator, g_form, fetch, document, getComputedStyle */
 /* eslint no-undef: "error" */
 (async function ($context) {
 	let gmf;
@@ -95,7 +95,14 @@
 
 			var loader = resultTarget.querySelector('#devops_references_result_loader');
 			loader.addEventListener('click', async function () {
+				if (loader.hasAttribute('disabled')) {
+					return;
+				}
+
 				loader.setAttribute('disabled', '');
+				for (const td of resultTarget.querySelectorAll('tr[data-table] td:last-child')) {
+					td.innerHTML = '';
+				}
 
 				for (const [table, conds] of Object.entries(queries)) {
 					const node = resultTarget.querySelector('tr[data-table=' + table + '] td:last-child');
@@ -113,11 +120,19 @@
 							'X-UserToken': g_ck
 						}
 					}).then(response => response.json())
-					.then(json => json.result.stats.count);
+					.then(json => json.result ? json.result.stats.count : '?');
 				}
 
 				loader.removeAttribute('disabled');
 			});
+
+			var resultContainer = resultTarget.closest('div.outputmsg');
+			var msgContainer = resultTarget.closest('div.outputmsg_container');
+			if (resultContainer && msgContainer) {
+				if (parseInt(getComputedStyle(msgContainer).height) < parseInt(getComputedStyle(resultContainer).height)) {
+					msgContainer.style.maxHeight = '100%';
+				}
+			}
 		}
 	} else {
 		resultTarget.innerHTML = '<br>Unable to detect table';
@@ -136,14 +151,14 @@
         <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
         <sys_created_on>2026-03-18 12:36:50</sys_created_on>
         <sys_id>efc4c60cc3377290de14d8477d01318c</sys_id>
-        <sys_mod_count>30</sys_mod_count>
+        <sys_mod_count>44</sys_mod_count>
         <sys_name>references</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>x_424426_devops_context_menu_item_efc4c60cc3377290de14d8477d01318c</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2026-04-10 13:48:17</sys_updated_on>
+        <sys_updated_on>2026-04-21 11:31:27</sys_updated_on>
         <type>header</type>
         <use_condition>false</use_condition>
     </x_424426_devops_context_menu_item>
