@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[(() => {
+
+	const bc = new BroadcastChannel('x_424426_devops');
+	bc.postMessage({
+		type: 'openInStudio',
+		sys_id: g_form.getUniqueValue(),
+		table: g_form.getTableName()
+	});
+	bc.close();
+
+})();]]></client_script>
+        <condition_script><![CDATA[(() => {
+	var env = window.top.location.pathname;
+	var devEnv = (typeof isDevStudio != 'undefined' && !!isDevStudio)
+		|| (typeof devStudioAPI != 'undefined' && !!devStudioAPI)
+		|| env?.startsWith('/$studio.do')
+		|| env?.startsWith('/now/servicenow-studio');
+
+	if (devEnv && !window.top.x_424426_devops_listener) {
+		window.top.x_424426_devops_listener = new BroadcastChannel('x_424426_devops');
+		window.top.x_424426_devops_listener.onmessage = function (event) {
+			if (event.data.type == 'openInStudio') {
+				devStudioAPI.openStudioTab(event.data.table + '.do?sys_id=' + event.data.sys_id);
+			} else if (event.data.type == 'isStudioOpen') {
+				window.top.x_424426_devops_listener.postMessage({
+					type: 'studio',
+					studio: env
+				});
+			}
+		};
+	}
+
+	if (!devEnv) {
+		// only show item if not in dev environment and if a studio is open
+		const bc = new BroadcastChannel('x_424426_devops');
+		const studioOpen = new Promise(resolve => {
+			bc.onmessage = function (event) {
+				if (event.data.type == 'studio') {
+					resolve('studio');
+				}
+			};
+
+			bc.postMessage({
+				type: 'isStudioOpen'
+			});
+		});
+
+		return Promise
+			.race([studioOpen, new Promise(resolve => setTimeout(resolve, 100))])
+			.then(value => {
+				bc.close();
+				return !!value;
+			});
+	}
+
+	return false;
+})();]]></condition_script>
+        <item_type>link</item_type>
+        <label>Open in Studio</label>
+        <order>200</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-02-09 16:39:22</sys_created_on>
+        <sys_id>c7389cd0c3c33ad0de14d8477d013125</sys_id>
+        <sys_mod_count>8</sys_mod_count>
+        <sys_name>Open in Studio</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_c7389cd0c3c33ad0de14d8477d013125</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-04-21 08:24:52</sys_updated_on>
+        <type>header</type>
+        <use_condition>true</use_condition>
+    </x_424426_devops_context_menu_item>
+</record_update>

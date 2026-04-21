@@ -108,17 +108,9 @@
 </j:jelly>]]></html>
         <name>preferences</name>
         <processing_script><![CDATA[/* global gs */
-/* global request, response */
 /* eslint no-undef: "error" */
-(function (request, response) {
-	// request [GlideServletRequest]
-	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletRequestScopedAPI
-	
-	// response [GlideServletResponse]
-	// https://developer.servicenow.com/dev.do#!/reference/api/latest/server/no-namespace/c_GlideServletResponseScopedAPI
-	
-	// this
-	// [represents the values from the <g:ui_form>]
+(function (/** @type{GlideServletRequest} */request, /** @type {GlideServletResponse} */ response) {
+
 	const user = gs.getUser(); 
 	user.savePreference('devops_show_hidden_fields', this['show-hidden-fields'] == 'on');
 	user.savePreference('devops_show_context_menu', this['show-context-menu'] == 'on');
@@ -128,19 +120,20 @@
 
 	gs.addInfoMessage(gs.getMessage('devops_preferences_saved'));
 	response.sendRedirect('x_424426_devops_preferences.do');
-}).call(this, request, response);]]></processing_script>
+	
+}).call(this, request, response); /* global request, response */]]></processing_script>
         <sys_class_name>sys_ui_page</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2024-06-07 17:44:18</sys_created_on>
         <sys_id>1cc9b09b93aa42101f07f5f08bba102b</sys_id>
-        <sys_mod_count>49</sys_mod_count>
+        <sys_mod_count>50</sys_mod_count>
         <sys_name>preferences</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_ui_page_1cc9b09b93aa42101f07f5f08bba102b</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-12-06 16:46:58</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-04-09 08:17:31</sys_updated_on>
     </sys_ui_page>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>1cc9b09b93aa42101f07f5f08bba102b</id>

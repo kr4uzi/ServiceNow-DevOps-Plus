@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="x_424426_devops_context_menu_item">
+    <x_424426_devops_context_menu_item action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <client_script><![CDATA[/* global $context, g_ck, URLSearchParams, navigator, g_form, fetch */
+/* eslint no-undef: "error" */
+(async function ($context) {
+	let gmf;
+	const openInWindow = navigator.userAgent.indexOf('Mac OS X') > -1 ? $context.event.metaKey : $context.event.ctrlKey;
+	let table = g_form.getTableName();
+	if (table == 'ni') table = 'sc_req_item';
+
+	g_form.addInfoMessage('Reference:<br><span id="devops_references_result">Loading ...</span>');
+	var resultTarget = document.getElementById('devops_references_result');
+
+	const tables = [];
+	for (let currentTable = table; currentTable; ) {
+		const request = await fetch('/api/now/table/sys_db_object?' + new URLSearchParams({
+			sysparm_query: 'name=' + currentTable,
+			sysparm_fields: 'super_class.name',
+			sysparm_limit: 1
+		}), {
+			headers: {
+				'X-UserToken': g_ck
+			}
+		});
+		const result = (await request.json()).result?.at(0);
+		if (!result) {
+			g_form.addErrorMessage('Table ' + currentTable + ' not found in tables');
+			return;
+		}
+
+		tables.push(currentTable);
+		currentTable = result['super_class.name'];
+	}
+
+	let message = 'References:';
+	if (tables.length) {
+		// NOTE: does not yet cover document_id fields!
+		const request = await fetch('/api/now/table/sys_dictionary?' + new URLSearchParams({
+			sysparm_query: 'sys_class_name=sys_dictionary^internal_type=reference^ORinternal_type=list'
+				+ '^referenceIN' + tables,
+			sysparm_fields: 'name,element,internal_type.name'
+		}), {
+			headers: {
+				'X-UserToken': g_ck
+			}
+		});
+
+		const sysId = g_form.getUniqueValue();
+		const queries = {};
+		for (const field of await (await request.json()).result) {
+			if (field['internal_type.name'] == 'reference') {
+				(queries[field.name] ??= []).push(field.element + '=' + sysId);
+			} else {
+				(queries[field.name] ??= []).push(field.element + 'LIKE' + sysId);
+			}
+		}
+
+		const tableData = await (async () => {
+			const request = await fetch('/api/now/table/sys_db_object?' + new URLSearchParams({
+				sysparm_query: 'nameIN' + Object.keys(queries),
+				sysparm_fields: 'label,name,scriptable_table'
+			}), {
+				headers: {
+					'X-UserToken': g_ck
+				}
+			});
+
+			const data = {};
+			for (const {label, name, scriptable_table} of (await request.json()).result) {
+				data[name] = {
+					label,
+					remote: scriptable_table == "true"
+				};
+			}
+
+			return data;
+		})();
+
+		let resultTable = '';
+		for (const [table, conds] of Object.entries(queries)) {
+			resultTable += `
+				<tr data-table=${table}>
+					<td>${tableData[table].label}</td>
+					<td>${table}</td>
+					<td><a target="_blank" href="/${table}_list.do?sysparm_query=${conds.join('^OR')}">Open ➚</a></td>
+					<td style="text-align: center"></td>
+				</tr>`;
+		}
+
+		if (resultTable) {
+			resultTarget.innerHTML = '<table style="background-color: rgba(255, 255, 255, 0);"><tr><th>Label</th><th>Table</th><th>Link</th><th>Results</th><tr>' + resultTable 
+				+ '<tr><td colspan=4><a href="javascript:void(0)" id="devops_references_result_loader">Load Results</a></td></tr>'
+			+ '</table>';
+
+			var loader = resultTarget.querySelector('#devops_references_result_loader');
+			loader.addEventListener('click', async function () {
+				loader.setAttribute('disabled', '');
+
+				for (const [table, conds] of Object.entries(queries)) {
+					const node = resultTarget.querySelector('tr[data-table=' + table + '] td:last-child');
+					if (tableData[table].remote) {
+						// do not search remote tables
+						node.innerHTML = '(remote)';
+						continue;
+					}
+
+					node.innerHTML = await fetch('/api/now/stats/' + table + '?' + new URLSearchParams({
+						sysparm_query: conds.join('^OR'),
+						sysparm_count: 'true'
+					}), {
+						headers: {
+							'X-UserToken': g_ck
+						}
+					}).then(response => response.json())
+					.then(json => json.result.stats.count);
+				}
+
+				loader.removeAttribute('disabled');
+			});
+		}
+	} else {
+		resultTarget.innerHTML = '<br>Unable to detect table';
+	}
+
+})($context);]]></client_script>
+        <condition_script><![CDATA[/* global $context */
+/* eslint no-undef: "error" */
+(function ($context) {
+
+})($context);]]></condition_script>
+        <item_type>link</item_type>
+        <label>references</label>
+        <order>900</order>
+        <sys_class_name>x_424426_devops_context_menu_item</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-03-18 12:36:50</sys_created_on>
+        <sys_id>efc4c60cc3377290de14d8477d01318c</sys_id>
+        <sys_mod_count>30</sys_mod_count>
+        <sys_name>references</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>x_424426_devops_context_menu_item_efc4c60cc3377290de14d8477d01318c</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-04-10 13:48:17</sys_updated_on>
+        <type>header</type>
+        <use_condition>false</use_condition>
+    </x_424426_devops_context_menu_item>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>efc4c60cc3377290de14d8477d01318c</id>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-03-18 12:36:50</sys_created_on>
+        <sys_id>2bc44a0cc3377290de14d8477d0131b9</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-03-18 12:36:50</sys_updated_on>
+        <table>x_424426_devops_context_menu_item</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>
