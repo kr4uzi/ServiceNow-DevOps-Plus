@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action">
+    <sys_ui_action action="INSERT_OR_UPDATE">
+        <action_name/>
+        <active>true</active>
+        <client>true</client>
+        <client_script_v2><![CDATA[function onClick(g_form) {
+
+}]]></client_script_v2>
+        <comments/>
+        <condition>gs.hasRole('x_424426_devops.devops_user')</condition>
+        <form_action>true</form_action>
+        <form_button>false</form_button>
+        <form_button_icon/>
+        <form_button_v2>false</form_button_v2>
+        <form_context_menu>false</form_context_menu>
+        <form_link>true</form_link>
+        <form_menu_button_v2>false</form_menu_button_v2>
+        <form_style/>
+        <format_for_configurable_workspace>false</format_for_configurable_workspace>
+        <hint/>
+        <isolate_script>true</isolate_script>
+        <list_action>false</list_action>
+        <list_banner_button>false</list_banner_button>
+        <list_button>false</list_button>
+        <list_button_icon/>
+        <list_choice>false</list_choice>
+        <list_context_menu>false</list_context_menu>
+        <list_link>false</list_link>
+        <list_save_with_form_button>false</list_save_with_form_button>
+        <list_style/>
+        <messages/>
+        <name>Impersonate</name>
+        <onclick>devops_impersonateUser()</onclick>
+        <order>100</order>
+        <script><![CDATA[/* global fetch */
+/* global GlideModal */
+/* global g_ck, g_form, g_navigation */
+/* eslint no-undef: "error" */
+function devops_impersonateUser() {
+	var gm = new GlideModal('glide_confirm_standard'); 
+	gm.setTitle('Confirm Impersonation');
+	gm.setPreference('title', 'You are about to impersonate "' + g_form.getValue('name') + '"');
+	gm.setPreference('warning', true);
+	gm.setPreference('onPromptComplete', function () {
+		gm.dev_okPressed = true;
+	});
+	gm.setPreference('onPromptCancel', function () {
+		gm.dev_cancelPressed = true;
+	});
+	gm.on('closeconfirm', function() {
+		var okPressed = !!gm.dev_okPressed;
+	
+		// reset state
+		delete gm.dev_okPressed;
+		delete gm.dev_cancelPressed;
+	
+		if (okPressed ) {
+			fetch('api/now/ui/impersonate/' + g_form.getUniqueValue(), {
+				method: 'POST',
+				headers: {
+					'X-Usertoken': g_ck
+				}
+			}).then(function (response) {
+				if (response.ok) {
+					g_navigation.refreshNavigator();
+					g_navigation.reloadWindow();
+					return;
+				}
+
+				response.text().then(function (text) {
+					g_form.addErrorMessage('Failed to impersonate: ' + text);
+				});
+			});
+			
+			return false;
+		}
+	});
+	gm.render();
+}]]></script>
+        <show_form_icon_only>false</show_form_icon_only>
+        <show_insert>false</show_insert>
+        <show_list_icon_only>false</show_list_icon_only>
+        <show_multiple_update>false</show_multiple_update>
+        <show_query>false</show_query>
+        <show_update>true</show_update>
+        <sys_class_name>sys_ui_action</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-11-06 13:30:49</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>996b02c73b989b1032648e0f23e45a8e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Impersonate</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_action_996b02c73b989b1032648e0f23e45a8e</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-11-06 13:30:49</sys_updated_on>
+        <table>sys_user</table>
+        <ui11_compatible>false</ui11_compatible>
+        <ui16_compatible>false</ui16_compatible>
+    </sys_ui_action>
+</record_update>

@@ -3,7 +3,7 @@
         <access>public</access>
         <active>true</active>
         <api_name>x_424426_devops.ConfigUtilClient</api_name>
-        <caller_access/>
+        <caller_access>2</caller_access>
         <client_callable>true</client_callable>
         <description/>
         <mobile_callable>false</mobile_callable>
@@ -42,7 +42,7 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 
 		try {
 			let record = null;
-			if (tableName && sysId) {
+			if (tableName && sysId && tableName != 'ni') {
 				try {
 					const exts = new GlideScriptedExtensionPoint().getExtensions('DevOpsExt');
 					if (exts.length) {
@@ -51,6 +51,9 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
 						const recordGr = ext.getRecord(tableName, sysId);
 						if (recordGr && recordGr.isValidRecord()) {
 							record = recordGr;
+						} else {
+							// threat lookup failure equal to extension point failure for unified logging
+							throw new Error(`Failed to lookup record ${tableName}.${sysId}`);
 						}
 					}
 				} catch (e) {
@@ -78,14 +81,14 @@ ConfigUtilClient.prototype = Object.extendsObject(global.AbstractAjaxProcessor, 
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2023-06-06 19:23:15</sys_created_on>
         <sys_id>ef60538997172110d70ef207f053af6d</sys_id>
-        <sys_mod_count>38</sys_mod_count>
+        <sys_mod_count>42</sys_mod_count>
         <sys_name>ConfigUtilClient</sys_name>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_script_include_ef60538997172110d70ef207f053af6d</sys_update_name>
         <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
-        <sys_updated_on>2025-09-20 16:50:03</sys_updated_on>
+        <sys_updated_on>2026-11-08 07:02:08</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>ef60538997172110d70ef207f053af6d</id>

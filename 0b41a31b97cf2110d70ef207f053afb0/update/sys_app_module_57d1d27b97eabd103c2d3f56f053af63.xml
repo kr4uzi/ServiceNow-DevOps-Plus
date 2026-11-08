@@ -16,30 +16,33 @@
         <mobile_title>List Context Menu Items</mobile_title>
         <mobile_view_name>Mobile</mobile_view_name>
         <name>sys_ui_context_menu</name>
-        <order>450</order>
+        <order>310</order>
         <override_menu_roles>false</override_menu_roles>
         <query/>
         <report/>
         <require_confirmation>false</require_confirmation>
         <roles/>
+        <route/>
+        <screen/>
         <sys_class_name>sys_app_module</sys_class_name>
         <sys_created_by>markus.kraus</sys_created_by>
         <sys_created_on>2023-11-23 17:09:04</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>57d1d27b97eabd103c2d3f56f053af63</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>3</sys_mod_count>
         <sys_name>Context Menu (List)</sys_name>
         <sys_overrides/>
         <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
         <sys_policy/>
         <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
         <sys_update_name>sys_app_module_57d1d27b97eabd103c2d3f56f053af63</sys_update_name>
-        <sys_updated_by>markus.kraus</sys_updated_by>
-        <sys_updated_on>2024-06-12 20:57:43</sys_updated_on>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-11-08 06:39:54</sys_updated_on>
         <timeline_page/>
         <title>Context Menu (List)</title>
         <uncancelable>false</uncancelable>
+        <ux_list/>
         <view_name/>
         <window_name/>
     </sys_app_module>
