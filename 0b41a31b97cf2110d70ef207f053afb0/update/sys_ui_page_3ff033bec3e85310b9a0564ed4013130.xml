@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_424426_devops_script_executor.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		const metadataGa = new GlideAggregate('sys_metadata');
+		metadataGa.addQuery('sys_class_name', 'IN', Object.keys(new x_424426_devops.ScriptExecutor()._getAccessableTables()));
+		metadataGa.groupBy('sys_scope');
+		metadataGa.addQuery('sys_scope.name', 'DOES NOT CONTAIN', '@');
+		metadataGa.query();
+
+		const scopeList = [];
+		while (metadataGa.next()) {
+			scopeList.push({
+				sys_id: metadataGa.getValue('sys_scope'),
+				label: metadataGa.getDisplayValue('sys_scope')
+			});
+		}
+	</g:evaluate>
+	<h1>NO TRANSACTION ROLLBACK AVAILABLE FOR THIS SCRIPT EXECUTOR</h1>
+	<hr />
+	<label for="runscript"><b><a>Run script (JavaScript executed on server)</a></b></label>
+	<g:ui_form>
+		<select name="scope" id="scope" class="select2 form-control">
+			<j2:forEach items="$[scopeList]" var="jvar_scope">
+				<option value="$[jvar_scope.sys_id]">
+					$[jvar_scope.label]
+				</option>
+			</j2:forEach>
+		</select>
+		<textarea id="runscript" name="script" rows="25" spellcheck="false" style="width: 100%; font-family:monospace; font-size:12px;"></textarea>
+		<input name="runscript" style="margin-top: 4px;" type="submit" value="Run script" />
+	</g:ui_form>
+</j:jelly>]]></html>
+        <name>script_executor</name>
+        <processing_script><![CDATA[/* global gs, x_424426_devops */
+/* eslint no-undef: "error" */
+(function (/** @type {GlideServletRequest} */request, /** @type {GlideServletResponse} */ response) {
+
+	const executor = new x_424426_devops.ScriptExecutor();
+	if (!executor.canExecute(this.scope)) {
+		gs.addErrorMessage('This scope is not supported');
+		response.sendRedirect('x_424426_devops_script_executor.do');
+		return;
+	}
+
+	const result = executor.executeScript(this.scope, this.script);
+	if (result.status == 'error') {
+		gs.addErrorMessage(result.message);
+		response.sendRedirect('x_424426_devops_script_executor.do');
+		return;
+	}
+
+	gs.addInfoMessage('Script Result:<br/>' + result.script_result);
+	response.sendRedirect('x_424426_devops_script_executor.do');
+	
+}).call(this, request, response); /* global request, response */]]></processing_script>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-11-18 13:38:13</sys_created_on>
+        <sys_id>3ff033bec3e85310b9a0564ed4013130</sys_id>
+        <sys_mod_count>7</sys_mod_count>
+        <sys_name>script_executor</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_ui_page_3ff033bec3e85310b9a0564ed4013130</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-11-18 14:22:56</sys_updated_on>
+    </sys_ui_page>
+</record_update>

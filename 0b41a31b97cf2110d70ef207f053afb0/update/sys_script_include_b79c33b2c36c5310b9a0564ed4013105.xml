@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_424426_devops.ScriptExecutor</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>ScriptExecutor</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[/* global Class, GlideRecord, GlideTableHierarchy, GlideScopedEvaluator */
+/* eslint no-undef: "error" */
+var ScriptExecutor = Class.create();
+ScriptExecutor.prototype = {
+	initialize: function () {
+		this.accessableTables = this._getAccessableTables();
+	},
+
+	_getAccessableTables: function () {
+		const tableGr = new GlideRecord('sys_db_object');
+		tableGr.addNullQuery('access').addOrCondition('access', 'public');
+		tableGr.addQuery('update_access', true);
+		tableGr.addQuery('name', 'IN', new GlideTableHierarchy('sys_metadata').getTableExtensions());
+		tableGr.addQuery();
+		tableGr.setLimit(10000);
+		tableGr.query();
+
+		const accessableTables = {};
+		while (tableGr.next()) {
+			const tabelName = tableGr.name.toString();
+			const dictGr = new GlideRecord('sys_dictionary');
+			dictGr.addQuery('internal_type', 'script');
+			dictGr.addQuery('name', tabelName);
+			dictGr.addNotNullQuery('element');
+			dictGr.setLimit(1);
+			dictGr.query();
+			if (dictGr.next()) {
+				accessableTables[tabelName] = dictGr.getValue('element');
+			}
+		}
+
+		return accessableTables;
+	},
+
+	_getInfusableScript: function (scope) {
+		const scriptGr = new GlideRecord('sys_metadata');
+		scriptGr.addQuery('sys_scope', scope);
+		scriptGr.addQuery('sys_class_name', 'IN', Object.keys(this.accessableTables));
+		scriptGr.setLimit(1);
+		scriptGr.query();
+		if (scriptGr.next()) {
+			// does not trigger a cross scope privilege access btw (lol!)
+			return scriptGr.getElement('ref_' + scriptGr.sys_class_name).getRefRecord();
+		}
+
+		return null;
+	},
+
+	canExecute: function (scope) {
+		return this._getInfusableScript(scope) != null;
+	},
+
+	executeScript: function (scope, script, paramMap = {}) {
+		const result = {
+			status: 'error'
+		};
+
+		const scriptGr = this._getInfusableScript(scope);
+		if (!scriptGr) {
+			result.message = 'Selected scope does not have a infusable script record' + scope;
+			return result;
+		}
+
+		const gse = new GlideScopedEvaluator();
+		for (const [key, value] of Object.entries(paramMap)) {
+			gse.putVariable(key, value);
+		}
+
+		result.status = 'success';
+
+		const field = this.accessableTables[scriptGr.getRecordClassName()];
+		scriptGr[field] = script;
+		result.script_result = gse.evaluateScript(scriptGr, field);
+		return result;
+	},
+
+	type: 'ScriptExecutor'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>markus.kraus@intrux.ch</sys_created_by>
+        <sys_created_on>2026-11-18 13:25:01</sys_created_on>
+        <sys_id>b79c33b2c36c5310b9a0564ed4013105</sys_id>
+        <sys_mod_count>16</sys_mod_count>
+        <sys_name>ScriptExecutor</sys_name>
+        <sys_package display_value="DevOps+" source="x_424426_devops">0b41a31b97cf2110d70ef207f053afb0</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="DevOps+">0b41a31b97cf2110d70ef207f053afb0</sys_scope>
+        <sys_update_name>sys_script_include_b79c33b2c36c5310b9a0564ed4013105</sys_update_name>
+        <sys_updated_by>markus.kraus@intrux.ch</sys_updated_by>
+        <sys_updated_on>2026-11-18 14:14:24</sys_updated_on>
+    </sys_script_include>
+</record_update>
